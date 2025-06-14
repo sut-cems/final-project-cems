@@ -73,11 +73,11 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+# .env
+# .env.development.local
+# .env.test.local
+# .env.production.local
+# .env.local
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -134,3 +134,278 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# =============================================
+# BACKEND SPECIFIC (GO)
+# =============================================
+
+# Go build outputs
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test binary, built with `go test -c`
+*.test
+
+# Go output of 'go build'
+*.out
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Air (hot reload for Go)
+tmp/
+.air.toml
+
+# Go modules cache
+backend/vendor/
+
+# Go coverage files
+*.coverprofile
+profile.out
+
+# =============================================
+# DATABASE FILES
+# =============================================
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+cems.db
+
+# Database dumps
+*.sql
+*.dump
+
+# Database migration files (keep structure, ignore data)
+# migrations/*.sql  # Uncomment if you want to ignore migration files
+
+# =============================================
+# FRONTEND SPECIFIC (REACT)
+# =============================================
+
+# React build outputs
+frontend/build/
+frontend/dist/
+
+# Create React App
+# frontend/.env.local
+# frontend/.env.development.local
+# frontend/.env.test.local
+# frontend/.env.production.local
+
+# Vite
+frontend/dist/
+frontend/.vite/
+
+# Webpack
+frontend/webpack-stats.json
+
+# Storybook
+frontend/storybook-static/
+frontend/.storybook/public/
+
+# =============================================
+# DEVELOPMENT TOOLS & IDE
+# =============================================
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# VS Code
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/*.code-snippets
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================
+# OPERATING SYSTEM FILES
+# =============================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# =============================================
+# UPLOADS & USER CONTENT
+# =============================================
+
+# File uploads
+uploads/
+# images/
+files/
+media/
+static/uploads/
+
+# User generated content
+user-uploads/
+public/uploads/
+
+# =============================================
+# CONFIG & SECRETS
+# =============================================
+
+# Configuration files with sensitive data
+config/production.json
+config/local.json
+config/secrets.json
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# API keys and secrets
+secrets/
+.secrets/
+
+# Docker secrets
+docker-secrets/
+
+# =============================================
+# BUILD & DEPLOYMENT
+# =============================================
+
+# Build directories
+/build
+/dist
+/bin
+/target
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# Kubernetes
+*.yaml.local
+secrets.yaml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# =============================================
+# TESTING
+# =============================================
+
+# Test coverage
+coverage/
+.nyc_output/
+test-results/
+junit.xml
+
+# Screenshot tests
+screenshots/
+__screenshots__/
+
+# E2E testing
+cypress/videos/
+cypress/screenshots/
+playwright-report/
+test-results/
+
+# =============================================
+# TEMPORARY & CACHE FILES
+# =============================================
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Cache directories
+.cache/
+.npm/
+.yarn/cache/
+.pnpm-store/
+
+# Package manager locks (uncomment if needed)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# =============================================
+# KEEP THESE FILES (EXCEPTIONS)
+# =============================================
+
+# Keep environment templates
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+!**/.env.example
+!.env.template
+
+# Keep important config templates
+!config/config.example.json
+!docker-compose.example.yml
+
+# Keep documentation assets
+!docs/images/
+!README.md
