@@ -1,0 +1,46 @@
+<svg viewBox="0 0 280 60" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Import Google Font -->
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&amp;display=swap');
+        </style>
+        
+        <linearGradient id="modernGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#640D5F" />
+            <stop offset="100%" stop-color="#D91656" />
+        </linearGradient>
+
+        <linearGradient id="modernGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#D91656" />
+            <stop offset="100%" stop-color="#EB5B00" />
+        </linearGradient>
+
+        <linearGradient id="modernGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#EB5B00" />
+            <stop offset="100%" stop-color="#FFB200" />
+        </linearGradient>
+
+        <filter id="modernShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#640D5F" flood-opacity="0.25" />
+        </filter>
+    </defs>
+
+    <!-- Geometric Crystal -->
+    <g transform="translate(5, 5)" filter="url(#modernShadow)">
+        <!-- Main crystal body - diamond shape -->
+        <polygon points="25,8 40,25 25,50 10,25" fill="url(#modernGrad1)" />
+        <!-- Right facet - top triangle -->
+        <polygon points="25,8 50,25 40,25" fill="url(#modernGrad2)" />
+        <!-- Bottom facet - bottom triangle -->
+        <polygon points="40,25 50,25 25,50" fill="url(#modernGrad3)" />
+    </g>
+
+    <!-- Logo Text -->
+    <g transform="translate(65, 0)">
+        <!-- CEMS Text -->
+        <text x="0" y="28" font-family="'Prompt', Arial, sans-serif" font-size="24" font-weight="700" fill="#640D5F" letter-spacing="-0.5px">CEMS</text>
+        
+        <!-- Thai Description -->
+        <text x="0" y="42" font-family="'Prompt', Arial, sans-serif" font-size="8" font-weight="400" fill="#6b7280" letter-spacing="0.2px">ระบบจัดการชมรมและกิจกรรมภายในมหาวิทยาลัย</text>
+    </g>
+</svg>
