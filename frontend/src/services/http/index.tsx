@@ -137,7 +137,7 @@ export async function fetchPopularClubs() {
   }
 }
 // GET /clubmembers/user/id
-export async function fetchClubMembersByUserID(id: string):Promise<ClubMember[]> {
+export async function fetchClubMembersByUserID(id: string):Promise<ClubMember> {
     const response = await fetch(`${API_BASE_URL}/clubmembers/user/${id}`, {
       method: 'GET',
       headers: {

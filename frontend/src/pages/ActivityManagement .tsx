@@ -10,15 +10,17 @@ export default function Home() {
 
   const [clubId, setClubId] = useState<number | null>(null);
 
+
+
   useEffect(() => {
     const fetchClubId = async () => {
       if (!userId) return;
 
       try {
         const res = await fetchClubMembersByUserID(String(userId));
-        console.log('res:',res)
-        setClubId(res[0].UserID); // ✅ สมมุติ API ตอบกลับเป็น ClubMember object
-        console.log('res id:',res[0].UserID)
+        console.log('resbody:',res)
+        setClubId(res.ClubID); // ✅ สมมุติ API ตอบกลับเป็น ClubMember object
+        console.log('res id:',res.ClubID)
       } catch (error) {
         console.error("Failed to fetch club info:", error);
       }
