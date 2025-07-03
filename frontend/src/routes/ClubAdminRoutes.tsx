@@ -3,6 +3,8 @@ import Home from "../pages/Home";
 import ActivitiManagement from "../pages/ActivityManagement ";
 import MinimalLayout from "../layouts/MinimalLayout/MinimalLayout";
 import Profile from "../pages/Profile/Profile";
+import Clubs from "../pages/Clubs/ClubCategories";
+import ClubAdminPage from "../pages/Clubs/ClubAdminPage";
 
 const ClubAdminRoutes = (): RouteObject => {
     return {
@@ -20,6 +22,14 @@ const ClubAdminRoutes = (): RouteObject => {
             {
                 path: "/profile",
                 element: <Profile />,
+            },
+            {
+                path: "/clubs",
+                element: <Clubs />,
+            },
+            {
+                path: "/clubs/:id",
+                element: <ClubAdminPage />,
             },
         ],
     };
