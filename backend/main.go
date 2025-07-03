@@ -89,6 +89,7 @@ func main() {
 		router.GET("/clubs/statistics", clubHandler.GetClubStatistics)
 		router.GET("/clubs", clubHandler.GetAllClubs)
 		router.GET("/clubs/:id", clubHandler.GetClubByID)
+		router.GET("/clubmembers/user/:id", controllers.GetClubMembersByUserID)
 		router.GET("/categories/clubs", controllers.GetCategoriesWithClubs)
 		router.POST("/clubs/:id/leave", controllers.LeaveClub)
 		router.GET("/clubs/:id/members", controllers.GetMembersByClubID)
@@ -102,6 +103,7 @@ func main() {
 		router.GET("/activities/featured", activityHandler.GetFeaturedActivities)
 		router.GET("/activities", activityHandler.GetActivities)
 		router.GET("/activities/:id", activityHandler.GetActivityByID)
+		router.GET("/activities/club/:id", activityHandler.GetActivityByClubID)
 		router.GET("/activities/statistics", activityHandler.GetActivityStatistics)
 
 		// Routes for Notifications

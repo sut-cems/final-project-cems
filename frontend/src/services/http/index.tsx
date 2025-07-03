@@ -1,6 +1,8 @@
 import type { Notifications } from "../../interfaces/INotifications";
 import type { LoginInput, LoginResponse, SignupInput } from "../../interfaces/ISingIn";
 import type { Users } from "../../interfaces/IUsers";
+import type { ClubMember } from "../../interfaces/IClubMembers";
+import type { Activity } from "../../interfaces/IActivitys";
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -134,6 +136,22 @@ export async function fetchPopularClubs() {
     };
   }
 }
+// GET /clubmembers/user/id
+export async function fetchClubMembersByUserID(id: string):Promise<ClubMember> {
+    const response = await fetch(`${API_BASE_URL}/clubmembers/user/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data;
+}
 
 export async function fetchClubStatistics() {
   try {
@@ -205,6 +223,26 @@ export async function fetchActivityStatistics() {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+// GET /activities/club/ID
+export async function fetchActivityByClubID(id: string): Promise<Activity[]> {
+  const response = await fetch(`${API_BASE_URL}/activities/club/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  console.log("FETCH RESULT:", result); 
+
+  return result.activities; 
 }
 
 export default class NotificationService {

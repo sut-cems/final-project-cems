@@ -359,3 +359,64 @@ func (h *ActivityHandler) GetActivityStatistics(c *gin.Context) {
 		"message":    "Statistics retrieved successfully",
 	})
 }
+
+func (h *ActivityHandler) GetActivityByClubID(c *gin.Context) {
+	id := c.Param("id")
+	clubID, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid club ID",
+			"message": "Club ID must be a valid number",
+		})
+		return
+	}
+
+	var activities []entity.Activity
+	if err := h.DB.
+		Preload("ActivityRegistrations").
+		Preload("Status").
+		Preload("Club").
+		Preload("Club.Status").
+		Preload("Club.Category").
+		Preload("Category").
+		Where("club_id = ?", uint(clubID)).
+		Find(&activities).Error; err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch activities by club ID",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	var responseActivities []ActivityResponse
+	for _, activity := range activities {
+		var registeredCount int64
+		h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
+
+		responseActivities = append(responseActivities, ActivityResponse{
+			ID:                  activity.ID,
+			Title:               activity.Title,
+			Description:         activity.Description,
+			Location:            activity.Location,
+			DateStart:           activity.DateStart.Format(time.RFC3339),
+			DateEnd:             activity.DateEnd.Format(time.RFC3339),
+			Capacity:            activity.Capacity,
+			PosterImage:         activity.PosterImage,
+			StatusID:            activity.StatusID,
+			ClubID:              activity.ClubID,
+			CategoryID:          activity.CategoryID,
+			RegisteredCount:     int(registeredCount),
+			Status:              activity.Status,
+			Club:                activity.Club,
+			Category:            activity.Category,
+			ActivityRegistrations: activity.ActivityRegistrations,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"activities": responseActivities,
+		"message":    "Activities retrieved successfully",
+	})
+}
+
