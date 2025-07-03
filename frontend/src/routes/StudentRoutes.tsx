@@ -2,6 +2,8 @@ import type { RouteObject } from "react-router-dom";
 import Home from "../pages/Home";
 import MinimalLayout from "../layouts/MinimalLayout/MinimalLayout";
 import GoogleCallbackPage from "../pages/Auth/Google/AuthCallback";
+import Clubs from "../pages/Clubs/ClubCategories";
+import ClubPage from "../pages/Clubs/ClubPage";
 
 const StudentRoutes = (): RouteObject => {
     return {
@@ -15,6 +17,14 @@ const StudentRoutes = (): RouteObject => {
             {
                 path: "/auth/google/callback",
                 element: <GoogleCallbackPage />,
+            },
+            {
+                path: "/clubs",
+                element: <Clubs />,
+            },
+            {
+                path: "/clubs/:id",
+                element: <ClubPage />,
             },
         ],
     };
