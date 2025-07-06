@@ -2,18 +2,21 @@ import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { Users } from '../../interfaces/IUsers';
 import { API_BASE_URL, fetchUserById } from '../../services/http';
+import LogoutConfirmationModal from '../Modal/Logout';
+import { ToastNotification } from '../Modal/DeleteButtonModal';
+import { useNavigate } from 'react-router-dom';
 
 // Custom Tooltip Component
-const Tooltip: React.FC<{ text: string; children: React.ReactNode; position?: 'top' | 'bottom' | 'left' | 'right' }> = ({ 
-  text, 
-  children, 
-  position = 'top' 
+export const TooltipCustom: React.FC<{ text: string; children: React.ReactNode; position?: 'top' | 'bottom' | 'left' | 'right' }> = ({
+  text,
+  children,
+  position = 'top'
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [showDelay, setShowDelay] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
-    const delay = setTimeout(() => setIsVisible(true), 500); 
+    const delay = setTimeout(() => setIsVisible(true), 500);
     setShowDelay(delay);
   };
 
@@ -52,7 +55,7 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode; position?: 't
   };
 
   return (
-    <div 
+    <div
       className="relative inline-block"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -71,9 +74,9 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode; position?: 't
 };
 
 // Custom Text Truncate Component
-const TruncatedText: React.FC<{ 
-  text: string; 
-  maxLength: number; 
+const TruncatedText: React.FC<{
+  text: string;
+  maxLength: number;
   className?: string;
   tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
   showTooltip?: boolean;
@@ -83,24 +86,93 @@ const TruncatedText: React.FC<{
 
   if (shouldTruncate && showTooltip) {
     return (
-      <Tooltip text={text} position={tooltipPosition}>
+      <TooltipCustom text={text} position={tooltipPosition}>
         <span className={`cursor-default ${className}`}>
           {displayText}
         </span>
-      </Tooltip>
+      </TooltipCustom>
     );
   }
 
   return <span className={className}>{displayText}</span>;
 };
 
-const ProfileDropdown: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
+const ProfileDropdown: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<Users | null>(null);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    title?: string;
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'info',
+    isVisible: false
+  });
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
+  const showToast = (message: string, type: 'success' | 'error' | 'info', title?: string) => {
+    setToast({
+      message,
+      type,
+      title,
+      isVisible: true
+    });
+  };
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
+
+    try {
+      // รอ 2 วินาที เพื่อแสดง loading state
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // ปิด modal
+      setShowLogoutModal(false);
+      setIsLoggingOut(false);
+
+      // แสดง toast ขั้นตอนต่างๆ
+      showToast('กำลังออกจากระบบ...', 'info', 'ออกจากระบบ');
+
+      setTimeout(() => {
+        showToast('ออกจากระบบสำเร็จ!', 'success', 'สำเร็จ');
+      }, 1000);
+
+      setTimeout(() => {
+        showToast('กำลังเคลียร์ข้อมูล...', 'info', 'ดำเนินการ');
+      }, 2500);
+
+      setTimeout(() => {
+        showToast('เสร็จสิ้น! ขอบคุณที่ใช้บริการ', 'success', 'เสร็จสิ้น');
+      }, 4000);
+
+      // ออกจากระบบหลังจาก 5 วินาที
+      setTimeout(() => {
+        localStorage.clear();
+        navigate('/');
+        navigate(0);
+      }, 5500);
+
+    } catch (error) {
+      setIsLoggingOut(false);
+      showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error', 'ข้อผิดพลาด');
+    }
+  };
+  const hideToast = () => {
+    setToast(prev => ({
+      ...prev,
+      isVisible: false
+    }));
+  };
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -199,9 +271,9 @@ const ProfileDropdown: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
           )}
         </div>
         <div className="font-medium hidden sm:block max-w-40">
-          <TruncatedText 
-            text={getDisplayName()} 
-            maxLength={25} 
+          <TruncatedText
+            text={getDisplayName()}
+            maxLength={25}
             tooltipPosition="bottom"
           />
         </div>
@@ -213,35 +285,35 @@ const ProfileDropdown: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
           <div className="p-2">
             <div className="px-4 py-3 border-b border-gray-100">
               <div className="text-sm font-medium text-gray-900 mb-1">
-                <TruncatedText 
-                  text={getDisplayName()} 
-                  maxLength={22} 
+                <TruncatedText
+                  text={getDisplayName()}
+                  maxLength={22}
                   tooltipPosition="right"
                 />
               </div>
               {user && (
                 <>
                   <div className="text-xs text-gray-500 mb-1 break-all">
-                    <Tooltip text={user.Email} position="right">
+                    <TooltipCustom text={user.Email} position="right">
                       <span className="cursor-default">
                         {user.Email.length > 28 ? `${user.Email.slice(0, 28)}...` : user.Email}
                       </span>
-                    </Tooltip>
+                    </TooltipCustom>
                   </div>
                   <div className="text-xs text-gray-400">
-                    <Tooltip text={`${user.StudentID}`} position="right">
+                    <TooltipCustom text={`${user.StudentID}`} position="right">
                       <span className="cursor-default">
                         รหัสนักศึกษา: {user.StudentID}
                       </span>
-                    </Tooltip>
+                    </TooltipCustom>
                   </div>
                 </>
               )}
             </div>
-            
+
             <div className="py-2">
-              <a 
-                href="/profile" 
+              <a
+                href="/profile"
                 className="flex items-center px-4 py-3 text-sm hover:bg-gradient-to-r hover:from-[#640D5F]/10 hover:to-[#D91656]/10 text-gray-700 hover:text-[#640D5F] rounded-lg transition-all duration-200 group"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#640D5F] to-[#D91656] flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
@@ -249,9 +321,9 @@ const ProfileDropdown: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
                 </div>
                 โปรไฟล์ของฉัน
               </a>
-              
-              <a 
-                href="/settings" 
+
+              <a
+                href="/settings"
                 className="flex items-center px-4 py-3 text-sm hover:bg-gradient-to-r hover:from-[#EB5B00]/10 hover:to-[#FFB200]/10 text-gray-700 hover:text-[#EB5B00] rounded-lg transition-all duration-200 group"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#EB5B00] to-[#FFB200] flex items-center justify-center mr-3 group-hover:scale-110 transition-transform duration-200">
@@ -260,11 +332,10 @@ const ProfileDropdown: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
                 ตั้งค่า
               </a>
             </div>
-            
+
             <div className="border-t border-gray-100 pt-2">
               <button
-                onClick={onLogout}
-                className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all duration-200 group"
+                onClick={() => setShowLogoutModal(true)} className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all duration-200 group"
               >
                 <div className="w-8 h-8 rounded-full bg-red-100 group-hover:bg-red-200 flex items-center justify-center mr-3 group-hover:scale-110 transition-all duration-200">
                   <LogOut className="w-4 h-4 text-red-600" />
@@ -275,16 +346,104 @@ const ProfileDropdown: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
           </div>
         </div>
       )}
+      <LogoutConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={cancelLogout}
+        onConfirm={confirmLogout}
+        userName={user ? `${user.FirstName} ${user.LastName}` : 'Admin User'}
+        user={user}
+        isLoggingOut={isLoggingOut}
+      />
+      <ToastNotification
+        message={toast.message}
+        type={toast.type}
+        title={toast.title}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+        duration={3000}
+        position="top-right"
+      />
     </div>
   );
 };
 
-const ProfileDropdownMobile: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
+const ProfileDropdownMobile: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<Users | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    title?: string;
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'info',
+    isVisible: false
+  });
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
+  };
+  const showToast = (message: string, type: 'success' | 'error' | 'info', title?: string) => {
+    setToast({
+      message,
+      type,
+      title,
+      isVisible: true
+    });
+  };
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
+
+    try {
+      // รอ 2 วินาที เพื่อแสดง loading state
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // ปิด modal
+      setShowLogoutModal(false);
+      setIsLoggingOut(false);
+
+      // แสดง toast ขั้นตอนต่างๆ
+      showToast('กำลังออกจากระบบ...', 'info', 'ออกจากระบบ');
+
+      setTimeout(() => {
+        showToast('ออกจากระบบสำเร็จ!', 'success', 'สำเร็จ');
+      }, 1000);
+
+      setTimeout(() => {
+        showToast('กำลังเคลียร์ข้อมูล...', 'info', 'ดำเนินการ');
+      }, 2500);
+
+      setTimeout(() => {
+        showToast('เสร็จสิ้น! ขอบคุณที่ใช้บริการ', 'success', 'เสร็จสิ้น');
+      }, 4000);
+
+      // ออกจากระบบหลังจาก 5 วินาที
+      setTimeout(() => {
+        localStorage.clear();
+        navigate('/');
+        navigate(0);
+      }, 5500);
+
+    } catch (error) {
+      setIsLoggingOut(false);
+      showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error', 'ข้อผิดพลาด');
+    }
+  };
+  const hideToast = () => {
+    setToast(prev => ({
+      ...prev,
+      isVisible: false
+    }));
+  };
+
+
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -374,11 +533,11 @@ const ProfileDropdownMobile: React.FC<{ onLogout: () => void }> = ({ onLogout })
             สวัสดี, {getDisplayName()}
           </p>
           {user && !loading && (
-            <Tooltip text={`รหัสนักศึกษา: ${user.StudentID}`}>
+            <TooltipCustom text={`รหัสนักศึกษา: ${user.StudentID}`}>
               <p className="text-xs text-gray-400 truncate cursor-default">
                 รหัสนักศึกษา: {user.StudentID}
               </p>
-            </Tooltip>
+            </TooltipCustom>
           )}
         </div>
         <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
@@ -396,7 +555,7 @@ const ProfileDropdownMobile: React.FC<{ onLogout: () => void }> = ({ onLogout })
             </div>
             <span className="font-medium">โปรไฟล์ของฉัน</span>
           </a>
-          
+
           <a
             href="/settings"
             className="flex items-center w-full p-4 text-gray-700 hover:text-[#EB5B00] hover:bg-gradient-to-r hover:from-[#EB5B00]/10 hover:to-[#FFB200]/10 rounded-xl transition-all duration-200 group"
@@ -407,9 +566,9 @@ const ProfileDropdownMobile: React.FC<{ onLogout: () => void }> = ({ onLogout })
             </div>
             <span className="font-medium">ตั้งค่า</span>
           </a>
-          
+
           <button
-            onClick={onLogout}
+            onClick={() => setShowLogoutModal(true)}
             className="flex items-center w-full p-4 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 group"
           >
             <div className="w-10 h-10 rounded-full bg-red-100 group-hover:bg-red-200 flex items-center justify-center mr-3 group-hover:scale-110 transition-all duration-200">
@@ -419,6 +578,23 @@ const ProfileDropdownMobile: React.FC<{ onLogout: () => void }> = ({ onLogout })
           </button>
         </div>
       )}
+      <LogoutConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={cancelLogout}
+        onConfirm={confirmLogout}
+        userName={user ? `${user.FirstName} ${user.LastName}` : 'Admin User'}
+        user={user}
+        isLoggingOut={isLoggingOut}
+      />
+      <ToastNotification
+        message={toast.message}
+        type={toast.type}
+        title={toast.title}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+        duration={3000}
+        position="top-right"
+      />
     </div>
   );
 };

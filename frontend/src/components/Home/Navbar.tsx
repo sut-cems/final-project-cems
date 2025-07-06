@@ -8,6 +8,7 @@ interface NavItem {
   href: string;
   isActive?: boolean;
   isScrollTarget?: boolean;
+  requireAdmin?: boolean; 
 }
 
 interface CEMSNavbarProps {
@@ -19,21 +20,31 @@ const Navbar: React.FC<CEMSNavbarProps> = ({ className = '' }) => {
   const [isAtBottom, setIsAtBottom] = useState<boolean>(false);
   const navigate = useNavigate();
   const isLoggedIn = localStorage.getItem("isLogin") === "true";
-  const [logoutMessage, setLogoutMessage] = useState('');
-  const [logoutStep, setLogoutStep] = useState(0);
+  const roleAdmin = localStorage.getItem("role") === 'admin'; 
+  const [logoutMessage] = useState('');
+  const [logoutStep] = useState(0);
   const location = useLocation();
   
-  const navItems: NavItem[] = [
+  // สร้างรายการเมนูพื้นฐาน
+  const allNavItems: NavItem[] = [
     { label: 'หน้าหลัก', href: '/' },
     { label: 'ชมรม', href: '/clubs' },
     { label: 'กิจกรรม', href: '/activities' },
+    { label: 'รายงาน', href: '/dashboard', requireAdmin: true }, 
     { label: 'เกี่ยวกับเรา', href: '/about', isScrollTarget: true },
-  ].map(item => ({
-    ...item,
-    isActive: item.isScrollTarget 
-      ? (location.pathname === '/' && isAtBottom) 
-      : (location.pathname === item.href && !(location.pathname === '/' && isAtBottom))
-  }));
+  ];
+
+  // กรองเมนูตาม role
+  const navItems: NavItem[] = allNavItems
+    .filter(item => {
+      return !item.requireAdmin || roleAdmin;
+    })
+    .map(item => ({
+      ...item,
+      isActive: item.isScrollTarget 
+        ? (location.pathname === '/' && isAtBottom) 
+        : (location.pathname === item.href && !(location.pathname === '/' && isAtBottom))
+    }));
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -114,32 +125,6 @@ const Navbar: React.FC<CEMSNavbarProps> = ({ className = '' }) => {
     </svg>
   );
 
-  const handleLogout = () => {
-    setLogoutStep(1);
-    setLogoutMessage('กำลังออกจากระบบ...');
-
-    setTimeout(() => {
-      setLogoutStep(2);
-      setLogoutMessage('ออกจากระบบสำเร็จ!');
-    }, 1000);
-
-    setTimeout(() => {
-      setLogoutStep(3);
-      setLogoutMessage('กำลังเคลียร์ข้อมูล...');
-    }, 2000);
-
-    setTimeout(() => {
-      setLogoutStep(4);
-      setLogoutMessage('เสร็จสิ้น! ขอบคุณที่ใช้บริการ');
-    }, 3000);
-
-    setTimeout(() => {
-      setLogoutMessage('');
-      setLogoutStep(0);
-      localStorage.clear();
-      window.location.href = '/';    
-    }, 4000);
-  };
 
   const getLogoutMessageStyles = () => {
     switch (logoutStep) {
@@ -261,7 +246,7 @@ const Navbar: React.FC<CEMSNavbarProps> = ({ className = '' }) => {
             {/* Desktop Auth Buttons */}
             <div className="hidden lg:flex items-center space-x-4">
               {isLoggedIn ? (
-                <ProfileDropdown onLogout={handleLogout} />
+                <ProfileDropdown />
               ) : (
                 <>
                   <a
@@ -339,7 +324,7 @@ const Navbar: React.FC<CEMSNavbarProps> = ({ className = '' }) => {
             {/* Mobile Auth Buttons */}
             <div className="space-y-4">
               {isLoggedIn ? (
-                <ProfileDropdownMobile onLogout={handleLogout} />
+                <ProfileDropdownMobile />
               ) : (
                 <>
                   <a
