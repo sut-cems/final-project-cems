@@ -1,16 +1,21 @@
 import type { RouteObject } from "react-router-dom";
-import Home from "../pages/Home";
-import MinimalLayout from "../layouts/MinimalLayout/MinimalLayout";
 import Profile from "../pages/Profile/Profile";
+import CEMSDashboard from "../pages/Admin/Dashboad";
+import AdminLayout from "../layouts/AdminLayout/AdminLayout";
+import ReportsManagemet from "../components/Reports/ReportsDashboard";
 
 const AdminRoutes = (): RouteObject => {
 	return {
-		path: "/",
-		element: <MinimalLayout />,
-		children: [
+	path: "/",
+		element: <AdminLayout />,
+		children: [		
 			{
 				path: "/",
-				element: <Home />
+				element: <CEMSDashboard />
+			},
+			{
+				path: "/manage-reports",
+				element: <ReportsManagemet />
 			},
 			{
                 path: "/profile",

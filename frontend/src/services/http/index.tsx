@@ -3,6 +3,9 @@ import type { LoginInput, LoginResponse, SignupInput } from "../../interfaces/IS
 import type { Users } from "../../interfaces/IUsers";
 import type { ClubMember } from "../../interfaces/IClubMembers";
 import type { Activity } from "../../interfaces/IActivitys";
+import type { ActivityHoursChart, DashboardStats, ParticipationChart  } from "../../pages/Admin/Dashboad";
+import type { ReportRequest } from "../../components/Reports/ReportCreate";
+import type { ReportListResponse } from "../../components/Reports/ReportsDashboard";
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -400,4 +403,132 @@ export default class NotificationService {
       return false;
     }
   }
+}
+
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+    const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch dashboard stats");
+    }
+    return await response.json();
+}
+
+export async function fetchParticipationChart(period?: string): Promise<ParticipationChart> {
+    const url = new URL(`${API_BASE_URL}/charts/participation`);
+    if (period) {
+        url.searchParams.append('period', period);
+    }
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch participation chart");
+    }
+    return await response.json();
+}
+
+export async function fetchActivityHoursChart(): Promise<ActivityHoursChart> {
+    const response = await fetch(`${API_BASE_URL}/charts/activity-hours`);
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch activity hours chart");
+    }
+    return await response.json();
+}
+
+export async function fetchReportList(page: number = 1, limit: number = 10): Promise<ReportListResponse> {
+    const url = new URL(`${API_BASE_URL}/reports`);
+    url.searchParams.append('page', page.toString());
+    url.searchParams.append('limit', limit.toString());
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch report list");
+    }
+    return await response.json();
+}
+
+export async function generateReports(data: ReportRequest[]): Promise<any> {
+   try {
+    const response = await fetch(`${API_BASE_URL}/generate-report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        return responseData;
+    } catch (error) {
+        console.error('Error generating reports:', error);
+        throw error;
+    }
+}
+
+export async function downloadReport(id: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/download-report/${id}`, {
+        method: "GET",
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to download report");
+    }
+    return await response.blob();
+}
+
+export async function downloadReportFile(id: string, filename?: string): Promise<void> {
+    try {
+        const blob = await downloadReport(id);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || `report_${id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Failed to download report:", error);
+        throw error;
+    }
+}
+
+export async function deleteReport(id: string): Promise<void> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/reports/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Failed to delete report";
+            
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch (parseError) {
+                errorMessage = response.statusText || errorMessage;
+            }
+
+            throw new Error(`${errorMessage} (Status: ${response.status})`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            const result = await response.json();
+            console.log("Report deleted successfully:", result);
+        }
+        
+    } catch (error) {
+        console.error("Error deleting report:", error);
+        throw error; 
+    }
 }

@@ -1,13 +1,20 @@
-package entity 
+package entity
+
 import (
 	"gorm.io/gorm"
 	"time"
 )
-// รายงานกิจกรรม
+
 type ActivityReport struct {
 	gorm.Model
-	UserID     uint
-	Type       string
-	FileURL    string
+	Name        string
+	UserID      uint
+	ActivityID  uint 
+	Type        string
+	FileURL     string
 	GeneratedAt time.Time
+	Status      string
+
+	User     User     `gorm:"foreignKey:UserID"`
+	Activity Activity `gorm:"foreignKey:ActivityID"`
 }
