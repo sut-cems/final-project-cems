@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import Footer from "../components/Home/Footer";
-import Navbar from "../components/Home/Navbar";
-import Body from "../components/ActivityManagement/Body";
-import { fetchClubMembersByUserID } from "../services/http"; // ✅ อย่าลืมนำเข้า
+import Footer from "../../components/Home/Footer";
+import Navbar from "../../components/Home/Navbar";
+import Body from "../../components/ActivitesManagement/ActivitesBody";
+import { fetchClubMembersByUserID } from "../../services/http"; // ✅ อย่าลืมนำเข้า
 
 export default function Home() {
   const storedId = localStorage.getItem("userId");
