@@ -1,6 +1,6 @@
 import type { RouteObject } from "react-router-dom";
 import Home from "../pages/Home";
-import ActivitiManagement from "../pages/ActivityManagement ";
+import ActivitiManagement from "../pages/Activites/ActivityManagement ";
 import MinimalLayout from "../layouts/MinimalLayout/MinimalLayout";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
