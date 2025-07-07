@@ -29,7 +29,7 @@ func GetUserByID(c *gin.Context) {
 	db := config.DB()
 	id := c.Param("id")
 	var user entity.User
-	if err := db.Preload("Role").Preload("CreatedClubs").Preload("ClubMembers").Preload("Registrations").Preload("VerifiedHours").Preload("GeneratedReports").First(&user, id).Error; err != nil {
+	if err := db.Preload("Role").Preload("Faculty").Preload("Program").Preload("CreatedClubs").Preload("ClubMembers").Preload("Registrations").Preload("VerifiedHours").Preload("GeneratedReports").First(&user, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}

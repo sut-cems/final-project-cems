@@ -10,6 +10,12 @@ import {
 } from "lucide-react";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
+import {
+  fetchUserById,
+  getFacultiesWithPrograms,
+  updateUser,
+} from "../../services/http";
+import type { Faculty } from "../../interfaces/IFaculty";
 
 // Combobox Component
 const Combobox = ({
@@ -29,19 +35,22 @@ const Combobox = ({
   const [searchTerm, setSearchTerm] = useState("");
   const comboboxRef = useRef<HTMLDivElement | null>(null);
 
-  const filteredOptions = options.filter((option: any) =>
+  const filteredOptions = options.filter((option: string) =>
     option.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelect = (option: any) => {
+  const handleSelect = (option: string) => {
     onChange(option);
     setIsOpen(false);
     setSearchTerm("");
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (comboboxRef.current && !comboboxRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        comboboxRef.current &&
+        !comboboxRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setSearchTerm("");
       }
@@ -91,7 +100,7 @@ const Combobox = ({
             {filteredOptions.length === 0 ? (
               <div className="p-2 text-gray-500 text-sm">No options found</div>
             ) : (
-              filteredOptions.map((option: any, index: any) => (
+              filteredOptions.map((option: string, index: number) => (
                 <div
                   key={index}
                   className="p-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center text-sm"
@@ -162,12 +171,12 @@ const ImageCropper = ({
     }
   }, []); // Add empty dependency array
 
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     setDragStart({ x: e.clientX - crop.x, y: e.clientY - crop.y });
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
 
     const newX = Math.max(
@@ -213,7 +222,7 @@ const ImageCropper = ({
     );
 
     canvas.toBlob(
-      (blob: any) => {
+      (blob: Blob | null) => {
         if (blob) {
           const reader = new FileReader();
           reader.onload = () => onCrop(reader.result);
@@ -234,7 +243,15 @@ const ImageCropper = ({
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  }, [isDragging, dragStart, crop.width, crop.height, imageDimensions]);
+  }, [
+    isDragging,
+    dragStart,
+    crop.width,
+    crop.height,
+    imageDimensions,
+    handleMouseMove,
+    handleMouseUp,
+  ]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -332,23 +349,23 @@ const ImageCropper = ({
 
 export default function Profile() {
   const [profileData, setProfileData] = useState({
-    firstName: "Peerawich",
-    lastName: "Punyano",
-    faculty: "Institute of Engineering",
-    program: "Computer Engineering",
-    studentID: "B6512071",
-    role: "Student",
-    club: "Computer Club",
-    activityHours: 24,
-    phoneNumber: "0987654321",
-    email: "computerlwnza@gmail.com",
+    firstName: "",
+    lastName: "",
+    faculty: "",
+    program: "",
+    studentID: "",
+    club: "",
+    activityHours: 0,
+    email: "",
   });
 
   // Store original data for cancel functionality
   const [originalData, setOriginalData] = useState(profileData);
   const [isEditing, setIsEditing] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(null);
-  const [originalAvatarUrl, setOriginalAvatarUrl] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | ArrayBuffer | null>(null);
+  const [originalAvatarUrl, setOriginalAvatarUrl] = useState<
+    string | ArrayBuffer | null
+  >(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
@@ -358,73 +375,80 @@ export default function Profile() {
     string | null
   >(null);
 
-  // Faculty and Program options
-  const facultyOptions = [
-    "Institute of Science",
-    "Institute of Social Technology",
-    "Institute of Agricultural Technology",
-    "Institute of Engineering",
-    "Institute of Medicine",
-    "Institute of Nursing",
-    "Institute of Dentistry",
-    "Institute of Public Health",
-    "Institute of Digital Arts and Sciences",
-  ];
+  const [isSaving, setIsSaving] = useState(false);
 
-  const programOptions = {
-    "Institute of Science": [
-      "Mathematics",
-      "Chemistry",
-      "Biology",
-      "Physics",
-      "Geoinformatics",
-      "Microbiology",
-      "Medical Science",
-      "Sports Science",
-      "Computer Science",
-    ],
-    "Institute of Social Technology": [
-      "Management Technology",
-      "Innovative Technology in the Service Industry",
-    ],
-    "Institute of Agricultural Technology": [
-      "Plant production technology",
-      "Animal Technology and Innovation",
-      "Food Technology",
-    ],
-    "Institute of Engineering": [
-      "Automation and Robotics Manufacturing Engineering",
-      "Agricultural and Food Engineering",
-      "Transportation and Logistics Engineering",
-      "Computer Engineering",
-      "Chemical Engineering",
-      "Mechanical Engineering",
-      "Ceramic Engineering",
-      "Electrical Engineering",
-      "Telecommunications and Smart Grid Engineering",
-      "Geoengineering",
-      "Petroleum Engineering and Geotechnology",
-      "Polymer Engineering",
-      "Industrial Engineering",
-      "Civil Engineering",
-      "Metallurgical Engineering",
-      "Environmental Engineering",
-      "Electrical Engineering",
-      "Electronic Engineering and Embedded Systems",
-    ],
-    "Institute of Medicine": ["Doctor of Medicine Program"],
-    "Institute of Nursing": ["Bachelor of Nursing Program"],
-    "Institute of Dentistry": ["Bachelor of Dentistry Program"],
-    "Institute of Public Health": [
-      "Environmental Health",
-      "Occupational Health and Safety",
-      "Nutrition and Dietetics",
-    ],
-    "Institute of Digital Arts and Sciences": [
-      "Digital Technology",
-      "Digital Communication Science",
-    ],
-  };
+  const [facultiesData, setFacultiesData] = useState<Faculty[]>([]);
+  const [facultyOptions, setFacultyOptions] = useState<string[]>([]);
+  const [programOptions, setProgramOptions] = useState<
+    Record<string, string[]>
+  >({});
+
+  // Add this useEffect to fetch user data (add this after your existing useEffect)
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        const userData = await fetchUserById(parseInt(userId || ""));
+
+        setProfileData({
+          firstName: userData.FirstName || "",
+          lastName: userData.LastName || "",
+          faculty: userData.Faculty?.Name || "",
+          program: userData.Program?.Name || "",
+          studentID: userData.StudentID || "",
+          club: userData.ClubID ? `${userData.ClubID}` : "-",
+          activityHours: userData.ActivityHour || 0,
+          email: userData.Email || "",
+        });
+
+        // Set original data for cancel functionality
+        setOriginalData({
+          firstName: userData.FirstName || "",
+          lastName: userData.LastName || "",
+          faculty: userData.Faculty?.Name || "",
+          program: userData.Program?.Name || "",
+          studentID: userData.StudentID || "",
+          club: userData.ClubID ? `${userData.ClubID}` : "",
+          activityHours: userData.VerifiedHours?.length || 0,
+          email: userData.Email || "",
+        });
+
+        if (userData.ProfileImage) {
+          setAvatarUrl(userData.ProfileImage);
+          setOriginalAvatarUrl(userData.ProfileImage);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    const fetchFacultiesData = async () => {
+      try {
+        const res = await getFacultiesWithPrograms();
+        const data = res.faculties;
+        setFacultiesData(data);
+        // Extract faculty names
+        const faculties = data.map((item: any) => item.Name);
+        setFacultyOptions(faculties);
+        // Create program options mapping
+        const programMap: Record<string, string[]> = {};
+        data.forEach((item: any) => {
+          programMap[item.Name] = item.Program.map(
+            (program: any) => program.Name
+          );
+        });
+        setProgramOptions(programMap);
+      } catch (error) {
+        console.error("Error fetching faculties:", error);
+      }
+    };
+
+    fetchFacultiesData();
+  }, []);
 
   const handleEditToggle = () => {
     if (!isEditing) {
@@ -447,15 +471,62 @@ export default function Profile() {
     }
   };
 
-  const handleSave = () => {
-    // Save changes and exit edit mode
-    setOriginalData(profileData);
-    setOriginalAvatarUrl(avatarUrl);
-    setIsEditing(false);
-    setShowAvatarOptions(false);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+
+      // Find the selected faculty and program IDs
+      const selectedFaculty = facultiesData.find(
+        (f) => f.Name === profileData.faculty
+      );
+      const selectedProgram = selectedFaculty?.Program.find(
+        (p) => p.Name === profileData.program
+      );
+
+      // Prepare data for API call
+      const updateData = {
+        FirstName: profileData.firstName,
+        LastName: profileData.lastName,
+        StudentID: profileData.studentID,
+        Email: profileData.email,
+        FacultyID: selectedFaculty?.ID || undefined, // Assuming faculty has ID field
+        ProgramID: selectedProgram?.ID || undefined, // Assuming program has ID field
+        ProfileImage: typeof avatarUrl === "string" ? avatarUrl : undefined,
+      };
+
+      console.log(updateData);
+
+      // Call the update API
+      await updateUser(userId, updateData);
+
+      // Save changes and exit edit mode
+      setOriginalData(profileData);
+      setOriginalAvatarUrl(avatarUrl);
+      setIsEditing(false);
+      setShowAvatarOptions(false);
+
+      // Optional: Show success message
+      // You can add a toast notification here
+      console.log("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      // Optional: Show error message to user
+      // You can add error handling/toast here
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleInputChange = (field: any, value: string) => {
+  const handleInputChange = (
+    field: keyof typeof profileData,
+    value: string
+  ) => {
     setProfileData((prev) => {
       const newData = {
         ...prev,
@@ -481,8 +552,8 @@ export default function Profile() {
     }
   };
 
-  const handleFileSelect = (event: any) => {
-    const file = event.target.files[0];
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -497,7 +568,7 @@ export default function Profile() {
     }
   };
 
-  const handleCropComplete = (croppedImageUrl: any) => {
+  const handleCropComplete = (croppedImageUrl: string | ArrayBuffer | null) => {
     setAvatarUrl(croppedImageUrl);
     setShowCropper(false);
     setSelectedImageForCrop(null);
@@ -580,14 +651,14 @@ export default function Profile() {
           >
             {avatarUrl ? (
               <img
-                src={avatarUrl}
+                src={typeof avatarUrl === "string" ? avatarUrl : undefined}
                 alt="Profile Avatar"
                 className="w-full h-full object-cover"
               />
             ) : (
               <span className="text-2xl font-bold text-gray-600">
-                {profileData.firstName.charAt(0)}
-                {profileData.lastName.charAt(0)}
+                {profileData.firstName?.charAt(0) || ""}
+                {profileData.lastName?.charAt(0) || ""}
               </span>
             )}
             {isEditing && (
@@ -649,10 +720,13 @@ export default function Profile() {
             <>
               <button
                 onClick={handleSave}
-                className="flex items-center gap-1 px-2 py-1 text-center text-white bg-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#7d1470] transition-all duration-300 hover:scale-110"
+                disabled={isSaving}
+                className={`flex items-center gap-1 px-2 py-1 text-center text-white bg-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#7d1470] transition-all duration-300 hover:scale-110 ${
+                  isSaving ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <Edit size={16} />
-                Save
+                {isSaving ? "Saving..." : "Save"}
               </button>
               <button
                 onClick={handleCancel}
@@ -710,23 +784,23 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Phone Number */}
+            {/* Student ID */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Phone Number
+                Student ID
               </label>
               {isEditing ? (
                 <input
-                  type="tel"
-                  value={profileData.phoneNumber}
+                  type="text"
+                  value={profileData.studentID}
                   onChange={(e) =>
-                    handleInputChange("phoneNumber", e.target.value)
+                    handleInputChange("studentID", e.target.value)
                   }
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
                 />
               ) : (
                 <p className="text-gray-900 font-medium">
-                  {profileData.phoneNumber}
+                  {profileData.studentID}
                 </p>
               )}
             </div>
@@ -776,11 +850,7 @@ export default function Profile() {
                 <Combobox
                   value={profileData.program}
                   onChange={(value: any) => handleInputChange("program", value)}
-                  options={
-                    programOptions[
-                      profileData.faculty as keyof typeof programOptions
-                    ] || []
-                  }
+                  options={programOptions[profileData.faculty] || []}
                   placeholder="Select program..."
                   disabled={!profileData.faculty}
                 />
@@ -789,35 +859,6 @@ export default function Profile() {
                   {profileData.program}
                 </p>
               )}
-            </div>
-
-            {/* Student ID */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Student ID
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={profileData.studentID}
-                  onChange={(e) =>
-                    handleInputChange("studentID", e.target.value)
-                  }
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
-                />
-              ) : (
-                <p className="text-gray-900 font-medium">
-                  {profileData.studentID}
-                </p>
-              )}
-            </div>
-
-            {/* Role */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">
-                Role
-              </label>
-              <p className="text-gray-900 font-medium">{profileData.role}</p>
             </div>
 
             {/* Club */}

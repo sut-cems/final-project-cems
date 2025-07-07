@@ -3,6 +3,7 @@ import type { ActivityRegistration } from "./IActivityRegistrations";
 import type { ActivityReport } from "./IActivityReports";
 import type { ClubMember } from "./IClubMembers";
 import type { Club } from "./IClubs";
+import type { Faculty, Program } from "./IFaculty";
 import type { Notifications } from "./INotifications";
 import type { Role } from "./IRoles";
 
@@ -20,6 +21,12 @@ export interface Users {
   IsActive: boolean;
   RoleID: number;
   Role?: Role;
+  FacultyID?: number;
+  Faculty?: Faculty;
+  ProgramID?: number;
+  Program?: Program;
+  ClubID?: number;
+  ActivityHour?: number;
   CreatedClubs?: Club[];
   ClubMembers?: ClubMember[];
   Registrations?: ActivityRegistration[];
