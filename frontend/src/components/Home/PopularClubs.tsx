@@ -4,6 +4,7 @@ import { API_BASE_URL, fetchPopularClubs, fetchClubStatistics } from '../../serv
 import type { ClubStatus } from '../../interfaces/IClubStatuses';
 import type { ClubCategory } from '../../interfaces/IClubCategories';
 import type { Activity } from '../../interfaces/IActivitys';
+import { useNavigate } from 'react-router-dom';
 
 interface ClubResponse {
   id: number;
@@ -36,7 +37,7 @@ const PopularClubs: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
-
+  const navigate = useNavigate();
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -96,6 +97,12 @@ const PopularClubs: React.FC = () => {
   const clubDisplayConfig: ClubDisplay[] = clubs.map(club => ({
     club
   }));
+  function handleToClubs() {
+    navigate('/clubs');
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }
 
   // Loading state
   if (loading) {
@@ -275,7 +282,8 @@ const PopularClubs: React.FC = () => {
         </div>
 
         <div className="text-center mt-16">
-          <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-900 via-pink-600 to-orange-500 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105  transition-all duration-300 overflow-hidden">
+          <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-900 via-pink-600 to-orange-500 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105  transition-all duration-300 overflow-hidden"
+            onClick={handleToClubs}>
             <span className="relative z-10 flex items-center space-x-2">
               <span>ดูชมรมทั้งหมด</span>
               <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
