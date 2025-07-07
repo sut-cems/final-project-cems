@@ -1,19 +1,21 @@
-import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import type { Users } from '../../interfaces/IUsers';
-import { API_BASE_URL, fetchUserById } from '../../services/http';
-import LogoutConfirmationModal from '../Modal/Logout';
-import { ToastNotification } from '../Modal/DeleteButtonModal';
-import { useNavigate } from 'react-router-dom';
+import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { Users } from "../../interfaces/IUsers";
+import { API_BASE_URL, fetchUserById } from "../../services/http";
+import LogoutConfirmationModal from "../Modal/Logout";
+import { ToastNotification } from "../Modal/DeleteButtonModal";
+import { useNavigate } from "react-router-dom";
 
 // Custom Tooltip Component
-export const TooltipCustom: React.FC<{ text: string; children: React.ReactNode; position?: 'top' | 'bottom' | 'left' | 'right' }> = ({
-  text,
-  children,
-  position = 'top'
-}) => {
+export const TooltipCustom: React.FC<{
+  text: string;
+  children: React.ReactNode;
+  position?: "top" | "bottom" | "left" | "right";
+}> = ({ text, children, position = "top" }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [showDelay, setShowDelay] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [showDelay, setShowDelay] = useState<ReturnType<
+    typeof setTimeout
+  > | null>(null);
 
   const handleMouseEnter = () => {
     const delay = setTimeout(() => setIsVisible(true), 500);
@@ -30,27 +32,27 @@ export const TooltipCustom: React.FC<{ text: string; children: React.ReactNode; 
 
   const getPositionClasses = () => {
     switch (position) {
-      case 'bottom':
-        return 'top-full left-1/2 transform -translate-x-1/2 mt-2';
-      case 'left':
-        return 'right-full top-1/2 transform -translate-y-1/2 mr-2';
-      case 'right':
-        return 'left-full top-1/2 transform -translate-y-1/2 ml-2';
+      case "bottom":
+        return "top-full left-1/2 transform -translate-x-1/2 mt-2";
+      case "left":
+        return "right-full top-1/2 transform -translate-y-1/2 mr-2";
+      case "right":
+        return "left-full top-1/2 transform -translate-y-1/2 ml-2";
       default: // top
-        return 'bottom-full left-1/2 transform -translate-x-1/2 mb-2';
+        return "bottom-full left-1/2 transform -translate-x-1/2 mb-2";
     }
   };
 
   const getArrowClasses = () => {
     switch (position) {
-      case 'bottom':
-        return 'bottom-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-gray-800';
-      case 'left':
-        return 'left-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-gray-800';
-      case 'right':
-        return 'right-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-gray-800';
+      case "bottom":
+        return "bottom-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-t-transparent border-b-gray-800";
+      case "left":
+        return "left-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-r-transparent border-l-gray-800";
+      case "right":
+        return "right-full top-1/2 transform -translate-y-1/2 border-t-transparent border-b-transparent border-l-transparent border-r-gray-800";
       default: // top
-        return 'top-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-gray-800';
+        return "top-full left-1/2 transform -translate-x-1/2 border-l-transparent border-r-transparent border-b-transparent border-t-gray-800";
     }
   };
 
@@ -66,7 +68,9 @@ export const TooltipCustom: React.FC<{ text: string; children: React.ReactNode; 
           <div className="bg-gray-800 text-white text-xs px-3 py-2 rounded-lg shadow-2xl border border-gray-700 backdrop-blur-sm bg-opacity-95 whitespace-nowrap animate-in fade-in-0 zoom-in-95 duration-200">
             {text}
           </div>
-          <div className={`absolute w-0 h-0 border-4 ${getArrowClasses()}`}></div>
+          <div
+            className={`absolute w-0 h-0 border-4 ${getArrowClasses()}`}
+          ></div>
         </div>
       )}
     </div>
@@ -78,18 +82,22 @@ const TruncatedText: React.FC<{
   text: string;
   maxLength: number;
   className?: string;
-  tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
+  tooltipPosition?: "top" | "bottom" | "left" | "right";
   showTooltip?: boolean;
-}> = ({ text, maxLength, className = "", tooltipPosition = 'top', showTooltip = true }) => {
+}> = ({
+  text,
+  maxLength,
+  className = "",
+  tooltipPosition = "top",
+  showTooltip = true,
+}) => {
   const shouldTruncate = text.length > maxLength;
   const displayText = shouldTruncate ? `${text.slice(0, maxLength)}...` : text;
 
   if (shouldTruncate && showTooltip) {
     return (
       <TooltipCustom text={text} position={tooltipPosition}>
-        <span className={`cursor-default ${className}`}>
-          {displayText}
-        </span>
+        <span className={`cursor-default ${className}`}>{displayText}</span>
       </TooltipCustom>
     );
   }
@@ -109,23 +117,27 @@ const ProfileDropdown: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
-    type: 'success' | 'error' | 'info';
+    type: "success" | "error" | "info";
     title?: string;
     isVisible: boolean;
   }>({
-    message: '',
-    type: 'info',
-    isVisible: false
+    message: "",
+    type: "info",
+    isVisible: false,
   });
   const cancelLogout = () => {
     setShowLogoutModal(false);
   };
-  const showToast = (message: string, type: 'success' | 'error' | 'info', title?: string) => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info",
+    title?: string
+  ) => {
     setToast({
       message,
       type,
       title,
-      isVisible: true
+      isVisible: true,
     });
   };
 
@@ -134,52 +146,51 @@ const ProfileDropdown: React.FC = () => {
 
     try {
       // รอ 2 วินาที เพื่อแสดง loading state
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // ปิด modal
       setShowLogoutModal(false);
       setIsLoggingOut(false);
 
       // แสดง toast ขั้นตอนต่างๆ
-      showToast('กำลังออกจากระบบ...', 'info', 'ออกจากระบบ');
+      showToast("กำลังออกจากระบบ...", "info", "ออกจากระบบ");
 
       setTimeout(() => {
-        showToast('ออกจากระบบสำเร็จ!', 'success', 'สำเร็จ');
+        showToast("ออกจากระบบสำเร็จ!", "success", "สำเร็จ");
       }, 1000);
 
       setTimeout(() => {
-        showToast('กำลังเคลียร์ข้อมูล...', 'info', 'ดำเนินการ');
+        showToast("กำลังเคลียร์ข้อมูล...", "info", "ดำเนินการ");
       }, 2500);
 
       setTimeout(() => {
-        showToast('เสร็จสิ้น! ขอบคุณที่ใช้บริการ', 'success', 'เสร็จสิ้น');
+        showToast("เสร็จสิ้น! ขอบคุณที่ใช้บริการ", "success", "เสร็จสิ้น");
       }, 4000);
 
       // ออกจากระบบหลังจาก 5 วินาที
       setTimeout(() => {
         localStorage.clear();
-        navigate('/');
+        navigate("/");
         navigate(0);
       }, 5500);
-
     } catch (error) {
       setIsLoggingOut(false);
-      showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error', 'ข้อผิดพลาด');
+      showToast("เกิดข้อผิดพลาดในการออกจากระบบ", "error", "ข้อผิดพลาด");
     }
   };
   const hideToast = () => {
-    setToast(prev => ({
+    setToast((prev) => ({
       ...prev,
-      isVisible: false
+      isVisible: false,
     }));
   };
 
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const userId = localStorage.getItem('userId');
+        const userId = localStorage.getItem("userId");
         if (!userId) {
-          setError('ไม่พบ User ID');
+          setError("ไม่พบ User ID");
           setLoading(false);
           return;
         }
@@ -189,8 +200,8 @@ const ProfileDropdown: React.FC = () => {
         setError(null);
         setImageError(false);
       } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
+        console.error("Error fetching user data:", err);
+        setError("ไม่สามารถโหลดข้อมูลผู้ใช้ได้");
       } finally {
         setLoading(false);
       }
@@ -200,7 +211,10 @@ const ProfileDropdown: React.FC = () => {
   }, []);
 
   const handleClickOutside = (e: MouseEvent) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(e.target as Node)
+    ) {
       setOpen(false);
     }
   };
@@ -218,16 +232,22 @@ const ProfileDropdown: React.FC = () => {
 
   const getInitials = () => {
     if (loading || error || !user) return "U";
-    return `${user.FirstName?.charAt(0) || ''}${user.LastName?.charAt(0) || ''}`.toUpperCase();
+    return `${user.FirstName?.charAt(0) || ""}${
+      user.LastName?.charAt(0) || ""
+    }`.toUpperCase();
   };
 
   const hasValidProfileImage = () => {
-    return user?.ProfileImage && user.ProfileImage.trim() !== '' && !imageError;
+    return user?.ProfileImage && user.ProfileImage.trim() !== "" && !imageError;
   };
 
   // Function to get the correct image URL
   const getImageUrl = (profileImage: string) => {
-    if (profileImage.startsWith('http://') || profileImage.startsWith('https://')) {
+    if (
+      profileImage.startsWith("http://") ||
+      profileImage.startsWith("https://") ||
+      profileImage.startsWith("data:image/jpeg;base64")
+    ) {
       return profileImage;
     }
     return `${API_BASE_URL}${profileImage}`;
@@ -251,7 +271,9 @@ const ProfileDropdown: React.FC = () => {
     }
 
     return (
-      <div className={`${size} rounded-full bg-gradient-to-br from-[#D91656] to-[#EB5B00] flex items-center justify-center text-white font-bold shadow-md group-hover:shadow-lg transition-shadow duration-300`}>
+      <div
+        className={`${size} rounded-full bg-gradient-to-br from-[#D91656] to-[#EB5B00] flex items-center justify-center text-white font-bold shadow-md group-hover:shadow-lg transition-shadow duration-300`}
+      >
         {getInitials()}
       </div>
     );
@@ -277,7 +299,11 @@ const ProfileDropdown: React.FC = () => {
             tooltipPosition="bottom"
           />
         </div>
-        <ChevronDown className={`w-4 h-4 transform transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-4 h-4 transform transition-transform duration-300 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
       {open && (
@@ -296,7 +322,9 @@ const ProfileDropdown: React.FC = () => {
                   <div className="text-xs text-gray-500 mb-1 break-all">
                     <TooltipCustom text={user.Email} position="right">
                       <span className="cursor-default">
-                        {user.Email.length > 28 ? `${user.Email.slice(0, 28)}...` : user.Email}
+                        {user.Email.length > 28
+                          ? `${user.Email.slice(0, 28)}...`
+                          : user.Email}
                       </span>
                     </TooltipCustom>
                   </div>
@@ -335,7 +363,8 @@ const ProfileDropdown: React.FC = () => {
 
             <div className="border-t border-gray-100 pt-2">
               <button
-                onClick={() => setShowLogoutModal(true)} className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all duration-200 group"
+                onClick={() => setShowLogoutModal(true)}
+                className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-all duration-200 group"
               >
                 <div className="w-8 h-8 rounded-full bg-red-100 group-hover:bg-red-200 flex items-center justify-center mr-3 group-hover:scale-110 transition-all duration-200">
                   <LogOut className="w-4 h-4 text-red-600" />
@@ -350,7 +379,7 @@ const ProfileDropdown: React.FC = () => {
         isOpen={showLogoutModal}
         onClose={cancelLogout}
         onConfirm={confirmLogout}
-        userName={user ? `${user.FirstName} ${user.LastName}` : 'Admin User'}
+        userName={user ? `${user.FirstName} ${user.LastName}` : "Admin User"}
         user={user}
         isLoggingOut={isLoggingOut}
       />
@@ -378,23 +407,27 @@ const ProfileDropdownMobile: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
-    type: 'success' | 'error' | 'info';
+    type: "success" | "error" | "info";
     title?: string;
     isVisible: boolean;
   }>({
-    message: '',
-    type: 'info',
-    isVisible: false
+    message: "",
+    type: "info",
+    isVisible: false,
   });
   const cancelLogout = () => {
     setShowLogoutModal(false);
   };
-  const showToast = (message: string, type: 'success' | 'error' | 'info', title?: string) => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info",
+    title?: string
+  ) => {
     setToast({
       message,
       type,
       title,
-      isVisible: true
+      isVisible: true,
     });
   };
 
@@ -403,54 +436,51 @@ const ProfileDropdownMobile: React.FC = () => {
 
     try {
       // รอ 2 วินาที เพื่อแสดง loading state
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // ปิด modal
       setShowLogoutModal(false);
       setIsLoggingOut(false);
 
       // แสดง toast ขั้นตอนต่างๆ
-      showToast('กำลังออกจากระบบ...', 'info', 'ออกจากระบบ');
+      showToast("กำลังออกจากระบบ...", "info", "ออกจากระบบ");
 
       setTimeout(() => {
-        showToast('ออกจากระบบสำเร็จ!', 'success', 'สำเร็จ');
+        showToast("ออกจากระบบสำเร็จ!", "success", "สำเร็จ");
       }, 1000);
 
       setTimeout(() => {
-        showToast('กำลังเคลียร์ข้อมูล...', 'info', 'ดำเนินการ');
+        showToast("กำลังเคลียร์ข้อมูล...", "info", "ดำเนินการ");
       }, 2500);
 
       setTimeout(() => {
-        showToast('เสร็จสิ้น! ขอบคุณที่ใช้บริการ', 'success', 'เสร็จสิ้น');
+        showToast("เสร็จสิ้น! ขอบคุณที่ใช้บริการ", "success", "เสร็จสิ้น");
       }, 4000);
 
       // ออกจากระบบหลังจาก 5 วินาที
       setTimeout(() => {
         localStorage.clear();
-        navigate('/');
+        navigate("/");
         navigate(0);
       }, 5500);
-
     } catch (error) {
       setIsLoggingOut(false);
-      showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error', 'ข้อผิดพลาด');
+      showToast("เกิดข้อผิดพลาดในการออกจากระบบ", "error", "ข้อผิดพลาด");
     }
   };
   const hideToast = () => {
-    setToast(prev => ({
+    setToast((prev) => ({
       ...prev,
-      isVisible: false
+      isVisible: false,
     }));
   };
-
-
 
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const userId = localStorage.getItem('userId');
+        const userId = localStorage.getItem("userId");
         if (!userId) {
-          setError('ไม่พบ User ID');
+          setError("ไม่พบ User ID");
           setLoading(false);
           return;
         }
@@ -460,8 +490,8 @@ const ProfileDropdownMobile: React.FC = () => {
         setError(null);
         setImageError(false);
       } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
+        console.error("Error fetching user data:", err);
+        setError("ไม่สามารถโหลดข้อมูลผู้ใช้ได้");
       } finally {
         setLoading(false);
       }
@@ -478,15 +508,21 @@ const ProfileDropdownMobile: React.FC = () => {
 
   const getInitials = () => {
     if (loading || error || !user) return "U";
-    return `${user.FirstName?.charAt(0) || ''}${user.LastName?.charAt(0) || ''}`.toUpperCase();
+    return `${user.FirstName?.charAt(0) || ""}${
+      user.LastName?.charAt(0) || ""
+    }`.toUpperCase();
   };
 
   const hasValidProfileImage = () => {
-    return user?.ProfileImage && user.ProfileImage.trim() !== '' && !imageError;
+    return user?.ProfileImage && user.ProfileImage.trim() !== "" && !imageError;
   };
 
   const getImageUrl = (profileImage: string) => {
-    if (profileImage.startsWith('http://') || profileImage.startsWith('https://')) {
+    if (
+      profileImage.startsWith("http://") ||
+      profileImage.startsWith("https://") ||
+      profileImage.startsWith("data:image/jpeg;base64")
+    ) {
       return profileImage;
     }
     return `${API_BASE_URL}${profileImage}`;
@@ -509,7 +545,9 @@ const ProfileDropdownMobile: React.FC = () => {
     }
 
     return (
-      <div className={`${size} rounded-full bg-gradient-to-br from-[#D91656] to-[#EB5B00] flex items-center justify-center text-white font-bold shadow-lg`}>
+      <div
+        className={`${size} rounded-full bg-gradient-to-br from-[#D91656] to-[#EB5B00] flex items-center justify-center text-white font-bold shadow-lg`}
+      >
         {getInitials()}
       </div>
     );
@@ -540,7 +578,11 @@ const ProfileDropdownMobile: React.FC = () => {
             </TooltipCustom>
           )}
         </div>
-        <ChevronDown className={`w-5 h-5 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-5 h-5 transform transition-transform duration-300 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
       {isOpen && (
@@ -582,7 +624,7 @@ const ProfileDropdownMobile: React.FC = () => {
         isOpen={showLogoutModal}
         onClose={cancelLogout}
         onConfirm={confirmLogout}
-        userName={user ? `${user.FirstName} ${user.LastName}` : 'Admin User'}
+        userName={user ? `${user.FirstName} ${user.LastName}` : "Admin User"}
         user={user}
         isLoggingOut={isLoggingOut}
       />

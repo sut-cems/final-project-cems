@@ -115,6 +115,31 @@ export async function deleteUser(id: string): Promise<void> {
   }
 }
 
+// GET FacultiesWithPrograms
+export async function getFacultiesWithPrograms() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/facultyWithProgram`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to fetch facultyWithProgram:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 // GET /clubs/popular
 export async function fetchPopularClubs() {
   try {

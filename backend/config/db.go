@@ -33,29 +33,31 @@ func ConnectDB() {
 }
 
 func SetupDatabase() {
-    err := db.AutoMigrate(
-        &entity.User{},
+	err := db.AutoMigrate(
+		&entity.User{},
 		&entity.Notification{},
-        &entity.Role{},
-        &entity.Club{},
-        &entity.ClubStatus{},
-        &entity.ClubCategory{},
-        &entity.ClubMember{},
-        &entity.Activity{},
-        &entity.ActivityStatus{},
-        &entity.EventCategory{},
-        &entity.ActivityRegistration{},
-        &entity.ActivityRegistrationStatus{},
-        &entity.AttendanceLog{},
-        &entity.ActivityHour{},
-        &entity.ActivityReview{},
-        &entity.ActivityReport{},
-        &entity.MediaUpload{},
-        &entity.ClubAnnouncement{},
-    )
-    if err != nil {
-        log.Fatal("AutoMigrate error:", err)
-    }
+		&entity.Role{},
+		&entity.Club{},
+		&entity.ClubStatus{},
+		&entity.ClubCategory{},
+		&entity.ClubMember{},
+		&entity.Activity{},
+		&entity.ActivityStatus{},
+		&entity.EventCategory{},
+		&entity.ActivityRegistration{},
+		&entity.ActivityRegistrationStatus{},
+		&entity.AttendanceLog{},
+		&entity.ActivityHour{},
+		&entity.ActivityReview{},
+		&entity.ActivityReport{},
+		&entity.MediaUpload{},
+		&entity.ClubAnnouncement{},
+		&entity.Faculty{},
+		&entity.Program{},
+	)
+	if err != nil {
+		log.Fatal("AutoMigrate error:", err)
+	}
 
 	// Initial roles
 	roles := []entity.Role{
@@ -70,7 +72,7 @@ func SetupDatabase() {
 	// Initial club statuses
 	statuses := []entity.ClubStatus{
 		{Name: "pending", Description: "รอการอนุมัติ", IsActive: true},
-		{Name: "approved", Description: "อนุมัติแล้ว",IsActive: true},
+		{Name: "approved", Description: "อนุมัติแล้ว", IsActive: true},
 		{Name: "suspended", Description: "ถูกระงับ", IsActive: false},
 	}
 	for _, s := range statuses {
@@ -108,8 +110,8 @@ func SetupDatabase() {
 		{Name: "วัฒนธรรม", Description: "ด้านศิลปวัฒนธรรม"},
 		{Name: "ทักษะชีวิต", Description: "พัฒนาทักษะการใช้ชีวิต"},
 		{Name: "สังสรรค์", Description: "การพบปะสังสรรค์"},
-        {Name: "อาสาสมัคร", Description: "กิจกรรมอาสาสมัคร"},
-        {Name: "อื่นๆ", Description: "อื่นๆ"},
+		{Name: "อาสาสมัคร", Description: "กิจกรรมอาสาสมัคร"},
+		{Name: "อื่นๆ", Description: "อื่นๆ"},
 	}
 	for _, e := range events {
 		db.FirstOrCreate(&e, entity.EventCategory{Name: e.Name})
@@ -127,6 +129,85 @@ func SetupDatabase() {
 		db.FirstOrCreate(&c, entity.ClubCategory{Name: c.Name})
 	}
 
+	faculties := []entity.Faculty{
+		{Name: "Institute of Science"},
+		{Name: "Institute of Social Technology"},
+		{Name: "Institute of Agricultural Technology"},
+		{Name: "Institute of Engineering"},
+		{Name: "Institute of Medicine"},
+		{Name: "Institute of Nursing"},
+		{Name: "Institute of Dentistry"},
+		{Name: "Institute of Public Health"},
+		{Name: "Institute of Digital Arts and Sciences"},
+	}
+
+	for _, f := range faculties {
+		db.FirstOrCreate(&f, entity.Faculty{Name: f.Name})
+	}
+
+	programs := []entity.Program{
+		// Institute of Science
+		{Name: "Mathematics", FacultyID: 1},
+		{Name: "Chemistry", FacultyID: 1},
+		{Name: "Biology", FacultyID: 1},
+		{Name: "Physics", FacultyID: 1},
+		{Name: "Geoinformatics", FacultyID: 1},
+		{Name: "Microbiology", FacultyID: 1},
+		{Name: "Medical Science", FacultyID: 1},
+		{Name: "Sports Science", FacultyID: 1},
+		{Name: "Computer Science", FacultyID: 1},
+
+		// Institute of Social Technology
+		{Name: "Management Technology", FacultyID: 2},
+		{Name: "Innovative Technology in the Service Industry", FacultyID: 2},
+
+		// Institute of Agricultural Technology
+		{Name: "Plant production technology", FacultyID: 3},
+		{Name: "Animal Technology and Innovation", FacultyID: 3},
+		{Name: "Food Technology", FacultyID: 3},
+
+		// Institute of Engineering
+		{Name: "Automation and Robotics Manufacturing Engineering", FacultyID: 4},
+		{Name: "Agricultural and Food Engineering", FacultyID: 4},
+		{Name: "Transportation and Logistics Engineering", FacultyID: 4},
+		{Name: "Computer Engineering", FacultyID: 4},
+		{Name: "Chemical Engineering", FacultyID: 4},
+		{Name: "Mechanical Engineering", FacultyID: 4},
+		{Name: "Ceramic Engineering", FacultyID: 4},
+		{Name: "Electrical Engineering", FacultyID: 4},
+		{Name: "Telecommunications and Smart Grid Engineering", FacultyID: 4},
+		{Name: "Geoengineering", FacultyID: 4},
+		{Name: "Petroleum Engineering and Geotechnology", FacultyID: 4},
+		{Name: "Polymer Engineering", FacultyID: 4},
+		{Name: "Industrial Engineering", FacultyID: 4},
+		{Name: "Civil Engineering", FacultyID: 4},
+		{Name: "Metallurgical Engineering", FacultyID: 4},
+		{Name: "Environmental Engineering", FacultyID: 4},
+		{Name: "Electronic Engineering and Embedded Systems", FacultyID: 4},
+
+		// Institute of Medicine
+		{Name: "Doctor of Medicine Program", FacultyID: 5},
+
+		// Institute of Nursing
+		{Name: "Bachelor of Nursing Program", FacultyID: 6},
+
+		// Institute of Dentistry
+		{Name: "Bachelor of Dentistry Program", FacultyID: 7},
+
+		// Institute of Public Health
+		{Name: "Environmental Health", FacultyID: 8},
+		{Name: "Occupational Health and Safety", FacultyID: 8},
+		{Name: "Nutrition and Dietetics", FacultyID: 8},
+
+		// Institute of Digital Arts and Sciences
+		{Name: "Digital Technology", FacultyID: 9},
+		{Name: "Digital Communication Science", FacultyID: 9},
+	}
+
+	for _, p := range programs {
+		db.FirstOrCreate(&p, entity.Program{Name: p.Name, FacultyID: p.FacultyID})
+	}
+
 	setupInitialUsers()
 
 	setupSampleClubs()
@@ -137,19 +218,19 @@ func SetupDatabase() {
 
 	setupClubMembers()
 
-    setupActivityRegistrations()
+	setupActivityRegistrations()
 
-    setupAttendanceLogs()
+	setupAttendanceLogs()
 
-    setupActivityReviews()
+	setupActivityReviews()
 
-    setupNotifications()
+	setupNotifications()
 
-    setupMediaUploads()
+	setupMediaUploads()
 
-    setupClubAnnouncements()
+	setupClubAnnouncements()
 
-    setupActivityReports()
+	setupActivityReports()
 
 	fmt.Println("Database setup completed successfully")
 }
@@ -411,34 +492,34 @@ func setupSampleClubs() {
 
 	// Get admin user to set as creator
 	var adminUser entity.User
-    if err := db.Where("email = ?", "admin@sut.ac.th").First(&adminUser).Error; err != nil {
-        fmt.Println("Admin user not found, skipping sample clubs creation")
-        return
-    }
+	if err := db.Where("email = ?", "admin@sut.ac.th").First(&adminUser).Error; err != nil {
+		fmt.Println("Admin user not found, skipping sample clubs creation")
+		return
+	}
 
-    var studentFootballClub entity.User
-    if err := db.Where("email = ?", "club.admin002@sut.ac.th").First(&studentFootballClub).Error; err != nil {
-        fmt.Println("Student user not found, skipping sample clubs creation")
-        return
-    }
+	var studentFootballClub entity.User
+	if err := db.Where("email = ?", "club.admin002@sut.ac.th").First(&studentFootballClub).Error; err != nil {
+		fmt.Println("Student user not found, skipping sample clubs creation")
+		return
+	}
 
-    var studentComClub entity.User
-    if err := db.Where("email = ?", "club.admin001@sut.ac.th").First(&studentComClub).Error; err != nil {
-        fmt.Println("Student user not found, skipping sample clubs creation")
-        return
-    }
+	var studentComClub entity.User
+	if err := db.Where("email = ?", "club.admin001@sut.ac.th").First(&studentComClub).Error; err != nil {
+		fmt.Println("Student user not found, skipping sample clubs creation")
+		return
+	}
 
-    var studentMusicClub entity.User
-    if err := db.Where("email = ?", "club.admin003@sut.ac.th").First(&studentMusicClub).Error; err != nil {
-        fmt.Println("Student user not found, skipping sample clubs creation")
-        return
-    }
+	var studentMusicClub entity.User
+	if err := db.Where("email = ?", "club.admin003@sut.ac.th").First(&studentMusicClub).Error; err != nil {
+		fmt.Println("Student user not found, skipping sample clubs creation")
+		return
+	}
 
-    var studentBasketClub entity.User
-    if err := db.Where("email = ?", "club.admin004@sut.ac.th").First(&studentBasketClub).Error; err != nil {
-        fmt.Println("Student user not found, skipping sample clubs creation")
-        return
-    }
+	var studentBasketClub entity.User
+	if err := db.Where("email = ?", "club.admin004@sut.ac.th").First(&studentBasketClub).Error; err != nil {
+		fmt.Println("Student user not found, skipping sample clubs creation")
+		return
+	}
 
 	// Create sample clubs from SUT
 	sampleClubs := []entity.Club{
@@ -641,7 +722,7 @@ func setupSampleActivities() {
 	db.Where("name = ?", "กีฬา").First(&sportsCategory)
 	db.Where("name = ?", "ศิลปะ").First(&artsCategory)
 	db.Where("name = ?", "บำเพ็ญประโยชน์").First(&volunteerCategory)
-    db.Where("name = ?", "ทักษะชีวิต").First(&lifeSkillsCategory)
+	db.Where("name = ?", "ทักษะชีวิต").First(&lifeSkillsCategory)
 	db.Where("name = ?", "สังสรรค์").First(&socializeCategory)
 
 	// Get sample clubs
@@ -661,7 +742,7 @@ func setupSampleActivities() {
 
 	sampleActivities := []entity.Activity{
 		// ========== กิจกรรมที่เสร็จสิ้นแล้ว (สำหรับ activity hours) ==========
-		
+
 		// กิจกรรมวิชาการ
 		{
 			Title:       "Workshop การเขียนโปรแกรม Python เบื้องต้น",
@@ -851,7 +932,7 @@ func setupSampleActivities() {
 		},
 
 		// ========== กิจกรรมที่กำลังจะมาถึง ==========
-		
+
 		// กิจกรรมวิชาการ
 		{
 			Title:       "Workshop AI และ Machine Learning",
@@ -1062,7 +1143,7 @@ func setupSampleActivities() {
 			fmt.Printf("Skipping activity '%s' - club not found\n", activity.Title)
 		}
 	}
-	
+
 	fmt.Println("Sample activities setup completed")
 }
 
@@ -1075,90 +1156,90 @@ func getClubID(clubMap map[string]entity.Club, clubName string) uint {
 }
 
 func setupSampleActivityHours() {
-    // ดึงผู้ใช้ role student
-    var students []entity.User
-    db.Joins("JOIN roles ON users.role_id = roles.id").
-        Where("roles.role_name = ?", "student").
-        Find(&students)
+	// ดึงผู้ใช้ role student
+	var students []entity.User
+	db.Joins("JOIN roles ON users.role_id = roles.id").
+		Where("roles.role_name = ?", "student").
+		Find(&students)
 
-    // ดึง ALL activities (ไม่จำกัดเฉพาะ finished เพราะอาจจะยังไม่มี)
-    var activities []entity.Activity
-    db.Find(&activities)
+	// ดึง ALL activities (ไม่จำกัดเฉพาะ finished เพราะอาจจะยังไม่มี)
+	var activities []entity.Activity
+	db.Find(&activities)
 
-    // ดึงผู้ตรวจสอบ (admin)
-    var admin entity.User
-    db.Joins("JOIN roles ON users.role_id = roles.id").
-        Where("roles.role_name = ?", "admin").
-        First(&admin)
+	// ดึงผู้ตรวจสอบ (admin)
+	var admin entity.User
+	db.Joins("JOIN roles ON users.role_id = roles.id").
+		Where("roles.role_name = ?", "admin").
+		First(&admin)
 
-    // ตรวจสอบว่าข้อมูลพร้อม
-    if len(students) == 0 {
-        fmt.Println("No students found for activity hours setup")
-        return
-    }
-    
-    if len(activities) == 0 {
-        fmt.Println("No activities found for activity hours setup") 
-        return
-    }
-    
-    if admin.ID == 0 {
-        fmt.Println("No admin found for activity hours setup")
-        return
-    }
+	// ตรวจสอบว่าข้อมูลพร้อม
+	if len(students) == 0 {
+		fmt.Println("No students found for activity hours setup")
+		return
+	}
 
-    fmt.Printf("Found %d students, %d activities, admin ID: %d\n", 
-        len(students), len(activities), admin.ID)
+	if len(activities) == 0 {
+		fmt.Println("No activities found for activity hours setup")
+		return
+	}
 
-    // สร้างข้อมูล activity hours
-    var activityID2 uint
-    if len(activities) > 1 {
-        activityID2 = activities[1].ID
-    } else {
-        activityID2 = activities[0].ID
-    }
+	if admin.ID == 0 {
+		fmt.Println("No admin found for activity hours setup")
+		return
+	}
 
-    sampleHours := []entity.ActivityHour{
-        {
-            UserID:     students[0].ID,
-            ActivityID: activities[0].ID,
-            Hours:      3.0,
-            VerifiedBy: admin.ID,
-        },
-    }
-    
-    // เพิ่ม record ที่ 2 ถ้ามี student และ activity เพียงพอ
-    if len(students) > 1 {
-        sampleHours = append(sampleHours, entity.ActivityHour{
-            UserID:     students[1].ID,
-            ActivityID: activityID2,
-            Hours:      2.5,
-            VerifiedBy: admin.ID,
-        })
-    }
+	fmt.Printf("Found %d students, %d activities, admin ID: %d\n",
+		len(students), len(activities), admin.ID)
 
-    // สร้างข้อมูลใน database
-    for i, hour := range sampleHours {
-        var existing entity.ActivityHour
-        result := db.Where("user_id = ? AND activity_id = ?",
-            hour.UserID, hour.ActivityID).
-            First(&existing)
+	// สร้างข้อมูล activity hours
+	var activityID2 uint
+	if len(activities) > 1 {
+		activityID2 = activities[1].ID
+	} else {
+		activityID2 = activities[0].ID
+	}
 
-        if result.Error != nil {
-            err := db.Create(&hour).Error
-            if err != nil {
-                fmt.Printf("Error creating activity hour %d: %v\n", i+1, err)
-            } else {
-                fmt.Printf("Successfully created activity hour for user %d, activity %d\n", 
-                    hour.UserID, hour.ActivityID)
-            }
-        } else {
-            fmt.Printf("Activity hour already exists for user %d, activity %d\n", 
-                hour.UserID, hour.ActivityID)
-        }
-    }
+	sampleHours := []entity.ActivityHour{
+		{
+			UserID:     students[0].ID,
+			ActivityID: activities[0].ID,
+			Hours:      3.0,
+			VerifiedBy: admin.ID,
+		},
+	}
 
-    fmt.Println("Sample activity hours setup completed")
+	// เพิ่ม record ที่ 2 ถ้ามี student และ activity เพียงพอ
+	if len(students) > 1 {
+		sampleHours = append(sampleHours, entity.ActivityHour{
+			UserID:     students[1].ID,
+			ActivityID: activityID2,
+			Hours:      2.5,
+			VerifiedBy: admin.ID,
+		})
+	}
+
+	// สร้างข้อมูลใน database
+	for i, hour := range sampleHours {
+		var existing entity.ActivityHour
+		result := db.Where("user_id = ? AND activity_id = ?",
+			hour.UserID, hour.ActivityID).
+			First(&existing)
+
+		if result.Error != nil {
+			err := db.Create(&hour).Error
+			if err != nil {
+				fmt.Printf("Error creating activity hour %d: %v\n", i+1, err)
+			} else {
+				fmt.Printf("Successfully created activity hour for user %d, activity %d\n",
+					hour.UserID, hour.ActivityID)
+			}
+		} else {
+			fmt.Printf("Activity hour already exists for user %d, activity %d\n",
+				hour.UserID, hour.ActivityID)
+		}
+	}
+
+	fmt.Println("Sample activity hours setup completed")
 }
 
 
@@ -1168,12 +1249,12 @@ func setupClubMembers() {
 	db.Joins("JOIN roles ON users.role_id = roles.id").
 		Where("roles.role_name = ?", "student").
 		Find(&students)
-		
+
 	var clubAdmins []entity.User
 	db.Joins("JOIN roles ON users.role_id = roles.id").
 		Where("roles.role_name = ?", "club_admin").
 		Find(&clubAdmins)
-		
+
 	var clubs []entity.Club
 	db.Find(&clubs)
 
@@ -1303,112 +1384,112 @@ func setupClubMembers() {
 
 // Setup การลงทะเบียนกิจกรรม
 func setupActivityRegistrations() {
-    var students []entity.User
-    db.Joins("JOIN roles ON users.role_id = roles.id").
-        Where("roles.role_name = ?", "student").
-        Find(&students)
+	var students []entity.User
+	db.Joins("JOIN roles ON users.role_id = roles.id").
+		Where("roles.role_name = ?", "student").
+		Find(&students)
 
-    var activities []entity.Activity
-    db.Find(&activities)
+	var activities []entity.Activity
+	db.Find(&activities)
 
-    var regStatuses []entity.ActivityRegistrationStatus
-    db.Find(&regStatuses)
+	var regStatuses []entity.ActivityRegistrationStatus
+	db.Find(&regStatuses)
 
-    if len(students) > 0 && len(activities) > 0 && len(regStatuses) > 0 {
-        var registeredStatus, attendedStatus, absentStatus entity.ActivityRegistrationStatus
-        db.Where("name = ?", "registered").First(&registeredStatus)
-        db.Where("name = ?", "attended").First(&attendedStatus)
-        db.Where("name = ?", "absent").First(&absentStatus)
+	if len(students) > 0 && len(activities) > 0 && len(regStatuses) > 0 {
+		var registeredStatus, attendedStatus, absentStatus entity.ActivityRegistrationStatus
+		db.Where("name = ?", "registered").First(&registeredStatus)
+		db.Where("name = ?", "attended").First(&attendedStatus)
+		db.Where("name = ?", "absent").First(&absentStatus)
 
-        sampleRegistrations := []entity.ActivityRegistration{
-            {
-                ActivityID:   activities[0].ID,
-                UserID:       students[0].ID,
-                StatusID:     attendedStatus.ID,
-                RegisteredAt: time.Now().AddDate(0, -1, -5),
-            },
-            {
-                ActivityID:   activities[0].ID,
-                UserID:       students[1].ID,
-                StatusID:     attendedStatus.ID,
-                RegisteredAt: time.Now().AddDate(0, -1, -3),
-            },
-            {
-                ActivityID:   activities[0].ID,
-                UserID:       students[2].ID,
-                StatusID:     absentStatus.ID,
-                RegisteredAt: time.Now().AddDate(0, -1, -2),
-            },
-        }
+		sampleRegistrations := []entity.ActivityRegistration{
+			{
+				ActivityID:   activities[0].ID,
+				UserID:       students[0].ID,
+				StatusID:     attendedStatus.ID,
+				RegisteredAt: time.Now().AddDate(0, -1, -5),
+			},
+			{
+				ActivityID:   activities[0].ID,
+				UserID:       students[1].ID,
+				StatusID:     attendedStatus.ID,
+				RegisteredAt: time.Now().AddDate(0, -1, -3),
+			},
+			{
+				ActivityID:   activities[0].ID,
+				UserID:       students[2].ID,
+				StatusID:     absentStatus.ID,
+				RegisteredAt: time.Now().AddDate(0, -1, -2),
+			},
+		}
 
-        if len(activities) > 1 {
-            futureRegistrations := []entity.ActivityRegistration{
-                {
-                    ActivityID:   activities[26].ID,
-                    UserID:       students[0].ID,
-                    StatusID:     registeredStatus.ID,
-                    RegisteredAt: time.Now().AddDate(0, 0, -2),
-                },
-                {
-                    ActivityID:   activities[26].ID,
-                    UserID:       students[1].ID,
-                    StatusID:     registeredStatus.ID,
-                    RegisteredAt: time.Now().AddDate(0, 0, -1),
-                },
-            }
-            sampleRegistrations = append(sampleRegistrations, futureRegistrations...)
-        }
+		if len(activities) > 1 {
+			futureRegistrations := []entity.ActivityRegistration{
+				{
+					ActivityID:   activities[26].ID,
+					UserID:       students[0].ID,
+					StatusID:     registeredStatus.ID,
+					RegisteredAt: time.Now().AddDate(0, 0, -2),
+				},
+				{
+					ActivityID:   activities[26].ID,
+					UserID:       students[1].ID,
+					StatusID:     registeredStatus.ID,
+					RegisteredAt: time.Now().AddDate(0, 0, -1),
+				},
+			}
+			sampleRegistrations = append(sampleRegistrations, futureRegistrations...)
+		}
 
-        for _, registration := range sampleRegistrations {
-            var existing entity.ActivityRegistration
-            result := db.Where("activity_id = ? AND user_id = ?", 
-                registration.ActivityID, registration.UserID).First(&existing)
-            if result.Error != nil {
-                db.Create(&registration)
-            }
-        }
-    }
+		for _, registration := range sampleRegistrations {
+			var existing entity.ActivityRegistration
+			result := db.Where("activity_id = ? AND user_id = ?",
+				registration.ActivityID, registration.UserID).First(&existing)
+			if result.Error != nil {
+				db.Create(&registration)
+			}
+		}
+	}
 
-    fmt.Println("Activity registrations setup completed")
+	fmt.Println("Activity registrations setup completed")
 }
 
 // Setup บันทึกการเช็คชื่อ
 func setupAttendanceLogs() {
-    var attendedRegistrations []entity.ActivityRegistration
-    db.Joins("JOIN activity_registration_statuses ON activity_registrations.status_id = activity_registration_statuses.id").
-        Where("activity_registration_statuses.name = ?", "attended").
-        Find(&attendedRegistrations)
+	var attendedRegistrations []entity.ActivityRegistration
+	db.Joins("JOIN activity_registration_statuses ON activity_registrations.status_id = activity_registration_statuses.id").
+		Where("activity_registration_statuses.name = ?", "attended").
+		Find(&attendedRegistrations)
 
-    if len(attendedRegistrations) > 0 {
-        sampleLogs := []entity.AttendanceLog{
-            {
-                RegistrationID: attendedRegistrations[0].ID,
-                CheckinTime:    time.Now().AddDate(0, -1, 0).Add(9 * time.Hour),
-                CheckoutTime:   time.Now().AddDate(0, -1, 0).Add(12 * time.Hour),
-            },
-        }
+	if len(attendedRegistrations) > 0 {
+		sampleLogs := []entity.AttendanceLog{
+			{
+				RegistrationID: attendedRegistrations[0].ID,
+				CheckinTime:    time.Now().AddDate(0, -1, 0).Add(9 * time.Hour),
+				CheckoutTime:   time.Now().AddDate(0, -1, 0).Add(12 * time.Hour),
+			},
+		}
 
-        if len(attendedRegistrations) > 1 {
-            moreLogs := []entity.AttendanceLog{
-                {
-                    RegistrationID: attendedRegistrations[1].ID,
-                    CheckinTime:    time.Now().AddDate(0, -1, 0).Add(9 * time.Hour + 15*time.Minute),
-                    CheckoutTime:   time.Now().AddDate(0, -1, 0).Add(12 * time.Hour + 30*time.Minute),
-                },
-            }
-            sampleLogs = append(sampleLogs, moreLogs...)
-        }
+		if len(attendedRegistrations) > 1 {
+			moreLogs := []entity.AttendanceLog{
+				{
+					RegistrationID: attendedRegistrations[1].ID,
+					CheckinTime:    time.Now().AddDate(0, -1, 0).Add(9*time.Hour + 15*time.Minute),
+					CheckoutTime:   time.Now().AddDate(0, -1, 0).Add(12*time.Hour + 30*time.Minute),
+				},
+			}
+			sampleLogs = append(sampleLogs, moreLogs...)
+		}
 
-        for _, log := range sampleLogs {
-            var existing entity.AttendanceLog
-            result := db.Where("registration_id = ?", log.RegistrationID).First(&existing)
-            if result.Error != nil {
-                db.Create(&log)
-            }
-        }
-    }
+		for _, log := range sampleLogs {
+			var existing entity.AttendanceLog
+			result := db.Where("registration_id = ?", log.RegistrationID).First(&existing)
+			if result.Error != nil {
+				db.Create(&log)
+			}
+		}
+	}
 
-    fmt.Println("Attendance logs setup completed")
+	fmt.Println("Attendance logs setup completed")
 }
 
 // Setup รีวิวกิจกรรม
@@ -1531,27 +1612,27 @@ func setupActivityReviews() {
 	for _, registration := range attendedRegistrations {
 		// Check if review already exists
 		var existing entity.ActivityReview
-		result := db.Where("activity_id = ? AND user_id = ?", 
+		result := db.Where("activity_id = ? AND user_id = ?",
 			registration.ActivityID, registration.UserID).First(&existing)
-		
+
 		if result.Error != nil { // Review doesn't exist, create new one
 			if reviewIndex < len(sampleReviews) {
 				review := sampleReviews[reviewIndex]
 				review.ActivityID = registration.ActivityID
 				review.UserID = registration.UserID
-				
+
 				// Set random created date within the last 30 days after activity ended
 				daysAgo := rand.Intn(30) + 1
 				review.CreatedAt = time.Now().AddDate(0, 0, -daysAgo)
-				
+
 				err := db.Create(&review).Error
 				if err != nil {
-					fmt.Printf("Error creating review for Activity ID %d, User ID %d: %v\n", 
+					fmt.Printf("Error creating review for Activity ID %d, User ID %d: %v\n",
 						registration.ActivityID, registration.UserID, err)
 				} else {
 					createdCount++
 				}
-				
+
 				reviewIndex++
 				// Reset index if we've used all sample reviews
 				if reviewIndex >= len(sampleReviews) {
@@ -1563,7 +1644,7 @@ func setupActivityReviews() {
 		}
 	}
 
-	fmt.Printf("Activity reviews setup completed: %d created, %d skipped (already exists)\n", 
+	fmt.Printf("Activity reviews setup completed: %d created, %d skipped (already exists)\n",
 		createdCount, skippedCount)
 }
 
@@ -1657,11 +1738,11 @@ func setupNotifications() {
 	for _, student := range students {
 		// สุ่มจำนวน notification สำหรับแต่ละคน (2-4 รายการ)
 		numNotifs := rand.Intn(3) + 2
-		
+
 		for j := 0; j < numNotifs; j++ {
 			msgTemplate := studentMessages[rand.Intn(len(studentMessages))]
 			activityIndex := rand.Intn(len(activities))
-			
+
 			var message string
 			switch msgTemplate.msgType {
 			case "registration", "reminder", "attendance_reminder":
@@ -1686,11 +1767,11 @@ func setupNotifications() {
 	for _, admin := range clubAdmins {
 		// สุ่มจำนวน notification สำหรับแต่ละคน (3-5 รายการ)
 		numNotifs := rand.Intn(3) + 3
-		
+
 		for j := 0; j < numNotifs; j++ {
 			msgTemplate := clubAdminMessages[rand.Intn(len(clubAdminMessages))]
 			activityIndex := rand.Intn(len(activities))
-			
+
 			var message string
 			switch msgTemplate.msgType {
 			case "approval_request", "registration_update", "cancellation_notice":
@@ -1715,10 +1796,10 @@ func setupNotifications() {
 	for _, admin := range adminUsers {
 		// สุ่มจำนวน notification สำหรับแต่ละคน (4-6 รายการ)
 		numNotifs := rand.Intn(3) + 4
-		
+
 		for j := 0; j < numNotifs; j++ {
 			msgTemplate := adminMessages[rand.Intn(len(adminMessages))]
-			
+
 			notifications = append(notifications, entity.Notification{
 				UserID:    admin.ID,
 				Message:   msgTemplate.message,
@@ -1732,7 +1813,7 @@ func setupNotifications() {
 	// --- สร้าง Notification พิเศษสำหรับ Martin (B6525279) ---
 	var martinUser entity.User
 	db.Where("student_id = ?", "B6525279").First(&martinUser)
-	
+
 	if martinUser.ID != 0 {
 		specialNotifications := []entity.Notification{
 			{
@@ -1757,7 +1838,7 @@ func setupNotifications() {
 				CreatedAt: time.Now().Add(-12 * time.Hour),
 			},
 		}
-		
+
 		notifications = append(notifications, specialNotifications...)
 	}
 
@@ -1774,128 +1855,127 @@ func setupNotifications() {
 	fmt.Printf("Total notifications created: %d\n", len(notifications))
 }
 
-
 // Setup การอัปโหลดสื่อ
 func setupMediaUploads() {
-    var activities []entity.Activity
-    db.Find(&activities)
+	var activities []entity.Activity
+	db.Find(&activities)
 
-    if len(activities) > 0 {
-        sampleUploads := []entity.MediaUpload{
-            {
-                ActivityID: activities[0].ID,
-                MediaType:  "image",
-                URL:        "/uploads/activities/workshop_photo_1.jpg",
-                UploadedAt: time.Now().AddDate(0, 0, -1),
-            },
-            {
-                ActivityID: activities[0].ID,
-                MediaType:  "image",
-                URL:        "/uploads/activities/workshop_photo_2.jpg",
-                UploadedAt: time.Now().AddDate(0, 0, -1),
-            },
-            {
-                ActivityID: activities[0].ID,
-                MediaType:  "video",
-                URL:        "/uploads/activities/workshop_video.mp4",
-                UploadedAt: time.Now().AddDate(0, 0, -1),
-            },
-        }
+	if len(activities) > 0 {
+		sampleUploads := []entity.MediaUpload{
+			{
+				ActivityID: activities[0].ID,
+				MediaType:  "image",
+				URL:        "/uploads/activities/workshop_photo_1.jpg",
+				UploadedAt: time.Now().AddDate(0, 0, -1),
+			},
+			{
+				ActivityID: activities[0].ID,
+				MediaType:  "image",
+				URL:        "/uploads/activities/workshop_photo_2.jpg",
+				UploadedAt: time.Now().AddDate(0, 0, -1),
+			},
+			{
+				ActivityID: activities[0].ID,
+				MediaType:  "video",
+				URL:        "/uploads/activities/workshop_video.mp4",
+				UploadedAt: time.Now().AddDate(0, 0, -1),
+			},
+		}
 
-        if len(activities) > 1 {
-            moreUploads := []entity.MediaUpload{
-                {
-                    ActivityID: activities[1].ID,
-                    MediaType:  "image",
-                    URL:        "/uploads/activities/football_match_1.jpg",
-                    UploadedAt: time.Now().AddDate(0, 0, -2),
-                },
-                {
-                    ActivityID: activities[1].ID,
-                    MediaType:  "image",
-                    URL:        "/uploads/activities/football_match_2.jpg",
-                    UploadedAt: time.Now().AddDate(0, 0, -2),
-                },
-            }
-            sampleUploads = append(sampleUploads, moreUploads...)
-        }
+		if len(activities) > 1 {
+			moreUploads := []entity.MediaUpload{
+				{
+					ActivityID: activities[1].ID,
+					MediaType:  "image",
+					URL:        "/uploads/activities/football_match_1.jpg",
+					UploadedAt: time.Now().AddDate(0, 0, -2),
+				},
+				{
+					ActivityID: activities[1].ID,
+					MediaType:  "image",
+					URL:        "/uploads/activities/football_match_2.jpg",
+					UploadedAt: time.Now().AddDate(0, 0, -2),
+				},
+			}
+			sampleUploads = append(sampleUploads, moreUploads...)
+		}
 
-        for _, upload := range sampleUploads {
-            var existing entity.MediaUpload
-            result := db.Where("activity_id = ? AND url = ?", 
-                upload.ActivityID, upload.URL).First(&existing)
-            if result.Error != nil {
-                db.Create(&upload)
-            }
-        }
-    }
+		for _, upload := range sampleUploads {
+			var existing entity.MediaUpload
+			result := db.Where("activity_id = ? AND url = ?",
+				upload.ActivityID, upload.URL).First(&existing)
+			if result.Error != nil {
+				db.Create(&upload)
+			}
+		}
+	}
 
-    fmt.Println("Media uploads setup completed")
+	fmt.Println("Media uploads setup completed")
 }
 
 // Setup ประกาศของชมรม
 func setupClubAnnouncements() {
-    var clubs []entity.Club
-    db.Where("status_id IN (SELECT id FROM club_statuses WHERE name = 'approved')").
-        Find(&clubs)
+	var clubs []entity.Club
+	db.Where("status_id IN (SELECT id FROM club_statuses WHERE name = 'approved')").
+		Find(&clubs)
 
-    if len(clubs) > 0 {
-        sampleAnnouncements := []entity.ClubAnnouncement{
-            {
-                ClubID:    clubs[0].ID, // ชมรมฟุตบอล
-                Title:     "เปิดรับสมัครสมาชิกใหม่",
-                Content:   "ชมรมฟุตบอลเปิดรับสมัครสมาชิกใหม่ สำหรับนักศึกษาที่สนใจเล่นฟุตบอล มีการฝึกซ้อมทุกวันอังคาร-พฤหัสบดี เวลา 16:00-18:00 น. ติดต่อสอบถามได้ที่ประธานชมรม",
-                CreatedAt: time.Now().AddDate(0, 0, -5),
-            },
-            {
-                ClubID:    clubs[0].ID, // ชมรมฟุตบอล
-                Title:     "การแข่งขันฟุตบอลระหว่างคณะ",
-                Content:   "ขอเชิญชวนนักศึกษาทุกคนมาเชียร์การแข่งขันฟุตบอลระหว่างคณะ วันที่ 15-17 มีนาคม 2567 ณ สนามกีฬามหาวิทยาลัย",
-                CreatedAt: time.Now().AddDate(0, 0, -10),
-            },
-        }
+	if len(clubs) > 0 {
+		sampleAnnouncements := []entity.ClubAnnouncement{
+			{
+				ClubID:    clubs[0].ID, // ชมรมฟุตบอล
+				Title:     "เปิดรับสมัครสมาชิกใหม่",
+				Content:   "ชมรมฟุตบอลเปิดรับสมัครสมาชิกใหม่ สำหรับนักศึกษาที่สนใจเล่นฟุตบอล มีการฝึกซ้อมทุกวันอังคาร-พฤหัสบดี เวลา 16:00-18:00 น. ติดต่อสอบถามได้ที่ประธานชมรม",
+				CreatedAt: time.Now().AddDate(0, 0, -5),
+			},
+			{
+				ClubID:    clubs[0].ID, // ชมรมฟุตบอล
+				Title:     "การแข่งขันฟุตบอลระหว่างคณะ",
+				Content:   "ขอเชิญชวนนักศึกษาทุกคนมาเชียร์การแข่งขันฟุตบอลระหว่างคณะ วันที่ 15-17 มีนาคม 2567 ณ สนามกีฬามหาวิทยาลัย",
+				CreatedAt: time.Now().AddDate(0, 0, -10),
+			},
+		}
 
-        if len(clubs) > 5 { // ชมรมคอมพิวเตอร์
-            techAnnouncements := []entity.ClubAnnouncement{
-                {
-                    ClubID:    clubs[5].ID, // ชมรมคอมพิวเตอร์
-                    Title:     "Workshop การเขียนโปรแกรม Python",
-                    Content:   "ชมรมคอมพิวเตอร์จัดอบรม Python Programming เบื้องต้น วันที่ 20 มีนาคม 2567 เวลา 13:00-16:00 น. ห้อง Lab คอมพิวเตอร์ อาคาร 40 ชั้น 3 ฟรี! สำหรับสมาชิก 50 บาท สำหรับบุคคลทั่วไป",
-                    CreatedAt: time.Now().AddDate(0, 0, -3),
-                },
-                {
-                    ClubID:    clubs[5].ID, // ชมรมคอมพิวเตอร์
-                    Title:     "ประชุมสมาชิกประจำเดือน",
-                    Content:   "เชิญสมาชิกทุกคนเข้าร่วมประชุมประจำเดือน วันที่ 25 มีนาคม 2567 เวลา 18:00 น. ห้องประชุม 401 อาคาร 40 เพื่อวางแผนกิจกรรมในเดือนหน้า",
-                    CreatedAt: time.Now().AddDate(0, 0, -1),
-                },
-            }
-            sampleAnnouncements = append(sampleAnnouncements, techAnnouncements...)
-        }
+		if len(clubs) > 5 { // ชมรมคอมพิวเตอร์
+			techAnnouncements := []entity.ClubAnnouncement{
+				{
+					ClubID:    clubs[5].ID, // ชมรมคอมพิวเตอร์
+					Title:     "Workshop การเขียนโปรแกรม Python",
+					Content:   "ชมรมคอมพิวเตอร์จัดอบรม Python Programming เบื้องต้น วันที่ 20 มีนาคม 2567 เวลา 13:00-16:00 น. ห้อง Lab คอมพิวเตอร์ อาคาร 40 ชั้น 3 ฟรี! สำหรับสมาชิก 50 บาท สำหรับบุคคลทั่วไป",
+					CreatedAt: time.Now().AddDate(0, 0, -3),
+				},
+				{
+					ClubID:    clubs[5].ID, // ชมรมคอมพิวเตอร์
+					Title:     "ประชุมสมาชิกประจำเดือน",
+					Content:   "เชิญสมาชิกทุกคนเข้าร่วมประชุมประจำเดือน วันที่ 25 มีนาคม 2567 เวลา 18:00 น. ห้องประชุม 401 อาคาร 40 เพื่อวางแผนกิจกรรมในเดือนหน้า",
+					CreatedAt: time.Now().AddDate(0, 0, -1),
+				},
+			}
+			sampleAnnouncements = append(sampleAnnouncements, techAnnouncements...)
+		}
 
-        if len(clubs) > 10 { // ชมรมดนตรีสากล
-            musicAnnouncements := []entity.ClubAnnouncement{
-                {
-                    ClubID:    clubs[10].ID, // ชมรมดนตรีสากล
-                    Title:     "คอนเสิร์ตประจำปี 2567",
-                    Content:   "ขอเชิญชมการแสดงคอนเสิร์ตประจำปีของชมรมดนตรีสากล วันที่ 30 มีนาคม 2567 เวลา 19:00 น. ณ หอประชุมใหญ่ มทส. เข้าชมฟรี!",
-                    CreatedAt: time.Now().AddDate(0, 0, -7),
-                },
-            }
-            sampleAnnouncements = append(sampleAnnouncements, musicAnnouncements...)
-        }
+		if len(clubs) > 10 { // ชมรมดนตรีสากล
+			musicAnnouncements := []entity.ClubAnnouncement{
+				{
+					ClubID:    clubs[10].ID, // ชมรมดนตรีสากล
+					Title:     "คอนเสิร์ตประจำปี 2567",
+					Content:   "ขอเชิญชมการแสดงคอนเสิร์ตประจำปีของชมรมดนตรีสากล วันที่ 30 มีนาคม 2567 เวลา 19:00 น. ณ หอประชุมใหญ่ มทส. เข้าชมฟรี!",
+					CreatedAt: time.Now().AddDate(0, 0, -7),
+				},
+			}
+			sampleAnnouncements = append(sampleAnnouncements, musicAnnouncements...)
+		}
 
-        for _, announcement := range sampleAnnouncements {
-            var existing entity.ClubAnnouncement
-            result := db.Where("club_id = ? AND title = ?", 
-                announcement.ClubID, announcement.Title).First(&existing)
-            if result.Error != nil {
-                db.Create(&announcement)
-            }
-        }
-    }
+		for _, announcement := range sampleAnnouncements {
+			var existing entity.ClubAnnouncement
+			result := db.Where("club_id = ? AND title = ?",
+				announcement.ClubID, announcement.Title).First(&existing)
+			if result.Error != nil {
+				db.Create(&announcement)
+			}
+		}
+	}
 
-    fmt.Println("Club announcements setup completed")
+	fmt.Println("Club announcements setup completed")
 }
 
 

@@ -3,25 +3,24 @@ package main
 import (
 	"final-project/cems/config"
 	"final-project/cems/controllers"
-	
+
+	"log"
 	"net/http"
 	"net/url"
-	"log"
 	"strings"
 
+	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"fmt"
 	"os"
-
 )
 
 func main() {
 	err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	// ตั้งค่า Google OAuth
 	controllers.SetupGoogleOAuthConfig()
@@ -44,7 +43,6 @@ func main() {
 
 	r.GET("/auth/google", controllers.GoogleLogin)
 	r.GET("/auth/google/callback", controllers.GoogleCallback)
-
 
 	r.Use(func(c *gin.Context) {
 		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -70,10 +68,10 @@ func main() {
 		// ตั้งค่า CORS
 		router.Use(cors.New(cors.Config{
 			AllowOrigins:     []string{"http://localhost:5173"},
-			AllowMethods: []string{"POST", "GET", "OPTIONS", "PATCH", "PUT"},
-			AllowHeaders: []string{"Content-Type", "Authorization", "X-Authorization"},
-    		ExposeHeaders:    []string{"Content-Length", "X-Authorization"},
-    		AllowCredentials: true,
+			AllowMethods:     []string{"POST", "GET", "OPTIONS", "PATCH", "PUT"},
+			AllowHeaders:     []string{"Content-Type", "Authorization", "X-Authorization"},
+			ExposeHeaders:    []string{"Content-Length", "X-Authorization"},
+			AllowCredentials: true,
 		}))
 
 		// Routes for Users
@@ -86,6 +84,8 @@ func main() {
 		// Routes for Roles
 		router.GET("/roles", controllers.GetRoles)
 		router.POST("/roles", controllers.CreateRole)
+
+		router.GET("/facultyWithProgram", controllers.GetAllFacultiesWithPrograms)
 
 		// Routes for Clubs
 		router.GET("/clubs/popular", clubHandler.GetPopularClubs)
@@ -133,32 +133,32 @@ func main() {
 	})
 
 	// อ่านค่า API_BASE_URL
-    apiBaseUrl := os.Getenv("API_BASE_URL")
-    if apiBaseUrl == "" {
-        log.Fatal("API_BASE_URL is not set")
-    }
+	apiBaseUrl := os.Getenv("API_BASE_URL")
+	if apiBaseUrl == "" {
+		log.Fatal("API_BASE_URL is not set")
+	}
 
-    // แยกพอร์ตจาก URL
-    parsedUrl, err := url.Parse(apiBaseUrl)
-    if err != nil {
-        log.Fatalf("Invalid API_BASE_URL: %v", err)
-    }
+	// แยกพอร์ตจาก URL
+	parsedUrl, err := url.Parse(apiBaseUrl)
+	if err != nil {
+		log.Fatalf("Invalid API_BASE_URL: %v", err)
+	}
 
-    hostPort := parsedUrl.Host 
-    
-    // แยกพอร์ต
-    parts := strings.Split(hostPort, ":")
-    port := ""
-    if len(parts) == 2 {
-        port = parts[1]
-    } else {
-        log.Fatal("API_BASE_URL does not contain port")
-    }
+	hostPort := parsedUrl.Host
+
+	// แยกพอร์ต
+	parts := strings.Split(hostPort, ":")
+	port := ""
+	if len(parts) == 2 {
+		port = parts[1]
+	} else {
+		log.Fatal("API_BASE_URL does not contain port")
+	}
 
 	// รัน server โดยใช้ port จาก .env
-    addr := "localhost:" + port
-    fmt.Println("Starting server on", addr)
-    r.Run(addr)
+	addr := "localhost:" + port
+	fmt.Println("Starting server on", addr)
+	r.Run(addr)
 
 }
 
