@@ -59,7 +59,10 @@ func main() {
 	activityHandler := controllers.NewActivityHandler(db)
 
 	notificationHandler := controllers.NewNotificationHandler(db)
-
+	
+	reportHandler := &controllers.ReportHandler{
+		DB: db,
+	}
 	router := r.Group("/")
 	{
 		// ตั้งค่า CORS
@@ -113,6 +116,16 @@ func main() {
 		router.PUT("/notifications/read-all/:userId", notificationHandler.MarkAllAsRead)
 		router.GET("/notifications/:userId/stream", notificationHandler.StreamNotifications)
 
+		// Routes for Reports
+		router.GET("/dashboard/stats", reportHandler.GetDashboardStats)
+		router.GET("/charts/participation", reportHandler.GetParticipationChart)
+		router.GET("/charts/activity-hours", reportHandler.GetActivityHoursChart)
+
+		router.GET("/reports", reportHandler.GetReportList)
+		router.POST("/generate-report", reportHandler.GenerateReportsBatch)
+		router.GET("/download-report/:id", reportHandler.DownloadReport)
+		router.DELETE("/reports/:id", reportHandler.DeleteReport)
+
 	}
 
 	r.GET("/", func(c *gin.Context) {
@@ -151,10 +164,13 @@ func main() {
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
+		origin := c.Request.Header.Get("Origin")
+		if origin == "http://localhost:5173" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
+		}
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)

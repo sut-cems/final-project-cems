@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/joho/godotenv v1.5.1
+	github.com/jung-kurt/gofpdf v1.16.2
 	golang.org/x/crypto v0.38.0
 	golang.org/x/oauth2 v0.30.0
 	gorm.io/gorm v1.30.0
