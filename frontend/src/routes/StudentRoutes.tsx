@@ -6,6 +6,7 @@ import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubPage from "../pages/Clubs/ClubPage";
 import ActivitiesPhotos from "../pages/Activites/ActivityPhoto";
+import Activities from "../pages/Activities/ActivitesPage";
 
 const StudentRoutes = (): RouteObject => {
     return {
@@ -35,6 +36,10 @@ const StudentRoutes = (): RouteObject => {
             {
                 path: "/clubs/:id",
                 element: <ClubPage />,
+            },
+            {
+                path: "/activities",
+                element: <Activities />,
             },
         ],
     };

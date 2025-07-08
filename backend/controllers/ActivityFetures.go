@@ -421,35 +421,48 @@ func (h *ActivityHandler) GetActivityByClubID(c *gin.Context) {
 	})
 }
 
-// สำหรับดึงรูปกิจกรรม
-func GetActivitiesWithPhotos(c *gin.Context) {
-	var activities []entity.Activity
+func (h *ActivityHandler) GetAllActivities(c *gin.Context) {
+    var activities []entity.Activity
 
-	db := config.DB()
-	// Preload the photos relationship
-	db.Preload("ActivityPhotos").Find(&activities)
+    query := h.DB.Preload("Status").Preload("Club").Preload("Category").Preload("ActivityRegistrations")
 
-	// Transform to match frontend expectations
-	var response []map[string]interface{}
-	for _, activity := range activities {
-		var images []map[string]interface{}
-		for _, photo := range activity.ActivityPhotos {
-			images = append(images, map[string]interface{}{
-				"url":          photo.Url,
-				"uploadedBy":   photo.UploadedBy,
-				"uploadedDate": photo.CreatedAt,
-			})
-		}
+    if err := query.Find(&activities).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error":   "Failed to fetch all activities",
+            "message": err.Error(),
+        })
+        return
+    }
 
-		// Only add activity to response if it has images
-		if len(images) > 0 {
-			response = append(response, map[string]interface{}{
-				"id":     activity.ID,
-				"title":  activity.Title,
-				"images": images,
-			})
-		}
-	}
+    var responseActivities []ActivityResponse
+    for _, activity := range activities {
+        var registeredCount int64
+        h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
 
-	c.JSON(200, response)
+        responseActivities = append(responseActivities, ActivityResponse{
+            ID:                  activity.ID,
+            Title:               activity.Title,
+            Description:         activity.Description,
+            Location:            activity.Location,
+            DateStart:           activity.DateStart.Format(time.RFC3339),
+            DateEnd:             activity.DateEnd.Format(time.RFC3339),
+            Capacity:            activity.Capacity,
+            PosterImage:         activity.PosterImage,
+            StatusID:            activity.StatusID,
+            ClubID:              activity.ClubID,
+            CategoryID:          activity.CategoryID,
+            RegisteredCount:     int(registeredCount),
+            Status:              activity.Status,
+            Club:                activity.Club,
+            Category:            activity.Category,
+            ActivityRegistrations: activity.ActivityRegistrations,
+        })
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "activities": responseActivities,
+        "message":    "All activities fetched successfully",
+    })
 }
+
+
