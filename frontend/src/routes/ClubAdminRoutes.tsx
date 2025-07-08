@@ -1,10 +1,11 @@
 import type { RouteObject } from "react-router-dom";
 import Home from "../pages/Home";
-import ActivitiManagement from "../pages/Activites/ActivityManagement ";
+import ActivitiesManagement from "../pages/Activities/ActivitiesManagement ";
 import MinimalLayout from "../layouts/MinimalLayout/MinimalLayout";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubAdminPage from "../pages/Clubs/ClubAdminPage";
+import Activities from "../pages/Activities/ActivitesPage";
 
 const ClubAdminRoutes = (): RouteObject => {
     return {
@@ -16,8 +17,8 @@ const ClubAdminRoutes = (): RouteObject => {
                 element: <Home />,
             },
             {
-                path: "/activity/management",
-                element: <ActivitiManagement />,
+                path: "/activities/management",
+                element: <ActivitiesManagement />,
             },
             {
                 path: "/profile",
@@ -30,6 +31,10 @@ const ClubAdminRoutes = (): RouteObject => {
             {
                 path: "/clubs/:id",
                 element: <ClubAdminPage />,
+            },
+                        {
+                path: "/activities",
+                element: <Activities />,
             },
         ],
     };
