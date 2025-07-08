@@ -54,6 +54,7 @@ func SetupDatabase() {
 		&entity.ClubAnnouncement{},
 		&entity.Faculty{},
 		&entity.Program{},
+		&entity.ActivityPhoto{},
 	)
 	if err != nil {
 		log.Fatal("AutoMigrate error:", err)
