@@ -105,6 +105,7 @@ func main() {
 		// Fetured Activities
 		router.GET("/activities/featured", activityHandler.GetFeaturedActivities)
 		router.GET("/activities", activityHandler.GetActivities)
+		router.GET("/all/activities", activityHandler.GetAllActivities)
 		router.GET("/activities/:id", activityHandler.GetActivityByID)
 		router.GET("/activities/club/:id", activityHandler.GetActivityByClubID)
 		router.GET("/activities/statistics", activityHandler.GetActivityStatistics)

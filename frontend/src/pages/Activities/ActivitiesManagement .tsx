@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
-import Body from "../../components/ActivitesManagement/ActivitesBody";
-import { fetchClubMembersByUserID } from "../../services/http"; // ✅ อย่าลืมนำเข้า
+import Body from "../../components/Activities/ActivitiesBody";
+import { fetchClubMembersByUserID } from "../../services/http";
 
-export default function Home() {
+export default function ActivitiesManagement() {
   const storedId = localStorage.getItem("userId");
   const userId = storedId ? parseInt(storedId) : null;
 
@@ -19,7 +19,7 @@ export default function Home() {
       try {
         const res = await fetchClubMembersByUserID(String(userId));
         console.log('resbody:',res)
-        setClubId(res.ClubID); // ✅ สมมุติ API ตอบกลับเป็น ClubMember object
+        setClubId(res.ClubID); 
         console.log('res id:',res.ClubID)
       } catch (error) {
         console.error("Failed to fetch club info:", error);
@@ -31,7 +31,7 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <Body clubId={clubId} /> {/* ✅ ส่ง clubId ผ่าน props */}
+      <Body clubId={clubId} /> 
       <Footer />
     </>
   );

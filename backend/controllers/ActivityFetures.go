@@ -420,3 +420,48 @@ func (h *ActivityHandler) GetActivityByClubID(c *gin.Context) {
 	})
 }
 
+func (h *ActivityHandler) GetAllActivities(c *gin.Context) {
+    var activities []entity.Activity
+
+    query := h.DB.Preload("Status").Preload("Club").Preload("Category").Preload("ActivityRegistrations")
+
+    if err := query.Find(&activities).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error":   "Failed to fetch all activities",
+            "message": err.Error(),
+        })
+        return
+    }
+
+    var responseActivities []ActivityResponse
+    for _, activity := range activities {
+        var registeredCount int64
+        h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
+
+        responseActivities = append(responseActivities, ActivityResponse{
+            ID:                  activity.ID,
+            Title:               activity.Title,
+            Description:         activity.Description,
+            Location:            activity.Location,
+            DateStart:           activity.DateStart.Format(time.RFC3339),
+            DateEnd:             activity.DateEnd.Format(time.RFC3339),
+            Capacity:            activity.Capacity,
+            PosterImage:         activity.PosterImage,
+            StatusID:            activity.StatusID,
+            ClubID:              activity.ClubID,
+            CategoryID:          activity.CategoryID,
+            RegisteredCount:     int(registeredCount),
+            Status:              activity.Status,
+            Club:                activity.Club,
+            Category:            activity.Category,
+            ActivityRegistrations: activity.ActivityRegistrations,
+        })
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "activities": responseActivities,
+        "message":    "All activities fetched successfully",
+    })
+}
+
+
