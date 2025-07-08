@@ -5,6 +5,7 @@ import GoogleCallbackPage from "../pages/Auth/Google/AuthCallback";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubPage from "../pages/Clubs/ClubPage";
+import ActivitiesPhotos from "../pages/Activites/ActivityPhoto";
 import Activities from "../pages/Activities/ActivitesPage";
 
 const StudentRoutes = (): RouteObject => {
@@ -19,6 +20,10 @@ const StudentRoutes = (): RouteObject => {
             {
                 path: "/profile",
                 element: <Profile />,
+            },
+            {
+                path: "/activity/photo",
+                element: <ActivitiesPhotos />,
             },
             {
                 path: "/auth/google/callback",

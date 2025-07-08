@@ -7,6 +7,7 @@ import {
   ArrowBigLeft,
   ChevronDown,
   Check,
+  CheckCircle,
 } from "lucide-react";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
@@ -347,6 +348,130 @@ const ImageCropper = ({
   );
 };
 
+type NotificationProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  message?: string;
+  autoClose?: boolean;
+  autoCloseDelay?: number;
+};
+
+const ProfileUpdateNotification = ({
+  isOpen,
+  onClose,
+  message = "โปรไฟล์ของคุณได้รับการอัพเดตเรียบร้อยแล้ว",
+  autoClose = true,
+  autoCloseDelay = 3000,
+}: NotificationProps) => {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (isOpen && autoClose) {
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(progressInterval);
+            setTimeout(onClose, 100);
+            return 100;
+          }
+          return prev + 100 / (autoCloseDelay / 100);
+        });
+      }, 100);
+
+      return () => {
+        clearInterval(progressInterval);
+        setProgress(0);
+      };
+    }
+  }, [isOpen, autoClose, autoCloseDelay, onClose]);
+
+  // Reset states when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setProgress(0);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const getUpdateMessage = () => {
+    if (message) return "โปรไฟล์ของคุณได้รับการอัพเดตเรียบร้อยแล้ว";
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-60 flex items-center justify-center p-4 animate-fadeIn">
+      <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full transform transition-all duration-300 animate-slideUp border border-gray-100/80">
+        {/* Close button */}
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors duration-200"
+          >
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Success Header */}
+        <div className="p-8 pb-4">
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+          </div>
+
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              อัพเดตสำเร็จ!
+            </h2>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {getUpdateMessage()}
+            </p>
+          </div>
+        </div>
+
+        {/* Auto-close progress bar */}
+        {autoClose && (
+          <div className="px-8 pb-6">
+            <div className="text-center space-y-3">
+              <p className="text-xs text-gray-500">หน้าต่างจะปิดโดยอัตโนมัติ</p>
+
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div
+                  className="h-full bg-green-500 rounded-full transition-all duration-100 ease-out"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { 
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+          }
+          to { 
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.15s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.2s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export default function Profile() {
   const [profileData, setProfileData] = useState({
     firstName: "",
@@ -382,6 +507,8 @@ export default function Profile() {
   const [programOptions, setProgramOptions] = useState<
     Record<string, string[]>
   >({});
+
+  const [showNotification, setShowNotification] = useState(false);
 
   // Add this useEffect to fetch user data (add this after your existing useEffect)
   useEffect(() => {
@@ -450,6 +577,18 @@ export default function Profile() {
     fetchFacultiesData();
   }, []);
 
+  const hasChanges = () => {
+    return (
+      profileData.firstName !== originalData.firstName ||
+      profileData.lastName !== originalData.lastName ||
+      profileData.faculty !== originalData.faculty ||
+      profileData.program !== originalData.program ||
+      profileData.studentID !== originalData.studentID ||
+      profileData.email !== originalData.email ||
+      avatarUrl !== originalAvatarUrl
+    );
+  };
+
   const handleEditToggle = () => {
     if (!isEditing) {
       // Starting edit mode - save current state
@@ -472,6 +611,11 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
+    if (!avatarUrl) {
+      alert("You must have a profile image");
+      return;
+    }
+
     try {
       setIsSaving(true);
 
@@ -509,15 +653,13 @@ export default function Profile() {
       setOriginalAvatarUrl(avatarUrl);
       setIsEditing(false);
       setShowAvatarOptions(false);
+      setShowNotification(true);
 
-      // Optional: Show success message
-      // You can add a toast notification here
-      console.log("Profile updated successfully");
+      setTimeout(() => {
+        window.location.reload();
+      }, 3100);
     } catch (error) {
       console.error("Error updating profile:", error);
-      // Optional: Show error message to user
-      // You can add error handling/toast here
-      alert("Failed to update profile. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -720,9 +862,11 @@ export default function Profile() {
             <>
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || !hasChanges()}
                 className={`flex items-center gap-1 px-2 py-1 text-center text-white bg-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#7d1470] transition-all duration-300 hover:scale-110 ${
-                  isSaving ? "opacity-50 cursor-not-allowed" : ""
+                  isSaving || !hasChanges()
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
               >
                 <Edit size={16} />
@@ -880,6 +1024,13 @@ export default function Profile() {
             </div>
           </div>
         </div>
+        <ProfileUpdateNotification
+          isOpen={showNotification}
+          onClose={() => setShowNotification(false)}
+          message="โปรไฟล์ของคุณได้รับการอัพเดตเรียบร้อยแล้ว"
+          autoClose={true}
+          autoCloseDelay={3000}
+        />
       </div>
 
       {/* Footer placeholder */}
