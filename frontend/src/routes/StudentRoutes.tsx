@@ -5,7 +5,7 @@ import GoogleCallbackPage from "../pages/Auth/Google/AuthCallback";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubPage from "../pages/Clubs/ClubPage";
-import ActivitiesPhotos from "../pages/Activites/ActivityPhoto";
+import ActivitiesPhotos from "../pages/Activities/ActivityPhoto";
 import Activities from "../pages/Activities/ActivitesPage";
 
 const StudentRoutes = (): RouteObject => {
