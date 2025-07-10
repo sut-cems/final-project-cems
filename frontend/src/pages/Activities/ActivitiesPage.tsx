@@ -6,7 +6,7 @@ import GroupedActivitiesList from '../../components/Activities/GroupedActivities
 import type { Activity } from '../../interfaces/IActivitys';
 import { fetchActivityAll } from '../../services/http/activities';
 
-const Activities: React.FC = () => {
+const ActivitiesPage: React.FC = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -61,4 +61,4 @@ const Activities: React.FC = () => {
   );
 };
 
-export default Activities;
+export default ActivitiesPage;

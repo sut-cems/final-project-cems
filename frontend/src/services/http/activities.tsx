@@ -40,3 +40,23 @@ export async function fetchActivityAll(): Promise<Activity[]> {
   const result = await response.json();
   return result.activities; // ✅ ต้องมั่นใจว่า backend ส่ง key นี้มา
 }
+
+// GET /activities/ID
+export async function fetchActivityById(id: string): Promise<Activity> {
+  const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  console.log("FETCH RESULT:", result); 
+
+  return result.activity; 
+}

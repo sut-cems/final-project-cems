@@ -5,7 +5,8 @@ import MinimalLayout from "../layouts/MinimalLayout/MinimalLayout";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubAdminPage from "../pages/Clubs/ClubAdminPage";
-import Activities from "../pages/Activities/ActivitesPage";
+import Activities from "../pages/Activities/ActivitiesPage";
+import ActivitiesDetail from '../pages/Activities/ActivitiesDetail';
 
 const ClubAdminRoutes = (): RouteObject => {
     return {
@@ -32,9 +33,13 @@ const ClubAdminRoutes = (): RouteObject => {
                 path: "/clubs/:id",
                 element: <ClubAdminPage />,
             },
-                        {
+            {
                 path: "/activities",
                 element: <Activities />,
+            },
+            {
+                path: "/activities/:id",
+                element: <ActivitiesDetail />,
             },
         ],
     };

@@ -4,7 +4,8 @@ import Home from "../pages/Home";
 import LoginPage from "../pages/Auth/Login/Login";
 import SignUp from "../pages/Auth/Login/SignUp";
 import GoogleCallbackPage from "../pages/Auth/Google/AuthCallback";
-
+import Activities from "../pages/Activities/ActivitiesPage";
+import ActivitiesDetail from '../pages/Activities/ActivitiesDetail';
 
 const MainRoutes = (): RouteObject => {
     return {
@@ -28,6 +29,14 @@ const MainRoutes = (): RouteObject => {
             {
                 path: "/auth/google/callback",
                 element: <GoogleCallbackPage />,
+            },
+            {
+                path: "/activities",
+                element: <Activities />,
+            },
+            {
+                path: "/activities/:id",
+                element: <ActivitiesDetail />,
             },
         ],
     };

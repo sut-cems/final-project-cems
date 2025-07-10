@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Sparkles } from 'lucide-react';
+import {  Plus, Sparkles } from 'lucide-react';
 import { message } from 'antd';
-import { API_BASE_URL, fetchActivityByClubID } from '../../services/http';
+import {  fetchActivityByClubID } from '../../services/http';
 import type { Activity } from '../../interfaces/IActivitys';
 import ActivityCard from '../../components/Activities/ActivitiesCard'; // ✅ ใช้การ์ดที่คุณสร้างไว้
 
@@ -13,8 +13,6 @@ interface BodyProps {
 const ActivitiesManagement: React.FC<BodyProps> = ({ clubId, clubName }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentClubName, setCurrentClubName] = useState<string>(clubName || '');
 
   useEffect(() => {
@@ -29,8 +27,6 @@ const ActivitiesManagement: React.FC<BodyProps> = ({ clubId, clubName }) => {
         }
       } catch (error) {
         messageApi.error("เกิดข้อผิดพลาดขณะโหลดกิจกรรม");
-      } finally {
-        setLoading(false);
       }
     };
 
