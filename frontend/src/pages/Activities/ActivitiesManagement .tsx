@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
-import Body from "../../components/Activities/ActivitiesBody";
+import Body from "../../components/Activities/ActivitiesManagement";
 import { fetchClubMembersByUserID } from "../../services/http";
 
 export default function ActivitiesManagement() {

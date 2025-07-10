@@ -6,7 +6,8 @@ import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubPage from "../pages/Clubs/ClubPage";
 import ActivitiesPhotos from "../pages/Activities/ActivityPhoto";
-import Activities from "../pages/Activities/ActivitesPage";
+import Activities from "../pages/Activities/ActivitiesPage";
+import ActivitiesDetail from '../pages/Activities/ActivitiesDetail';
 
 const StudentRoutes = (): RouteObject => {
     return {
@@ -40,6 +41,10 @@ const StudentRoutes = (): RouteObject => {
             {
                 path: "/activities",
                 element: <Activities />,
+            },
+            {
+                path: "/activities/:id",
+                element: <ActivitiesDetail />,
             },
         ],
     };

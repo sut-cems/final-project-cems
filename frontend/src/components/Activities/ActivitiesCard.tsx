@@ -7,6 +7,7 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../services/http";
 import type { Activity } from "../../interfaces/IActivitys";
 
@@ -15,6 +16,7 @@ interface ActivityCardProps {
 }
 
 const ActivityCard: React.FC<ActivityCardProps> = ({ activity }) => {
+  const navigate = useNavigate();
   const getImageUrl = (path: string): string => {
     if (!path) return "";
     if (path.startsWith("http://") || path.startsWith("https://")) return path;
@@ -22,55 +24,55 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity }) => {
     return `${API_BASE_URL}${cleanPath}`;
   };
 
-  const getStatusConfig = (statusId: number | string) => {
-    const id = Number(statusId);
-    switch (id) {
-      case 1:
-        return {
-          text: "แบบร่าง",
-          bgColor: "bg-gradient-to-r from-slate-500 to-gray-600",
-          textColor: "text-white",
-          shadow: "shadow-slate-200",
-        };
-      case 2:
-        return {
-          text: "รออนุมัติ",
-          bgColor: "bg-gradient-to-r from-amber-500 to-orange-500",
-          textColor: "text-white",
-          shadow: "shadow-amber-200",
-        };
-      case 3:
-        return {
-          text: "อนุมัติแล้ว",
-          bgColor: "bg-gradient-to-r from-emerald-500 to-green-500",
-          textColor: "text-white",
-          shadow: "shadow-green-200",
-        };
-      case 4:
-        return {
-          text: "ยกเลิก",
-          bgColor: "bg-gradient-to-r from-red-500 to-pink-500",
-          textColor: "text-white",
-          shadow: "shadow-red-200",
-        };
-      case 5:
-        return {
-          text: "สิ้นสุดแล้ว",
-          bgColor: "bg-gradient-to-r from-indigo-500 to-purple-500",
-          textColor: "text-white",
-          shadow: "shadow-indigo-200",
-        };
-      default:
-        return {
-          text: "ไม่ทราบสถานะ",
-          bgColor: "bg-gradient-to-r from-gray-400 to-gray-500",
-          textColor: "text-white",
-          shadow: "shadow-gray-200",
-        };
-    }
-  };
+  const getStatusConfig = (statusName?: string) => {
+  switch (statusName) {
+    case "draft":
+      return {
+        text: "draft",
+        bgColor: "bg-gradient-to-r from-slate-500 to-gray-600",
+        textColor: "text-white",
+        shadow: "shadow-slate-200",
+      };
+    case "pending":
+      return {
+        text: "pending",
+        bgColor: "bg-gradient-to-r from-amber-500 to-orange-500",
+        textColor: "text-white",
+        shadow: "shadow-amber-200",
+      };
+    case "approved":
+      return {
+        text: "approved",
+        bgColor: "bg-gradient-to-r from-emerald-500 to-green-500",
+        textColor: "text-white",
+        shadow: "shadow-green-200",
+      };
+    case "cancelled":
+      return {
+        text: "cancelled",
+        bgColor: "bg-gradient-to-r from-red-500 to-pink-500",
+        textColor: "text-white",
+        shadow: "shadow-red-200",
+      };
+    case "finished":
+      return {
+        text: "finished",
+        bgColor: "bg-gradient-to-r from-indigo-500 to-purple-500",
+        textColor: "text-white",
+        shadow: "shadow-indigo-200",
+      };
+    default:
+      return {
+        text: statusName || "not status",
+        bgColor: "bg-gradient-to-r from-gray-400 to-gray-500",
+        textColor: "text-white",
+        shadow: "shadow-gray-200",
+      };
+  }
+};
 
-  const statusConfig = getStatusConfig(activity.StatusID || 0);
+
+  const statusConfig = getStatusConfig(activity.Status?.Name);
   const registrationCount = activity.ActivityRegistrations?.length || 0;
 
   return (
@@ -155,7 +157,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity }) => {
         </div>
 
         {/* CTA Button */}
-        <div className="mt-4 pt-3 border-t border-gray-100">
+        <div onClick={() => navigate(`/activities/${activity.ID}`)} className="mt-4 pt-3 border-t border-gray-100">
           <div className="flex justify-between items-center text-purple-600 group-hover:text-orange-500 transition-colors cursor-pointer">
             <span className="text-sm font-semibold">ดูรายละเอียด</span>
             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
