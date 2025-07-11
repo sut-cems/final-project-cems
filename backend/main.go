@@ -110,6 +110,8 @@ func main() {
 		router.GET("/activities/club/:id", activityHandler.GetActivityByClubID)
 		router.GET("/activities/statistics", activityHandler.GetActivityStatistics)
 		router.GET("/activities/photo",controllers.GetActivitiesWithPhotos)
+		router.GET("/activities/photo/:id",controllers.GetPhotosByActivityId)
+		router.POST("/activities/photo/:id", controllers.AddPhotoToActivity)
 
 		// Routes for Notifications
 		router.GET("/notifications", controllers.GetALLNotifications)
