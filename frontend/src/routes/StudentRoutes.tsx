@@ -5,49 +5,49 @@ import GoogleCallbackPage from "../pages/Auth/Google/AuthCallback";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubPage from "../pages/Clubs/ClubPage";
-import ActivitiesPhotos from "../pages/Activities/ActivityPhoto";
+import ActivitiesPhotos from "../pages/Activities/ActivitiesPhotosPage";
 import Activities from "../pages/Activities/ActivitiesPage";
-import ActivitiesDetail from '../pages/Activities/ActivitiesDetail';
+import ActivitiesDetail from "../pages/Activities/ActivitiesDetail";
 
 const StudentRoutes = (): RouteObject => {
-    return {
+  return {
+    path: "/",
+    element: <MinimalLayout />,
+    children: [
+      {
         path: "/",
-        element: <MinimalLayout />,
-        children: [
-            {
-                path: "/",
-                element: <Home />,
-            },
-            {
-                path: "/profile",
-                element: <Profile />,
-            },
-            {
-                path: "/activity/photo",
-                element: <ActivitiesPhotos />,
-            },
-            {
-                path: "/auth/google/callback",
-                element: <GoogleCallbackPage />,
-            },
-            {
-                path: "/clubs",
-                element: <Clubs />,
-            },
-            {
-                path: "/clubs/:id",
-                element: <ClubPage />,
-            },
-            {
-                path: "/activities",
-                element: <Activities />,
-            },
-            {
-                path: "/activities/:id",
-                element: <ActivitiesDetail />,
-            },
-        ],
-    };
+        element: <Home />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
+      },
+      {
+        path: "/activities/photo",
+        element: <ActivitiesPhotos />,
+      },
+      {
+        path: "/auth/google/callback",
+        element: <GoogleCallbackPage />,
+      },
+      {
+        path: "/clubs",
+        element: <Clubs />,
+      },
+      {
+        path: "/clubs/:id",
+        element: <ClubPage />,
+      },
+      {
+        path: "/activities",
+        element: <Activities />,
+      },
+      {
+        path: "/activities/:id",
+        element: <ActivitiesDetail />,
+      },
+    ],
+  };
 };
 
 export default StudentRoutes;

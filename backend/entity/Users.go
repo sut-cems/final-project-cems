@@ -17,8 +17,6 @@ type User struct {
 	Faculty      Faculty
 	ProgramID    uint
 	Program      Program
-	ClubID       uint
-	Club         Club
 	ActivityHour int
 
 	CreatedClubs     []Club                 `gorm:"foreignKey:CreatedBy"`

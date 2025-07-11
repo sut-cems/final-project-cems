@@ -1,5 +1,4 @@
 import {
-  ArrowBigLeft,
   ChevronLeft,
   ChevronRight,
   X,
@@ -8,21 +7,30 @@ import {
   RotateCcw,
   User,
   Calendar,
+  Search,
+  Plus,
 } from "lucide-react";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
 import { useEffect, useState } from "react";
-import { fetchActivityPhoto } from "../../services/http";
+import { fetchUserById } from "../../services/http";
+import { useNavigate } from "react-router-dom";
+import { fetchActivitiesPhotos } from "../../services/http/activities";
 
 export default function ActivitiesPhotos() {
   const [showSlideshow, setShowSlideshow] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedActivityImages, setSelectedActivityImages] = useState<any[]>([]);
+  const [selectedActivityImages, setSelectedActivityImages] = useState<any[]>(
+    []
+  );
   const [zoomLevel, setZoomLevel] = useState(1);
   const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [userRole, setUserRole] = useState<string>("");
+  const navigate = useNavigate();
 
   interface ActivityImage {
     url: string;
@@ -44,6 +52,10 @@ export default function ActivitiesPhotos() {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const handleAddPhoto = (activityId: number) => {
+    navigate(`/activities/photo/add-photo/${activityId}`);
   };
 
   const openSlideshow = (images: any, startIndex = 0) => {
@@ -129,11 +141,23 @@ export default function ActivitiesPhotos() {
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const res = await fetchActivityPhoto();
+      const res = await fetchActivitiesPhotos();
       setActivities(res);
     };
 
     fetchActivities();
+    const fetchUserRole = async () => {
+      const userID = localStorage.getItem("userId");
+      if (userID) {
+        try {
+          const userData = await fetchUserById(parseInt(userID));
+          setUserRole(userData.Role?.RoleName || "");
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+    fetchUserRole();
   }, []);
 
   return (
@@ -142,72 +166,106 @@ export default function ActivitiesPhotos() {
       <Navbar />
 
       {/* Main Content */}
-      <div className="flex flex-col container mx-auto h-auto py-8 px-4">
-        {/* Topic Section */}
-        <div className="relative w-full flex items-center mb-8">
-          {/* Back button */}
-          <button
-            className="flex items-center gap-1 px-2 py-1 text-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#640D5F] hover:text-white transition-all duration-300 hover:scale-110"
-            onClick={() => window.history.back()}
-          >
-            <ArrowBigLeft size={16} />
-            Back
-          </button>
 
-          {/* Title */}
-          <h1 className="flex text-5xl mx-auto py-4 text-center font-bold bg-gradient-to-r from-purple-900 via-pink-600 to-orange-500 bg-clip-text text-transparent">
-            รูปและวิดีโอจากกิจกรรม
-          </h1>
-        </div>
-
-        {/* Activity Photo Section */}
-        <div className="flex flex-col gap-8">
-          <div className="space-y-8">
-            {activities.map((activity) => (
-              <div
-                key={activity.id}
-                className="bg-white rounded-lg shadow-md p-6"
-              >
-                {/* Activity Title */}
-                <div className="flex justify-between">
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                    {activity.title}
-                  </h2>
-                  <h2>({activity.images.length} รูป)</h2>
-                </div>
-
-                {/* Images Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                  {activity.images.slice(0, 4).map((image, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-square rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:scale-105 duration-300 hover:ring-4 hover:ring-orange-300"
-                    >
-                      <img
-                        src={image.url}
-                        alt={`Activity ${activity.id} - Image ${index + 1}`}
-                        className="w-full h-full object-contain cursor-pointer transition-transform duration-300"
-                        onClick={() => openSlideshow(activity.images, index)}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* View More Button */}
-                {activity.images.length > 4 && (
-                  <div className="flex justify-end mt-4">
-                    <button
-                      onClick={() => openSlideshow(activity.images)}
-                      className="text-[#640D5F] text-sm font-medium hover:underline flex items-center"
-                    >
-                      ดูทั้งหมด
-                    </button>
-                  </div>
-                )}
+      {/* Topic Section */}
+      <div className="relative w-full flex items-center">
+        <div className="w-full mb-8 -mx-4 px-4 py-12 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600">
+          <div className="container mx-auto">
+            <div className="text-center mb-6">
+              <div className="flex justify-center items-end mx-auto">
+                <h1 className="text-5xl font-bold text-yellow-400 mb-2">
+                  รูปภาพ
+                </h1>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  จากกิจกรรมทั้งหมด
+                </h2>
               </div>
-            ))}
+              <p className="text-white/90">ค้นหากิจกรรมที่คุณสนใจ</p>
+            </div>
+            <div className="flex items-center justify-center mx-auto w-xl bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 ">
+              <Search className="text-white mr-2 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="ค้นหากิจกรรม..."
+                className="bg-transparent placeholder-white/70 text-white w-full outline-none"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </div>
+      </div>
+      {/* Activity Photo Section */}
+      <div className="flex flex-col container mx-auto h-auto pb-8 px-4">
+        <div className="flex flex-col gap-8">
+          <div className="space-y-8">
+            {activities
+              .filter((activity) =>
+                activity.title.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map((activity) => (
+                <div key={activity.id}>
+                  {/* Activity Title with Add Photo Button */}
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-3xl font-bold text-black-700 pl-4 relative select-none ">
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-orange-600 rounded"></span>
+                      {activity.title} ({activity.images.length} รูป)
+                    </h2>
+
+                    {/* Add Photo Button - Only show for club_admin */}
+                    {userRole === "club_admin" && (
+                      <button
+                        onClick={() => handleAddPhoto(activity.id)}
+                        className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg duration-200 font-medium hover:scale-105 hover:cursor-pointer transition-all"
+                      >
+                        <Plus size={20} />
+                        เพิ่มรูปภาพ
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Images Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    {activity.images.slice(0, 4).map((image, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:scale-105 duration-300 hover:ring-4 hover:ring-orange-300"
+                      >
+                        <img
+                          src={image.url}
+                          alt={`Activity ${activity.id} - Image ${index + 1}`}
+                          className="w-full h-full object-contain cursor-pointer transition-transform duration-300"
+                          onClick={() => openSlideshow(activity.images, index)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* View More Button */}
+                  {activity.images.length > 4 && (
+                    <div className="flex justify-end mt-4">
+                      <button
+                        onClick={() => openSlideshow(activity.images)}
+                        className="text-[#640D5F] text-sm font-medium hover:underline flex items-center"
+                      >
+                        ดูทั้งหมด
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* No search results message - ADD THIS */}
+        {activities.length > 0 &&
+          activities.filter((activity) =>
+            activity.title.toLowerCase().includes(searchTerm.toLowerCase())
+          ).length === 0 && (
+            <div className="text-center text-gray-400 text-xl py-16">
+              ไม่พบกิจกรรมที่ตรงกับคำค้นหา
+            </div>
+          )}
 
         {/* Empty State (when no activities) */}
         {activities.length === 0 && (

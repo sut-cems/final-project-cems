@@ -253,30 +253,6 @@ export async function fetchActivityStatistics() {
   }
 }
 
-export async function fetchActivityPhoto() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/activities/photo`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error("Failed to fetch activity statistics:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-}
-
 // GET /activities/club/ID
 export async function fetchActivityByClubID(id: string): Promise<Activity[]> {
   const response = await fetch(`${API_BASE_URL}/activities/club/${id}`, {
