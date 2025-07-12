@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"errors"
+	"final-project/cems/config"
 	"final-project/cems/entity"
 	"net/http"
 	"strconv"
@@ -16,21 +18,21 @@ type ActivityHandler struct {
 
 // Response structures
 type ActivityResponse struct {
-	ID                  uint                        `json:"ID"`
-	Title               string                      `json:"Title"`
-	Description         string                      `json:"Description"`
-	Location            string                      `json:"Location"`
-	DateStart           string                      `json:"DateStart"`
-	DateEnd             string                      `json:"DateEnd"`
-	Capacity            int                         `json:"Capacity"`
-	PosterImage         string                      `json:"PosterImage"`
-	StatusID            uint                        `json:"StatusID"`
-	ClubID              uint                        `json:"ClubID"`
-	CategoryID          uint                        `json:"CategoryID"`
-	RegisteredCount     int                         `json:"RegisteredCount"`
-	Status              entity.ActivityStatus       `json:"Status"`
-	Club                entity.Club                 `json:"Club"`
-	Category            entity.EventCategory        `json:"Category"`
+	ID                    uint                          `json:"ID"`
+	Title                 string                        `json:"Title"`
+	Description           string                        `json:"Description"`
+	Location              string                        `json:"Location"`
+	DateStart             string                        `json:"DateStart"`
+	DateEnd               string                        `json:"DateEnd"`
+	Capacity              int                           `json:"Capacity"`
+	PosterImage           string                        `json:"PosterImage"`
+	StatusID              uint                          `json:"StatusID"`
+	ClubID                uint                          `json:"ClubID"`
+	CategoryID            uint                          `json:"CategoryID"`
+	RegisteredCount       int                           `json:"RegisteredCount"`
+	Status                entity.ActivityStatus         `json:"Status"`
+	Club                  entity.Club                   `json:"Club"`
+	Category              entity.EventCategory          `json:"Category"`
 	ActivityRegistrations []entity.ActivityRegistration `json:"ActivityRegistrations"`
 }
 
@@ -89,21 +91,21 @@ func (h *ActivityHandler) GetFeaturedActivities(c *gin.Context) {
 		h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
 
 		responseActivity := ActivityResponse{
-			ID:                  activity.ID,
-			Title:               activity.Title,
-			Description:         activity.Description,
-			Location:            activity.Location,
-			DateStart:           activity.DateStart.Format(time.RFC3339),
-			DateEnd:             activity.DateEnd.Format(time.RFC3339),
-			Capacity:            activity.Capacity,
-			PosterImage:         activity.PosterImage,
-			StatusID:            activity.StatusID,
-			ClubID:              activity.ClubID,
-			CategoryID:          activity.CategoryID,
-			RegisteredCount:     int(registeredCount),
-			Status:              activity.Status,
-			Club:                activity.Club,
-			Category:            activity.Category,
+			ID:                    activity.ID,
+			Title:                 activity.Title,
+			Description:           activity.Description,
+			Location:              activity.Location,
+			DateStart:             activity.DateStart.Format(time.RFC3339),
+			DateEnd:               activity.DateEnd.Format(time.RFC3339),
+			Capacity:              activity.Capacity,
+			PosterImage:           activity.PosterImage,
+			StatusID:              activity.StatusID,
+			ClubID:                activity.ClubID,
+			CategoryID:            activity.CategoryID,
+			RegisteredCount:       int(registeredCount),
+			Status:                activity.Status,
+			Club:                  activity.Club,
+			Category:              activity.Category,
 			ActivityRegistrations: activity.ActivityRegistrations,
 		}
 		responseActivities = append(responseActivities, responseActivity)
@@ -213,21 +215,21 @@ func (h *ActivityHandler) GetActivities(c *gin.Context) {
 		h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
 
 		responseActivity := ActivityResponse{
-			ID:                  activity.ID,
-			Title:               activity.Title,
-			Description:         activity.Description,
-			Location:            activity.Location,
-			DateStart:           activity.DateStart.Format(time.RFC3339),
-			DateEnd:             activity.DateEnd.Format(time.RFC3339),
-			Capacity:            activity.Capacity,
-			PosterImage:         activity.PosterImage,
-			StatusID:            activity.StatusID,
-			ClubID:              activity.ClubID,
-			CategoryID:          activity.CategoryID,
-			RegisteredCount:     int(registeredCount),
-			Status:              activity.Status,
-			Club:                activity.Club,
-			Category:            activity.Category,
+			ID:                    activity.ID,
+			Title:                 activity.Title,
+			Description:           activity.Description,
+			Location:              activity.Location,
+			DateStart:             activity.DateStart.Format(time.RFC3339),
+			DateEnd:               activity.DateEnd.Format(time.RFC3339),
+			Capacity:              activity.Capacity,
+			PosterImage:           activity.PosterImage,
+			StatusID:              activity.StatusID,
+			ClubID:                activity.ClubID,
+			CategoryID:            activity.CategoryID,
+			RegisteredCount:       int(registeredCount),
+			Status:                activity.Status,
+			Club:                  activity.Club,
+			Category:              activity.Category,
 			ActivityRegistrations: activity.ActivityRegistrations,
 		}
 		responseActivities = append(responseActivities, responseActivity)
@@ -279,21 +281,21 @@ func (h *ActivityHandler) GetActivityByID(c *gin.Context) {
 	h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
 
 	responseActivity := ActivityResponse{
-		ID:                  activity.ID,
-		Title:               activity.Title,
-		Description:         activity.Description,
-		Location:            activity.Location,
-		DateStart:           activity.DateStart.Format(time.RFC3339),
-		DateEnd:             activity.DateEnd.Format(time.RFC3339),
-		Capacity:            activity.Capacity,
-		PosterImage:         activity.PosterImage,
-		StatusID:            activity.StatusID,
-		ClubID:              activity.ClubID,
-		CategoryID:          activity.CategoryID,
-		RegisteredCount:     int(registeredCount),
-		Status:              activity.Status,
-		Club:                activity.Club,
-		Category:            activity.Category,
+		ID:                    activity.ID,
+		Title:                 activity.Title,
+		Description:           activity.Description,
+		Location:              activity.Location,
+		DateStart:             activity.DateStart.Format(time.RFC3339),
+		DateEnd:               activity.DateEnd.Format(time.RFC3339),
+		Capacity:              activity.Capacity,
+		PosterImage:           activity.PosterImage,
+		StatusID:              activity.StatusID,
+		ClubID:                activity.ClubID,
+		CategoryID:            activity.CategoryID,
+		RegisteredCount:       int(registeredCount),
+		Status:                activity.Status,
+		Club:                  activity.Club,
+		Category:              activity.Category,
 		ActivityRegistrations: activity.ActivityRegistrations,
 	}
 
@@ -395,21 +397,21 @@ func (h *ActivityHandler) GetActivityByClubID(c *gin.Context) {
 		h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
 
 		responseActivities = append(responseActivities, ActivityResponse{
-			ID:                  activity.ID,
-			Title:               activity.Title,
-			Description:         activity.Description,
-			Location:            activity.Location,
-			DateStart:           activity.DateStart.Format(time.RFC3339),
-			DateEnd:             activity.DateEnd.Format(time.RFC3339),
-			Capacity:            activity.Capacity,
-			PosterImage:         activity.PosterImage,
-			StatusID:            activity.StatusID,
-			ClubID:              activity.ClubID,
-			CategoryID:          activity.CategoryID,
-			RegisteredCount:     int(registeredCount),
-			Status:              activity.Status,
-			Club:                activity.Club,
-			Category:            activity.Category,
+			ID:                    activity.ID,
+			Title:                 activity.Title,
+			Description:           activity.Description,
+			Location:              activity.Location,
+			DateStart:             activity.DateStart.Format(time.RFC3339),
+			DateEnd:               activity.DateEnd.Format(time.RFC3339),
+			Capacity:              activity.Capacity,
+			PosterImage:           activity.PosterImage,
+			StatusID:              activity.StatusID,
+			ClubID:                activity.ClubID,
+			CategoryID:            activity.CategoryID,
+			RegisteredCount:       int(registeredCount),
+			Status:                activity.Status,
+			Club:                  activity.Club,
+			Category:              activity.Category,
 			ActivityRegistrations: activity.ActivityRegistrations,
 		})
 	}
@@ -420,3 +422,189 @@ func (h *ActivityHandler) GetActivityByClubID(c *gin.Context) {
 	})
 }
 
+func (h *ActivityHandler) GetAllActivities(c *gin.Context) {
+	var activities []entity.Activity
+
+	query := h.DB.Preload("Status").Preload("Club").Preload("Category").Preload("ActivityRegistrations")
+
+	if err := query.Find(&activities).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to fetch all activities",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	var responseActivities []ActivityResponse
+	for _, activity := range activities {
+		var registeredCount int64
+		h.DB.Model(&entity.ActivityRegistration{}).Where("activity_id = ?", activity.ID).Count(&registeredCount)
+
+		responseActivities = append(responseActivities, ActivityResponse{
+			ID:                    activity.ID,
+			Title:                 activity.Title,
+			Description:           activity.Description,
+			Location:              activity.Location,
+			DateStart:             activity.DateStart.Format(time.RFC3339),
+			DateEnd:               activity.DateEnd.Format(time.RFC3339),
+			Capacity:              activity.Capacity,
+			PosterImage:           activity.PosterImage,
+			StatusID:              activity.StatusID,
+			ClubID:                activity.ClubID,
+			CategoryID:            activity.CategoryID,
+			RegisteredCount:       int(registeredCount),
+			Status:                activity.Status,
+			Club:                  activity.Club,
+			Category:              activity.Category,
+			ActivityRegistrations: activity.ActivityRegistrations,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"activities": responseActivities,
+		"message":    "All activities fetched successfully",
+	})
+}
+
+// สำหรับดึงรูปกิจกรรม
+func GetActivitiesWithPhotos(c *gin.Context) {
+	var activities []entity.Activity
+
+	db := config.DB()
+	// Preload the photos relationship
+	db.Preload("ActivityPhotos").Find(&activities)
+
+	// Transform to match frontend expectations
+	var response []map[string]interface{}
+	for _, activity := range activities {
+		var images []map[string]interface{}
+		for _, photo := range activity.ActivityPhotos {
+			images = append(images, map[string]interface{}{
+				"url":          photo.Url,
+				"uploadedBy":   photo.UploadedBy,
+				"uploadedDate": photo.CreatedAt,
+			})
+		}
+
+		// Only add activity to response if it has images
+		if len(images) > 0 {
+			response = append(response, map[string]interface{}{
+				"id":     activity.ID,
+				"title":  activity.Title,
+				"images": images,
+			})
+		}
+	}
+
+	c.JSON(200, response)
+}
+
+func GetPhotosByActivityId(c *gin.Context) {
+	// Get activity ID from URL parameter
+	activityId := c.Param("id")
+	
+	// Convert string to uint (assuming ID is uint)
+	var activityID uint
+	if id, err := strconv.ParseUint(activityId, 10, 32); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid activity ID"})
+		return
+	} else {
+		activityID = uint(id)
+	}
+
+	var activity entity.Activity
+	db := config.DB()
+	
+	// Find the activity and preload its photos
+	result := db.Preload("ActivityPhotos").First(&activity, activityID)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.JSON(404, gin.H{"error": "Activity not found"})
+		} else {
+			c.JSON(500, gin.H{"error": "Database error"})
+		}
+		return
+	}
+
+	// Transform photos to match frontend expectations
+	var images []map[string]interface{}
+	for _, photo := range activity.ActivityPhotos {
+		images = append(images, map[string]interface{}{
+			"url":          photo.Url,
+			"uploadedBy":   photo.UploadedBy,
+			"uploadedDate": photo.CreatedAt,
+		})
+	}
+
+	// Return response with activity info and its photos
+	response := map[string]interface{}{
+		"id":     activity.ID,
+		"title":  activity.Title,
+		"images": images,
+	}
+
+	c.JSON(200, response)
+}
+
+func AddPhotoToActivity(c *gin.Context) {
+	// Get activity ID from URL parameter
+	activityId := c.Param("id")
+	
+	// Convert string to uint (assuming ID is uint)
+	var activityID uint
+	if id, err := strconv.ParseUint(activityId, 10, 32); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid activity ID"})
+		return
+	} else {
+		activityID = uint(id)
+	}
+
+	db := config.DB()
+	
+	// Check if activity exists
+	var activity entity.Activity
+	if err := db.First(&activity, activityID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(404, gin.H{"error": "Activity not found"})
+		} else {
+			c.JSON(500, gin.H{"error": "Database error"})
+		}
+		return
+	}
+
+	// Parse JSON request body
+	var req struct {
+		Url        string `json:"url" binding:"required"`
+		UploadedBy string `json:"uploadedBy" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request body", "details": err.Error()})
+		return
+	}
+
+	// Create new photo record
+	photo := entity.ActivityPhoto{
+		ActivityID: activityID,
+		Url:        req.Url,
+		UploadedBy: req.UploadedBy,
+	}
+
+	// Save photo to database
+	if err := db.Create(&photo).Error; err != nil {
+		c.JSON(500, gin.H{"error": "Failed to save photo", "details": err.Error()})
+		return
+	}
+
+	// Return success response with the created photo
+	response := map[string]interface{}{
+		"id":           photo.ID,
+		"activityId":   photo.ActivityID,
+		"url":          photo.Url,
+		"uploadedBy":   photo.UploadedBy,
+		"uploadedDate": photo.CreatedAt,
+		"message":      "Photo added successfully",
+	}
+
+	c.JSON(201, response)
+}

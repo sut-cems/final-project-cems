@@ -1,7 +1,10 @@
 package entity
+
 import (
+	"gorm.io/gorm"
 	"time"
-	"gorm.io/gorm")
+)
+
 // กิจกรรม
 type Activity struct {
 	gorm.Model
@@ -16,8 +19,9 @@ type Activity struct {
 	ClubID      uint
 	CategoryID  uint
 
-	Status   ActivityStatus
-	Club     Club
-	Category EventCategory
+	Status                ActivityStatus
+	Club                  Club
+	Category              EventCategory
 	ActivityRegistrations []ActivityRegistration `gorm:"foreignKey:ActivityID"`
+	ActivityPhotos        []ActivityPhoto        `gorm:"foreignKey:ActivityID"`
 }
