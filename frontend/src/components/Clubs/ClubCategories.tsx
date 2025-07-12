@@ -10,6 +10,8 @@ interface Club {
   tags?: string[];
   member_count?: number;
   activity_count?: number;
+  status_id?: number;
+  isActive?: boolean;
 }
 
 interface Category {
@@ -129,6 +131,8 @@ const ClubCategories: React.FC<ClubCategoriesProps> = ({ searchTerm }) => {
                       description: clubDescription || '',
                       member_count: club.member_count || 0,
                       activity_count: club.activity_count || 0,
+                      status_id: club.status_id,               
+                      isActive: club.status?.is_active ?? true 
                     };
                   })
                   .filter((club): club is Club => club !== null)

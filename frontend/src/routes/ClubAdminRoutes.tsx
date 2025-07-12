@@ -5,6 +5,7 @@ import MinimalLayout from "../layouts/MinimalLayout/MinimalLayout";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubAdminPage from "../pages/Clubs/ClubAdminPage";
+import CreateClub from "../pages/Clubs/CreateClub";
 
 const ClubAdminRoutes = (): RouteObject => {
     return {
@@ -30,6 +31,10 @@ const ClubAdminRoutes = (): RouteObject => {
             {
                 path: "/clubs/:id",
                 element: <ClubAdminPage />,
+            },
+            {
+                path: "/create-club",
+                element: <CreateClub />,
             },
         ],
     };

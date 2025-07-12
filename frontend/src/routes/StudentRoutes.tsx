@@ -5,6 +5,7 @@ import GoogleCallbackPage from "../pages/Auth/Google/AuthCallback";
 import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubPage from "../pages/Clubs/ClubPage";
+import CreateClub from "../pages/Clubs/CreateClub";
 
 const StudentRoutes = (): RouteObject => {
     return {
@@ -30,6 +31,10 @@ const StudentRoutes = (): RouteObject => {
             {
                 path: "/clubs/:id",
                 element: <ClubPage />,
+            },
+            {
+                path: "/create-club",
+                element: <CreateClub />,
             },
         ],
     };

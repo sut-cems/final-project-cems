@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { GetMembersByClubID, removeMember, changePresident, approveMember } from "../../services/http/clubs";
+import { GetMembersByClubID, changePresident, approveMember, removeClubMember } from "../../services/http/clubs";
 import { Users, ShieldCheck, Trash2, Crown, Clock, CheckCircle, UserPlus, Settings } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
 
@@ -71,23 +71,36 @@ const ClubMemberManagePage = () => {
   };
 
   const handleConfirmModal = async () => {
-    if (!selectedUserId || !clubId || !modalType) return;
+  if (!selectedUserId || !clubId || !modalType) return;
 
+  try {
     if (modalType === "remove") {
-      await removeMember(clubId, selectedUserId);
+      await removeClubMember(clubId, selectedUserId);
     } else if (modalType === "change-president") {
-      await changePresident(clubId, selectedUserId);
-      window.location.reload();
+      const response = await changePresident(clubId, selectedUserId);
+      if (response.token) {
+        const currentUserId = parseInt(localStorage.getItem("userId") || "0");
+        if (currentUserId === selectedUserId) {
+          localStorage.setItem("token", response.token);
+        }
+      }
+      window.location.reload(); // หรือ fetchMembers() ถ้าไม่อยาก reload ทั้งหน้า
       return;
     } else if (modalType === "approve") {
       await approveMember(clubId, selectedUserId);
     }
 
     await fetchMembers();
+  } catch (err) {
+    console.error("handleConfirmModal error:", err);
+  } finally {
     setShowModal(false);
     setSelectedUserId(null);
     setModalType(null);
-  };
+  }
+};
+
+
 
   const handleApproveConfirm = (userId: number) => {
     setModalType("approve");
