@@ -316,7 +316,7 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                       {club.activities?.map((activity) => (
                         <div
                           key={activity.ID}
-                          onClick={() => navigate(`/activity/${activity.ID}`)}
+                          onClick={() => navigate(`/activities/${activity.ID}`)}
                           className="bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-white/20 cursor-pointer group"
                         >
                           <div className="relative overflow-hidden">

@@ -9,6 +9,7 @@ import Activities from "../pages/Activities/ActivitiesPage";
 import ActivitiesDetail from "../pages/Activities/ActivitiesDetail";
 import ActivitiesPhotos from "../pages/Activities/ActivitiesPhotosPage";
 import AddActivitiesPhotos from "../pages/Activities/AddActivitiesPhoto";
+import CreateClub from "../pages/Clubs/CreateClub";
 
 const ClubAdminRoutes = (): RouteObject => {
   return {
@@ -50,6 +51,10 @@ const ClubAdminRoutes = (): RouteObject => {
       {
         path: "/activities/photo/add-photo/:id",
         element: <AddActivitiesPhotos />,
+      },
+      {
+        path: "/create-club",
+        element: <CreateClub />,
       },
     ],
   };

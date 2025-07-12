@@ -53,7 +53,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       case 'change-president':
         return <ShieldCheck className="w-12 h-12 text-yellow-500" />;
       case 'approve':
-        return <CheckCircle className="w-12 h-12 text-green-500" />; // ✅ เพิ่มอันนี้
+        return <CheckCircle className="w-12 h-12 text-green-500" />;
       default:
         return null;
     }
