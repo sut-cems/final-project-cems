@@ -167,14 +167,13 @@ const ReportsManagemet: React.FC = () => {
 
 
     useEffect(() => {
-        // สร้าง filters object ที่ใช้ debounced search
         const effectiveFilters = {
             ...filters,
             search: debouncedSearchTerm
         };
 
         loadReports(1, effectiveFilters);
-    }, [debouncedSearchTerm, filters.type, filters.status, filters.period]); // ไม่รวม filters.search
+    }, [debouncedSearchTerm, filters.type, filters.status, filters.period]); 
 
     useEffect(() => {
         setFilteredReports(reports);
@@ -203,11 +202,11 @@ const ReportsManagemet: React.FC = () => {
 
     const getTypeDisplay = (type: string) => {
         const typeMap: { [key: string]: string } = {
-            'summary': 'รายงานสรุป',
-            'hours': 'ชั่วโมงสะสม',
-            'evaluation': 'การประเมิน',
-            'participants': 'ผู้เข้าร่วม',
-            'statistics': 'สถิติ'
+            'activity_summary': 'รายงานสรุปกิจกรรม',
+            'club_ranking': 'รายงานอันดับชมรมจาการจัดกิจกรรม',
+            'club_performance': 'รายงานประสิทธิภาพของชมรม',
+            'category_analytics': 'รายงานวิเคราะห์กิจกรรมตามหมวดหมู่',
+            'student_hours': 'รายงานชั่วโมงกิจกรรม'
         };
         return typeMap[type] || type;
     };
@@ -639,7 +638,7 @@ const ReportsManagemet: React.FC = () => {
                 format: 'pdf',
                 user_id: 1
             };
-            await generateReports([request]);
+            await generateReports(request);
             loadReports();
         } catch (error) {
             alert(`เกิดข้อผิดพลาด: ${(error as Error).message}`);
@@ -651,7 +650,7 @@ const ReportsManagemet: React.FC = () => {
     const handleCustomReport = async (request: ReportRequest) => {
         try {
             setLoading(true);
-            await generateReports([request]);
+            await generateReports(request);
             loadReports();
         } catch (error) {
             alert(`เกิดข้อผิดพลาด: ${(error as Error).message}`);
@@ -757,7 +756,7 @@ const ReportsManagemet: React.FC = () => {
 
                         {/* Modern Minimal Refresh Button */}
                         <button
-                            onClick={() => loadReports(1)}
+                            onClick={() => loadReports()}
                             className="group relative bg-white border border-gray-200 text-gray-600 px-4 py-2.5 rounded-xl hover:border-[#640D5F]/30 hover:bg-[#640D5F]/5 hover:text-[#640D5F] transition-all duration-300 font-medium flex items-center space-x-2 shadow-sm hover:shadow-md active:scale-95"
                         >
                             <RefreshCw className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" />
@@ -841,12 +840,12 @@ const ReportsManagemet: React.FC = () => {
                                 <div className="group relative bg-white rounded-xl p-6 border-0 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 overflow-hidden">
                                     <div className="absolute inset-0 bg-gradient-to-br from-[#FFB200]/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     <div className="relative z-10">
-                                        <div className="w-12 h-12 bg-[#FFB200]/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-[#FFB200] transition-colors duration-300">
-                                            <CheckCircle className="w-5 h-5 text-[#FFB200] group-hover:text-white transition-colors duration-300" />
+                                        <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-green-500 transition-colors duration-300">
+                                            <CheckCircle className="w-5 h-5 text-green-500 group-hover:text-white transition-colors duration-300" />
                                         </div>
                                         <p className="text-gray-500 text-sm font-medium mb-2">เสร็จสิ้น</p>
                                         <p className="text-2xl font-bold text-gray-900 mb-1">{stats.completed}</p>
-                                        <div className="h-0.5 w-10 bg-[#FFB200] rounded-full"></div>
+                                        <div className="h-0.5 w-10 bg-green-500 rounded-full"></div>
                                     </div>
                                 </div>
 
@@ -903,11 +902,11 @@ const ReportsManagemet: React.FC = () => {
                                         <ModernSelect
                                             options={[
                                                 { value: "", label: "ทั้งหมด" },
-                                                { value: "summary", label: "รายงานสรุป", icon: <FileText className="w-4 h-4" /> },
-                                                { value: "hours", label: "ชั่วโมงสะสม", icon: <Clock className="w-4 h-4" /> },
-                                                { value: "evaluation", label: "การประเมิน", icon: <Star className="w-4 h-4" /> },
-                                                { value: "participants", label: "ผู้เข้าร่วม", icon: <Users className="w-4 h-4" /> },
-                                                { value: "statistics", label: "สถิติ", icon: <BarChart className="w-4 h-4" /> }
+                                                { value: "activity_summary", label: "รายงานสรุปกิจกรรม", icon: <FileText className="w-4 h-4" /> },
+                                                { value: "club_ranking", label: "รายงานอันดับชมรมจาการจัดกิจกรรม", icon: <Clock className="w-4 h-4" /> },
+                                                { value: "club_performance", label: "รายงานประสิทธิภาพของชมรม", icon: <Star className="w-4 h-4" /> },
+                                                { value: "category_analytics", label: "รายงานวิเคราะห์กิจกรรมตามหมวดหมู่", icon: <Users className="w-4 h-4" /> },
+                                                { value: "student_hours", label: "รายงานชั่วโมงสะสม", icon: <BarChart className="w-4 h-4" /> }
                                             ]}
                                             value={filters.type}
                                             onChange={(value) => setFilters({ ...filters, type: value })}

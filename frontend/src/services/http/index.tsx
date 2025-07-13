@@ -273,6 +273,51 @@ export async function fetchActivityByClubID(id: string): Promise<Activity[]> {
   return result.activities; 
 }
 
+// function for flexible user search
+export async function searchUsers(query: string): Promise<Users[]> {
+  const response = await fetch(`${API_BASE_URL}/users/search?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error || errorData.message}`);
+  }
+
+  const result = await response.json();
+  console.log("SEARCH USERS RESULT:", result);
+  return result.data || [];
+}
+
+// Fallback function that tries multiple search methods
+export async function flexibleUserSearch(query: string): Promise<Users[]> {
+  try {
+    // First try the dedicated search endpoint
+    return await searchUsers(query);
+  } catch (error) {
+    console.warn('Search endpoint failed, trying fallback methods:', error);
+    
+    // If search endpoint doesn't exist, try other methods
+    const results: Users[] = [];
+    
+    // Try fetching by ID if query looks like a number
+    if (/^\d+$/.test(query)) {
+      try {
+        const userById = await fetchUserById(parseInt(query));
+        if (userById) results.push(userById);
+      } catch (e) {
+        console.warn('ID search failed:', e);
+      }
+    }
+    
+    // If no results found, return empty array
+    return results;
+  }
+}
+
 export default class NotificationService {
   private baseURL = 'http://localhost:8000';
   private eventSource: EventSource | null = null;
@@ -473,9 +518,9 @@ export async function fetchReportList(page: number = 1, limit: number = 10): Pro
     return await response.json();
 }
 
-export async function generateReports(data: ReportRequest[]): Promise<any> {
+export async function generateReports(data: ReportRequest): Promise<any> {
    try {
-    const response = await fetch(`${API_BASE_URL}/generate-report`, {
+    const response = await fetch(`${API_BASE_URL}/reports/generate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -488,7 +533,7 @@ export async function generateReports(data: ReportRequest[]): Promise<any> {
             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
 
-        const responseData = await response.json();
+        const responseData = await response.blob();
         return responseData;
     } catch (error) {
         console.error('Error generating reports:', error);

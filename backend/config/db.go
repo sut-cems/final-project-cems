@@ -5,14 +5,10 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"final-project/cems/entity"
 
-	"github.com/jung-kurt/gofpdf"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -108,7 +104,7 @@ func SetupDatabase() {
 		{Name: "วิชาการ", Description: "กิจกรรมด้านวิชาการ"},
 		{Name: "บำเพ็ญประโยชน์", Description: "จิตอาสาและบริการสังคม"},
 		{Name: "กีฬา", Description: "การแข่งขัน/ออกกำลังกาย"},
-		{Name: "วัฒนธรรม", Description: "ด้านศิลปวัฒนธรรม"},
+		{Name: "ศิลปะ", Description: "กิจกรรมด้านศิลปะและวัฒนธรรม"},
 		{Name: "ทักษะชีวิต", Description: "พัฒนาทักษะการใช้ชีวิต"},
 		{Name: "สังสรรค์", Description: "การพบปะสังสรรค์"},
 		{Name: "อาสาสมัคร", Description: "กิจกรรมอาสาสมัคร"},
@@ -120,11 +116,11 @@ func SetupDatabase() {
 
 	// Initial club categories
 	clubCats := []entity.ClubCategory{
-		{Name: "ชมรมกีฬา", Description: "กีฬาและการออกกำลังกาย"},
-		{Name: "ชมรมวิชาการ", Description: "ส่งเสริมการเรียนรู้และพัฒนาทักษะวิชาการ"},
-		{Name: "ชมรมศิลปะ", Description: "ศิลปะ ดนตรี และการแสดง"},
-		{Name: "ชมรมอาสา", Description: "พัฒนาสังคมและบำเพ็ญประโยชน์"},
-		{Name: "ชมรมอื่นๆ", Description: "นักศึกษาสัมพันธ์และกิจกรรมทั่วไป"},
+		{Name: "กีฬา", Description: "กีฬาและการออกกำลังกาย"},
+		{Name: "วิชาการ", Description: "ส่งเสริมการเรียนรู้และพัฒนาทักษะวิชาการ"},
+		{Name: "ศิลปะ", Description: "ศิลปะ ดนตรี และการแสดง"},
+		{Name: "อาสา", Description: "พัฒนาสังคมและบำเพ็ญประโยชน์"},
+		{Name: "อื่นๆ", Description: "นักศึกษาสัมพันธ์และกิจกรรมทั่วไป"},
 	}
 	for _, c := range clubCats {
 		db.FirstOrCreate(&c, entity.ClubCategory{Name: c.Name})
@@ -230,8 +226,6 @@ func SetupDatabase() {
 	setupMediaUploads()
 
 	setupClubAnnouncements()
-
-	setupActivityReports()
 
 	fmt.Println("Database setup completed successfully")
 }
@@ -485,11 +479,11 @@ func setupSampleClubs() {
 
 	// Get categories
 	var sportsCategory, artsCategory, academicCategory, volunteerCategory, otherCategory entity.ClubCategory
-	db.Where("name = ?", "ชมรมกีฬา").First(&sportsCategory)
-	db.Where("name = ?", "ชมรมศิลปะ").First(&artsCategory)
-	db.Where("name = ?", "ชมรมวิชาการ").First(&academicCategory)
-	db.Where("name = ?", "ชมรมอาสา").First(&volunteerCategory)
-	db.Where("name = ?", "ชมรมอื่นๆ").First(&otherCategory)
+	db.Where("name = ?", "กีฬา").First(&sportsCategory)
+	db.Where("name = ?", "ศิลปะ").First(&artsCategory)
+	db.Where("name = ?", "วิชาการ").First(&academicCategory)
+	db.Where("name = ?", "อาสา").First(&volunteerCategory)
+	db.Where("name = ?", "อื่นๆ").First(&otherCategory)
 
 	// Get admin user to set as creator
 	var adminUser entity.User
@@ -526,7 +520,7 @@ func setupSampleClubs() {
 	sampleClubs := []entity.Club{
 		// ชมรมกีฬา
 		{
-			Name:        "ชมรมฟุตบอล",
+			Name:        "ฟุตบอล",
 			Description: "ชมรมสำหรับผู้ที่รักการเล่นฟุตบอลและต้องการพัฒนาทักษะการเล่น",
 			LogoImage:   "/images/clubs/football/FootballClub.png",
 			CreatedBy:   studentFootballClub.ID,
@@ -534,7 +528,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมบาสเกตบอล",
+			Name:        "บาสเกตบอล",
 			Description: "ชมรมบาสเกตบอลเพื่อส่งเสริมการเล่นกีฬาและการแข่งขัน",
 			LogoImage:   "/images/clubs/basketball/BasketballClub.png",
 			CreatedBy:   studentBasketClub.ID,
@@ -542,7 +536,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมแบดมินตัน",
+			Name:        "แบดมินตัน",
 			Description: "ชมรมแบดมินตันสำหรับผู้ที่สนใจการเล่นแบดมินตัน",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -550,7 +544,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมกีฬาอิเล็คทรอนิคส",
+			Name:        "กีฬาอิเล็คทรอนิคส",
 			Description: "E-Sports Club สำหรับผู้ที่สนใจการแข่งขันเกมออนไลน์",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -558,7 +552,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมฟุตซอล",
+			Name:        "ฟุตซอล",
 			Description: "ชมรมฟุตซอลเพื่อส่งเสริมการเล่นกีฬาในร่ม",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -568,7 +562,7 @@ func setupSampleClubs() {
 
 		// ชมรมวิชาการ
 		{
-			Name:        "ชมรมคอมพิวเตอร์",
+			Name:        "คอมพิวเตอร์",
 			Description: "ชมรมสำหรับผู้ที่สนใจด้านเทคโนโลยีคอมพิวเตอร์และการเขียนโปรแกรม",
 			LogoImage:   "/images/clubs/computer/ComputerClub.png",
 			CreatedBy:   studentComClub.ID,
@@ -576,7 +570,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมโรบอท",
+			Name:        "โรบอท",
 			Description: "ชมรมโรบอทเพื่อศึกษาและพัฒนาเทคโนโลยีหุ่นยนต์",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -584,7 +578,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมอิเล็กทรอนิกส์และนวัตกรรมระบบสมองกลฝังตัว",
+			Name:        "อิเล็กทรอนิกส์และนวัตกรรมระบบสมองกลฝังตัว",
 			Description: "ชมรมสำหรับศึกษาเทคโนโลยีอิเล็กทรอนิกส์และระบบฝังตัว",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -592,7 +586,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมดาราศาสตร์และอวกาศ มทส.",
+			Name:        "ดาราศาสตร์และอวกาศ มทส.",
 			Description: "SUT Astronomy and Space Club เพื่อศึกษาดาราศาสตร์และวิทยาศาสตร์อวกาศ",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -600,7 +594,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมภาษาญี่ปุ่น",
+			Name:        "ภาษาญี่ปุ่น",
 			Description: "ชมรมสำหรับผู้ที่สนใจเรียนรู้ภาษาและวัฒนธรรมญี่ปุ่น",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -610,7 +604,7 @@ func setupSampleClubs() {
 
 		// ชมรมศิลปะ
 		{
-			Name:        "ชมรมดนตรีสากล",
+			Name:        "ดนตรีสากล",
 			Description: "International Music Club สำหรับผู้ที่รักดนตรีสากลและการแสดง",
 			LogoImage:   "/images/clubs/music/MusicClub.png",
 			CreatedBy:   studentMusicClub.ID,
@@ -618,7 +612,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมดนตรีและนาฎศิลป์ไทย มทส.",
+			Name:        "ดนตรีและนาฎศิลป์ไทย มทส.",
 			Description: "Thai Music and Arts Club เพื่อส่งเสริมดนตรีและศิลปะไทย",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -626,7 +620,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมศิลปะการถ่ายภาพ",
+			Name:        "ศิลปะการถ่ายภาพ",
 			Description: "Photographic Club สำหรับผู้ที่สนใจการถ่ายภาพและศิลปะภาพ",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -634,7 +628,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมลีลาศ",
+			Name:        "ลีลาศ",
 			Description: "Dance Club สำหรับผู้ที่รักการเต้นรำและการแสดง",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -644,7 +638,7 @@ func setupSampleClubs() {
 
 		// ชมรมอาสา/สังคม
 		{
-			Name:        "ชมรมค่ายอาสาพัฒนาชนบท",
+			Name:        "ค่ายอาสาพัฒนาชนบท",
 			Description: "Countryside Development Club เพื่อพัฒนาชุมชนและชนบท",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -652,7 +646,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมจิตอาสาแสดทอง",
+			Name:        "จิตอาสาแสดทอง",
 			Description: "SUT Volunteer Club สำหรับกิจกรรมจิตอาสาและบำเพ็ญประโยชน์",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -660,7 +654,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมอนุรักษ์สภาพแวดล้อม",
+			Name:        "อนุรักษ์สภาพแวดล้อม",
 			Description: "Environment Club เพื่อส่งเสริมการอนุรักษ์สิ่งแวดล้อม",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -670,7 +664,7 @@ func setupSampleClubs() {
 
 		// ชมรมอื่นๆ
 		{
-			Name:        "ชมรมสมาธ",
+			Name:        "ฝึกสมาธิ",
 			Description: "Meditation Club เพื่อฝึกสมาธิและจิตใจให้สงบ",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -678,7 +672,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรมเชียร์ลีดเดอร์",
+			Name:        "เชียร์ลีดเดอร์",
 			Description: "Cheerleading Club สำหรับการเป็นเชียร์และการแสดง",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -686,7 +680,7 @@ func setupSampleClubs() {
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Name:        "ชมรม To Be Number One",
+			Name:        "To Be Number One",
 			Description: "To Be Number One Club เพื่อส่งเสริมการต่อต้านยาเสพติด",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -696,7 +690,7 @@ func setupSampleClubs() {
 
 		// ชมรมที่รออนุมัติ (ตัวอย่าง)
 		{
-			Name:        "ชมรมการบิน",
+			Name:        "การบิน",
 			Description: "Flight Club สำหรับผู้ที่สนใจด้านการบินและอากาศยาน",
 			LogoImage:   "",
 			CreatedBy:   adminUser.ID,
@@ -725,6 +719,7 @@ func setupSampleActivities() {
 	db.Where("name = ?", "บำเพ็ญประโยชน์").First(&volunteerCategory)
 	db.Where("name = ?", "ทักษะชีวิต").First(&lifeSkillsCategory)
 	db.Where("name = ?", "สังสรรค์").First(&socializeCategory)
+	db.Where("name = ?", "อื่นๆ").First(&otherCategory)
 
 	// Get sample clubs
 	var clubs []entity.Club
@@ -753,7 +748,7 @@ func setupSampleActivities() {
 			Location:    "ห้องคอมพิวเตอร์ 101",
 			Capacity:    30,
 			PosterImage: "https://images.unsplash.com/photo-1526379879527-8559ecfcaec0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมคอมพิวเตอร์"),
+			ClubID:      getClubID(clubMap, "คอมพิวเตอร์"),
 			CategoryID:  academicCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -765,7 +760,7 @@ func setupSampleActivities() {
 			Location:    "หอประชุมใหญ่",
 			Capacity:    100,
 			PosterImage: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1625&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมอิเล็กทรอนิกส์และนวัตกรรมระบบสมองกลฝังตัว"),
+			ClubID:      getClubID(clubMap, "อิเล็กทรอนิกส์และนวัตกรรมระบบสมองกลฝังตัว"),
 			CategoryID:  academicCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -777,7 +772,7 @@ func setupSampleActivities() {
 			Location:    "ห้องปฏิบัติการคอมพิวเตอร์ 201-203",
 			Capacity:    60,
 			PosterImage: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมคอมพิวเตอร์"),
+			ClubID:      getClubID(clubMap, "คอมพิวเตอร์"),
 			CategoryID:  academicCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -789,7 +784,7 @@ func setupSampleActivities() {
 			Location:    "ห้องปฏิบัติการหุ่นยนต์",
 			Capacity:    25,
 			PosterImage: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมโรบอท"),
+			ClubID:      getClubID(clubMap, "โรบอท"),
 			CategoryID:  academicCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -801,7 +796,7 @@ func setupSampleActivities() {
 			Location:    "ลานกิจกรรมนักศึกษา",
 			Capacity:    80,
 			PosterImage: "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมภาษาญี่ปุ่น"),
+			ClubID:      getClubID(clubMap, "ภาษาญี่ปุ่น"),
 			CategoryID:  academicCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -815,7 +810,7 @@ func setupSampleActivities() {
 			Location:    "สนามฟุตบอลมหาวิทยาลัย",
 			Capacity:    100,
 			PosterImage: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1393&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมฟุตบอล"),
+			ClubID:      getClubID(clubMap, "ฟุตบอล"),
 			CategoryID:  sportsCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -827,7 +822,7 @@ func setupSampleActivities() {
 			Location:    "สนามบาสเกตบอลในร่ม",
 			Capacity:    200,
 			PosterImage: "https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1390&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมบาสเกตบอล"),
+			ClubID:      getClubID(clubMap, "บาสเกตบอล"),
 			CategoryID:  sportsCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -839,7 +834,7 @@ func setupSampleActivities() {
 			Location:    "ห้องแล็บคอมพิวเตอร์ E-Sports",
 			Capacity:    32,
 			PosterImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมกีฬาอิเล็คทรอนิคส"),
+			ClubID:      getClubID(clubMap, "กีฬาอิเล็คทรอนิคส"),
 			CategoryID:  sportsCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -851,33 +846,33 @@ func setupSampleActivities() {
 			Location:    "ยิมเนเซียม",
 			Capacity:    64,
 			PosterImage: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมแบดมินตัน"),
+			ClubID:      getClubID(clubMap, "แบดมินตัน"),
 			CategoryID:  sportsCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
 
 		// กิจกรรมศิลปะ
 		{
-			Title:       "คอนเสิร์ตดนตรีสากล \"Harmony Night\"",
+			Title:       `คอนเสิร์ตดนตรีสากล "Harmony Night"`,
 			Description: "การแสดงดนตรีสากลจากสมาชิกชมรม ร่วมกับศิลปินรับเชิญ",
 			DateStart:   time.Now().AddDate(0, -2, -15),
 			DateEnd:     time.Now().AddDate(0, -2, -15),
 			Location:    "หอประชุมกลาง",
 			Capacity:    300,
 			PosterImage: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมดนตรีสากล"),
+			ClubID:      getClubID(clubMap, "ดนตรีสากล"),
 			CategoryID:  artsCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
 		{
-			Title:       "นิทรรศการการถ่ายภาพ \"มุมมองใหม่\"",
+			Title:       `นิทรรศการการถ่ายภาพ "มุมมองใหม่"`,
 			Description: "การจัดแสดงผลงานการถ่ายภาพจากสมาชิกชมรม หัวข้อ \"ความงามรอบตัวเรา\"",
 			DateStart:   time.Now().AddDate(0, -1, -20),
 			DateEnd:     time.Now().AddDate(0, -1, -13),
 			Location:    "แกลเลอรี่ศิลปะ",
 			Capacity:    150,
 			PosterImage: "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1474&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมศิลปะการถ่ายภาพ"),
+			ClubID:      getClubID(clubMap, "ศิลปะการถ่ายภาพ"),
 			CategoryID:  artsCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -889,7 +884,7 @@ func setupSampleActivities() {
 			Location:    "โรงละครกลางแจ้ง",
 			Capacity:    200,
 			PosterImage: "https://images.unsplash.com/photo-1595273670150-bd0c3c392e10?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมดนตรีและนาฎศิลป์ไทย มทส."),
+			ClubID:      getClubID(clubMap, "ดนตรีและนาฎศิลป์ไทย มทส."),
 			CategoryID:  artsCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -903,7 +898,7 @@ func setupSampleActivities() {
 			Location:    "บ้านเด็กกำพร้า จ.นครราชสีมา",
 			Capacity:    40,
 			PosterImage: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1473&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมจิตอาสาแสดทอง"),
+			ClubID:      getClubID(clubMap, "จิตอาสาแสดทอง"),
 			CategoryID:  volunteerCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -915,7 +910,7 @@ func setupSampleActivities() {
 			Location:    "อุทยานแห่งชาติเขาใหญ่",
 			Capacity:    50,
 			PosterImage: "https://images.unsplash.com/photo-1574263867128-66ad5b6e7c89?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1631&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมอนุรักษ์สภาพแวดล้อม"),
+			ClubID:      getClubID(clubMap, "อนุรักษ์สภาพแวดล้อม"),
 			CategoryID:  volunteerCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -927,7 +922,7 @@ func setupSampleActivities() {
 			Location:    "โรงเรียนบ้านหนองแสง",
 			Capacity:    35,
 			PosterImage: "https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมค่ายอาสาพัฒนาชนบท"),
+			ClubID:      getClubID(clubMap, "ค่ายอาสาพัฒนาชนบท"),
 			CategoryID:  volunteerCategory.ID,
 			StatusID:    finishedStatus.ID,
 		},
@@ -943,7 +938,7 @@ func setupSampleActivities() {
 			Location:    "ห้องคอมพิวเตอร์ 201",
 			Capacity:    40,
 			PosterImage: "https://images.unsplash.com/photo-1555255707-c07966088b7b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมคอมพิวเตอร์"),
+			ClubID:      getClubID(clubMap, "คอมพิวเตอร์"),
 			CategoryID:  academicCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -955,19 +950,19 @@ func setupSampleActivities() {
 			Location:    "ลานกิจกรรมใหญ่",
 			Capacity:    80,
 			PosterImage: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1287&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมโรบอท"),
+			ClubID:      getClubID(clubMap, "โรบอท"),
 			CategoryID:  academicCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
 		{
-			Title:       "สัมมนาดาราศาสตร์: \"ความลับของจักรวาล\"",
+			Title:       `สัมมนาดาราศาสตร์: "ความลับของจักรวาล"`,
 			Description: "การบรรยายพิเศษโดยนักดาราศาสตร์ชื่อดัง พร้อมการสังเกตการณ์ดาวผ่านกล้องโทรทรรศน์",
 			DateStart:   time.Now().AddDate(0, 0, 20),
 			DateEnd:     time.Now().AddDate(0, 0, 20),
 			Location:    "หอดูดาวมหาวิทยาลัย",
 			Capacity:    60,
 			PosterImage: "/images/activities/posterImages/poster2.png",
-			ClubID:      getClubID(clubMap, "ชมรมดาราศาสตร์และอวกาศ มทส."),
+			ClubID:      getClubID(clubMap, "ดาราศาสตร์และอวกาศ มทส."),
 			CategoryID:  academicCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -981,7 +976,7 @@ func setupSampleActivities() {
 			Location:    "สนามฟุตบอลมหาวิทยาลัย",
 			Capacity:    500,
 			PosterImage: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมฟุตบอล"),
+			ClubID:      getClubID(clubMap, "ฟุตบอล"),
 			CategoryID:  sportsCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -993,7 +988,7 @@ func setupSampleActivities() {
 			Location:    "สนามฟุตซอลในร่ม",
 			Capacity:    150,
 			PosterImage: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมฟุตซอล"),
+			ClubID:      getClubID(clubMap, "ฟุตซอล"),
 			CategoryID:  sportsCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1005,21 +1000,21 @@ func setupSampleActivities() {
 			Location:    "ห้อง E-Sports Center",
 			Capacity:    50,
 			PosterImage: "/images/activities/posterImages/poster3.png",
-			ClubID:      getClubID(clubMap, "ชมรมกีฬาอิเล็คทรอนิคส"),
+			ClubID:      getClubID(clubMap, "กีฬาอิเล็คทรอนิคส"),
 			CategoryID:  sportsCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
 
 		// กิจกรรมศิลปะ
 		{
-			Title:       "คอนเสิร์ตเปิดภาคเรียน \"Fresh Start\"",
+			Title:       `คอนเสิร์ตเปิดภาคเรียน "Fresh Start"`,
 			Description: "คอนเสิร์ตต้อนรับนักศึกษาใหม่ พร้อมการแสดงจากศิลปินนักศึกษา",
 			DateStart:   time.Now().AddDate(0, 0, 25),
 			DateEnd:     time.Now().AddDate(0, 0, 25),
 			Location:    "หอประชุมใหญ่",
 			Capacity:    400,
 			PosterImage: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมดนตรีสากล"),
+			ClubID:      getClubID(clubMap, "ดนตรีสากล"),
 			CategoryID:  artsCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1031,7 +1026,7 @@ func setupSampleActivities() {
 			Location:    "สตูดิโอถ่ายภาพ",
 			Capacity:    20,
 			PosterImage: "https://images.unsplash.com/photo-1554048612-b6a482b80ed2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมศิลปะการถ่ายภาพ"),
+			ClubID:      getClubID(clubMap, "ศิลปะการถ่ายภาพ"),
 			CategoryID:  artsCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1043,7 +1038,7 @@ func setupSampleActivities() {
 			Location:    "ห้องเอนกประสงค์ใหญ่",
 			Capacity:    100,
 			PosterImage: "https://images.unsplash.com/photo-1518834107812-67b0b7c58434?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมลีลาศ"),
+			ClubID:      getClubID(clubMap, "ลีลาศ"),
 			CategoryID:  artsCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1057,7 +1052,7 @@ func setupSampleActivities() {
 			Location:    "ชุมชนรอบมหาวิทยาลัย",
 			Capacity:    60,
 			PosterImage: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมอนุรักษ์สภาพแวดล้อม"),
+			ClubID:      getClubID(clubMap, "อนุรักษ์สภาพแวดล้อม"),
 			CategoryID:  volunteerCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1069,7 +1064,7 @@ func setupSampleActivities() {
 			Location:    "โรงเรียนบ้านป่าไผ่",
 			Capacity:    30,
 			PosterImage: "https://images.unsplash.com/photo-1523050854058-8df90110c9d1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมค่ายอาสาพัฒนาชนบท"),
+			ClubID:      getClubID(clubMap, "ค่ายอาสาพัฒนาชนบท"),
 			CategoryID:  volunteerCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1081,7 +1076,7 @@ func setupSampleActivities() {
 			Location:    "อาคารเรียนรวม 1",
 			Capacity:    200,
 			PosterImage: "/images/activities/posterImages/poster1.png",
-			ClubID:      getClubID(clubMap, "ชมรมจิตอาสาแสดทอง"),
+			ClubID:      getClubID(clubMap, "จิตอาสาแสดทอง"),
 			CategoryID:  volunteerCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1095,7 +1090,7 @@ func setupSampleActivities() {
 			Location:    "ศูนย์ธรรมาราม",
 			Capacity:    40,
 			PosterImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมสมาธิ"),
+			ClubID:      getClubID(clubMap, "สมาธิ"),
 			CategoryID:  otherCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1107,7 +1102,7 @@ func setupSampleActivities() {
 			Location:    "ยิมเนเซียมใหญ่",
 			Capacity:    150,
 			PosterImage: "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรมเชียร์ลีดเดอร์"),
+			ClubID:      getClubID(clubMap, "เชียร์ลีดเดอร์"),
 			CategoryID:  otherCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1119,7 +1114,7 @@ func setupSampleActivities() {
 			Location:    "หอประชุมกลาง",
 			Capacity:    300,
 			PosterImage: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-			ClubID:      getClubID(clubMap, "ชมรม To Be Number One"),
+			ClubID:      getClubID(clubMap, "To Be Number One"),
 			CategoryID:  otherCategory.ID,
 			StatusID:    approvedStatus.ID,
 		},
@@ -1127,10 +1122,10 @@ func setupSampleActivities() {
 
 	// Create activities
 	for _, activity := range sampleActivities {
-		if activity.ClubID != 0 { // Only create if club exists
+		if activity.ClubID != 0 && activity.CategoryID != 0 && activity.StatusID != 0 { // Only create if all foreign keys are valid
 			var existing entity.Activity
 			result := db.Where("title = ?", activity.Title).First(&existing)
-			if result.Error != nil {
+			if result.Error != nil { // Activity not found, create it
 				err := db.Create(&activity).Error
 				if err != nil {
 					fmt.Printf("Error creating activity '%s': %v\n", activity.Title, err)
@@ -1141,7 +1136,7 @@ func setupSampleActivities() {
 				fmt.Printf("Activity already exists: %s\n", activity.Title)
 			}
 		} else {
-			fmt.Printf("Skipping activity '%s' - club not found\n", activity.Title)
+			fmt.Printf("Skipping activity '%s' - missing required foreign key (ClubID, CategoryID, or StatusID) \n", activity.Title)
 		}
 	}
 
@@ -1980,296 +1975,3 @@ func setupClubAnnouncements() {
 }
 
 
-// generatePDFReport creates a PDF report with the given parameters
-func generatePDFReport(filePath, reportName, reportType string, userID uint) error {
-    pdf := gofpdf.New("P", "mm", "A4", "")
-    pdf.SetTitle(reportName, false)
-    pdf.AddPage()
-    
-    // Header
-    pdf.SetFont("Arial", "B", 20)
-    pdf.Cell(0, 15, "CEMS Activity Report")
-    pdf.Ln(20)
-    
-    // Report Info
-    pdf.SetFont("Arial", "B", 14)
-    pdf.Cell(0, 10, reportName)
-    pdf.Ln(15)
-    
-    pdf.SetFont("Arial", "", 12)
-    pdf.Cell(0, 8, fmt.Sprintf("Report Type: %s", strings.Title(strings.ReplaceAll(reportType, "_", " "))))
-    pdf.Ln(8)
-    pdf.Cell(0, 8, fmt.Sprintf("User ID: %d", userID))
-    pdf.Ln(8)
-    pdf.Cell(0, 8, fmt.Sprintf("Generated on: %s", time.Now().Format("January 2, 2006 at 15:04")))
-    pdf.Ln(15)
-    
-    // Content based on report type
-    pdf.SetFont("Arial", "B", 12)
-    switch reportType {
-    case "participation":
-        pdf.Cell(0, 10, "Participation Summary")
-        pdf.Ln(12)
-        pdf.SetFont("Arial", "", 10)
-        pdf.Cell(0, 6, "This report contains detailed participation statistics for activities.")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Total activities participated")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Hours of participation")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Participation trends over time")
-        
-    case "hours":
-        pdf.Cell(0, 10, "Activity Hours Summary")
-        pdf.Ln(12)
-        pdf.SetFont("Arial", "", 10)
-        pdf.Cell(0, 6, "This report contains detailed activity hours breakdown.")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Total verified hours")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Hours by category")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Monthly hours distribution")
-        
-    case "evaluation":
-        pdf.Cell(0, 10, "Activity Evaluation Report")
-        pdf.Ln(12)
-        pdf.SetFont("Arial", "", 10)
-        pdf.Cell(0, 6, "This report contains activity evaluation and feedback data.")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Average ratings")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Feedback analysis")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Improvement recommendations")
-        
-    case "summary":
-        pdf.Cell(0, 10, "Comprehensive Activity Summary")
-        pdf.Ln(12)
-        pdf.SetFont("Arial", "", 10)
-        pdf.Cell(0, 6, "This report contains a comprehensive overview of all activities.")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Overall statistics")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Key performance indicators")
-        pdf.Ln(6)
-        pdf.Cell(0, 6, "• Executive summary")
-        
-    default:
-        pdf.Cell(0, 10, "General Report")
-        pdf.Ln(12)
-        pdf.SetFont("Arial", "", 10)
-        pdf.Cell(0, 6, "This is a general activity report.")
-    }
-    
-    // Footer
-    pdf.Ln(20)
-    pdf.SetFont("Arial", "I", 8)
-    pdf.Cell(0, 5, "Generated by CEMS (Community Engagement Management System)")
-    
-    return pdf.OutputFileAndClose(filePath)
-}
-
-// createReportDirectories creates all necessary directories for reports
-func createReportDirectories() error {
-    baseDir := "reports"
-    reportTypes := []string{"participation", "hours", "evaluation", "summary"}
-    
-    // Create base directory
-    if err := os.MkdirAll(baseDir, 0755); err != nil {
-        return fmt.Errorf("failed to create base reports directory: %v", err)
-    }
-    
-    // Create subdirectories for each report type
-    for _, reportType := range reportTypes {
-        dir := filepath.Join(baseDir, reportType)
-        if err := os.MkdirAll(dir, 0755); err != nil {
-            return fmt.Errorf("failed to create %s directory: %v", reportType, err)
-        }
-        fmt.Printf("Created directory: %s\n", dir)
-    }
-    
-    fmt.Println("All report directories created successfully!")
-    return nil
-}
-
-// setupActivityReports creates demo reports for all types and statuses
-func setupActivityReports() error {
-    // First, create all necessary directories
-    if err := createReportDirectories(); err != nil {
-        return fmt.Errorf("failed to create report directories: %v", err)
-    }
-    
-    // Get admin user
-    var adminUser entity.User
-    if err := db.Joins("JOIN roles ON users.role_id = roles.id").
-        Where("roles.role_name = ?", "admin").
-        First(&adminUser).Error; err != nil {
-        return fmt.Errorf("failed to find admin user: %v", err)
-    }
-    
-    now := time.Now()
-    timestamp := now.Format("20060102150405")
-    
-    // Define report types and statuses
-    reportTypes := []string{"participation", "hours", "evaluation", "summary"}
-    statuses := []string{"completed", "processing", "error", "pending"}
-    
-    var reports []entity.ActivityReport
-    
-    // Create reports for each type and status combination
-    for _, reportType := range reportTypes {
-        for _, status := range statuses {
-            reportName := fmt.Sprintf("%s Report [%s] - Admin %d", 
-                strings.Title(strings.ReplaceAll(reportType, "_", " ")), 
-                strings.Title(status), 
-                adminUser.ID)
-            
-            filename := fmt.Sprintf("%s_report_%s_%d_%s.pdf", 
-                reportType, status, adminUser.ID, timestamp)
-            
-            report := entity.ActivityReport{
-                Name:        reportName,
-                UserID:      adminUser.ID,
-                Type:        reportType,
-                FileURL:     filename,
-                Status:      status,
-                GeneratedAt: now,
-            }
-            
-            reports = append(reports, report)
-        }
-    }
-    
-    // Create all reports in database and generate PDF files
-    for _, report := range reports {
-        // Determine the correct directory based on report type
-        reportDir := filepath.Join("reports", report.Type)
-        filePath := filepath.Join(reportDir, report.FileURL)
-        
-        if report.Status == "completed" {
-            // Generate actual PDF for completed reports
-            err := generatePDFReport(filePath, report.Name, report.Type, report.UserID)
-            if err != nil {
-                fmt.Printf("Error generating PDF for %s: %v\n", report.Name, err)
-                // Create placeholder file instead
-                placeholderContent := fmt.Sprintf("PDF generation failed for %s report", report.Type)
-                os.WriteFile(filePath, []byte(placeholderContent), 0644)
-            } else {
-                fmt.Printf("Generated PDF: %s\n", filePath)
-            }
-        } else {
-            // Create placeholder files for non-completed reports
-            var placeholderContent string
-            switch report.Status {
-            case "processing":
-                placeholderContent = fmt.Sprintf("Report is being processed... Please wait.\nReport Type: %s\nUser ID: %d", report.Type, report.UserID)
-            case "error":
-                placeholderContent = fmt.Sprintf("Error occurred while generating report.\nReport Type: %s\nUser ID: %d\nPlease contact administrator.", report.Type, report.UserID)
-            case "pending":
-                placeholderContent = fmt.Sprintf("Report is pending approval.\nReport Type: %s\nUser ID: %d", report.Type, report.UserID)
-            default:
-                placeholderContent = fmt.Sprintf("Report not available.\nReport Type: %s\nUser ID: %d", report.Type, report.UserID)
-            }
-            
-            err := os.WriteFile(filePath, []byte(placeholderContent), 0644)
-            if err != nil {
-                fmt.Printf("Error creating placeholder file for %s: %v\n", report.Name, err)
-            } else {
-                fmt.Printf("Created placeholder: %s\n", filePath)
-            }
-        }
-        
-        // Save report to database
-        if err := db.Create(&report).Error; err != nil {
-            fmt.Printf("Error saving report to database: %v\n", err)
-            continue
-        }
-        
-        fmt.Printf("Created report: %s (Status: %s)\n", report.Name, report.Status)
-    }
-    
-    fmt.Printf("\nSetup completed successfully!\n")
-    fmt.Printf("Created %d demo reports across %d types with %d different statuses\n", 
-        len(reports), len(reportTypes), len(statuses))
-    
-    // Print directory structure
-    fmt.Println("\nReport directory structure:")
-    fmt.Println("reports/")
-    for _, reportType := range reportTypes {
-        fmt.Printf("├── %s/\n", reportType)
-        
-        // List files in each directory
-        dir := filepath.Join("reports", reportType)
-        files, err := os.ReadDir(dir)
-        if err == nil {
-            for i, file := range files {
-                if i == len(files)-1 {
-                    fmt.Printf("│   └── %s\n", file.Name())
-                } else {
-                    fmt.Printf("│   ├── %s\n", file.Name())
-                }
-            }
-        }
-    }
-    
-    return nil
-}
-
-// CleanupReports removes all report files and directories (useful for testing)
-func CleanupReports(db *gorm.DB) error {
-    // Remove all reports from database
-    if err := db.Where("1 = 1").Delete(&entity.ActivityReport{}).Error; err != nil {
-        return fmt.Errorf("failed to delete reports from database: %v", err)
-    }
-    
-    // Remove reports directory
-    if err := os.RemoveAll("reports"); err != nil {
-        return fmt.Errorf("failed to remove reports directory: %v", err)
-    }
-    
-    fmt.Println("All reports cleaned up successfully!")
-    return nil
-}
-
-// GetReportStats returns statistics about reports
-func GetReportStats(db *gorm.DB) (map[string]interface{}, error) {
-    stats := make(map[string]interface{})
-    
-    // Total reports
-    var totalReports int64
-    db.Model(&entity.ActivityReport{}).Count(&totalReports)
-    stats["total_reports"] = totalReports
-    
-    // Reports by type
-    var typeStats []struct {
-        Type  string `json:"type"`
-        Count int64  `json:"count"`
-    }
-    db.Model(&entity.ActivityReport{}).
-        Select("type, count(*) as count").
-        Group("type").
-        Scan(&typeStats)
-    stats["by_type"] = typeStats
-    
-    // Reports by status
-    var statusStats []struct {
-        Status string `json:"status"`
-        Count  int64  `json:"count"`
-    }
-    db.Model(&entity.ActivityReport{}).
-        Select("status, count(*) as count").
-        Group("status").
-        Scan(&statusStats)
-    stats["by_status"] = statusStats
-    
-    // Recent reports (last 7 days)
-    var recentReports int64
-    sevenDaysAgo := time.Now().AddDate(0, 0, -7)
-    db.Model(&entity.ActivityReport{}).
-        Where("generated_at >= ?", sevenDaysAgo).
-        Count(&recentReports)
-    stats["recent_reports"] = recentReports
-    
-    return stats, nil
-}
