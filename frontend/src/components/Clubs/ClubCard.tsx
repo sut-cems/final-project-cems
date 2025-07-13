@@ -12,6 +12,7 @@ interface ClubCardProps {
     activity_count?: number;
     category?: string;
     isActive?: boolean;
+    status_id?: number;
   };
   color: string;
   onClick?: () => void;
@@ -22,7 +23,8 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, color, onClick }) => {
   const logoImage = club.LogoImage;
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  
+  const isPending = Number(club.status_id) === 1;
+
   const getImageUrl = (logoImage: string): string => {
     if (!logoImage) return '';
 
@@ -44,7 +46,16 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, color, onClick }) => {
 
   // Status
   const StatusIndicator = () => {
-    if (club.isActive !== false) {
+    if (isPending) {
+      return (
+        <div className="absolute top-2 right-2 z-20">
+          <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-2 py-1 rounded-full shadow-md flex items-center gap-1 hover:scale-105 transition-transform duration-300">
+            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+            <span className="text-xs font-medium">รออนุมัติ</span>
+          </div>
+        </div>
+      );
+    } else if (club.isActive !== false) {
       return (
         <div className="absolute top-2 right-2 z-20">
           <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-2 py-1 rounded-full shadow-md flex items-center gap-1 hover:scale-105 transition-transform duration-300">
@@ -53,8 +64,7 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, color, onClick }) => {
           </div>
         </div>
       );
-    }
-    else {
+    } else {
       return (
         <div className="absolute top-2 right-2 z-20">
           <div className="bg-gradient-to-r from-red-400 to-red-500 text-white px-2 py-1 rounded-full shadow-md flex items-center gap-1 hover:scale-105 transition-transform duration-300">
@@ -69,13 +79,20 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, color, onClick }) => {
     
   return (
     <div 
-      className={`group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-xl cursor-pointer h-full flex flex-col border border-white/50 ${
-        isHovered ? 'ring-2 ring-purple-300/50 shadow-purple-500/20' : ''
-      }`}
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+  className={`group relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden transition-all duration-500 
+    hover:scale-105 hover:shadow-xl h-full flex flex-col border border-white/50 
+    ${isHovered ? 'ring-2 ring-purple-300/50 shadow-purple-500/20' : ''} 
+    ${!isPending ? 'cursor-pointer' : 'cursor-not-allowed opacity-70 pointer-events-none'}
+  `}
+  onClick={() => {
+    if (!isPending && onClick) {
+      onClick();
+    }
+  }}
+  onMouseEnter={() => setIsHovered(true)}
+  onMouseLeave={() => setIsHovered(false)}
+>
+
       {/* Compact Card Header */}
       <div className="h-32 relative overflow-hidden">
         {/* Background gradients */}
@@ -160,10 +177,16 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, color, onClick }) => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-full shadow-md group-hover:scale-105 transition-transform duration-300 hover:shadow-lg">
-            <span className="text-xs font-semibold">ดูรายละเอียด</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform duration-300" />
-          </div>
+          {!isPending ? (
+            <div className="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-full shadow-md group-hover:scale-105 transition-transform duration-300 hover:shadow-lg">
+              <span className="text-xs font-semibold">ดูรายละเอียด</span>
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform duration-300" />
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white px-3 py-1.5 rounded-full shadow-inner cursor-not-allowed opacity-60">
+              <span className="text-xs font-semibold">รอติดตาม</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import ClubPage from "../pages/Clubs/ClubPage";
 import ActivitiesPhotos from "../pages/Activities/ActivitiesPhotosPage";
 import Activities from "../pages/Activities/ActivitiesPage";
 import ActivitiesDetail from "../pages/Activities/ActivitiesDetail";
+import CreateClub from "../pages/Clubs/CreateClub";
 
 const StudentRoutes = (): RouteObject => {
   return {
@@ -45,6 +46,10 @@ const StudentRoutes = (): RouteObject => {
       {
         path: "/activities/:id",
         element: <ActivitiesDetail />,
+      },
+      {
+        path: "/create-club",
+        element: <CreateClub />,
       },
     ],
   };
