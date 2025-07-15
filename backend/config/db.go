@@ -127,15 +127,15 @@ func SetupDatabase() {
 	}
 
 	faculties := []entity.Faculty{
-		{Name: "Institute of Science"},
-		{Name: "Institute of Social Technology"},
-		{Name: "Institute of Agricultural Technology"},
-		{Name: "Institute of Engineering"},
-		{Name: "Institute of Medicine"},
-		{Name: "Institute of Nursing"},
-		{Name: "Institute of Dentistry"},
-		{Name: "Institute of Public Health"},
-		{Name: "Institute of Digital Arts and Sciences"},
+		{Name: "วิทยาศาสตร์"},
+		{Name: "เทคโนโลยีสังคม"},
+		{Name: "เทคโนโลยีการเกษตร"},
+		{Name: "วิศวกรรมศาสตร์"},
+		{Name: "แพทยศาสตร์"},
+		{Name: "พยาบาลศาสตร์"},
+		{Name: "ทันตแพทยศาสตร์"},
+		{Name: "สาธารณสุขศาสตร์"},
+		{Name: "ศาสตร์และศิลป์ดิจิทัล"},
 	}
 
 	for _, f := range faculties {
@@ -144,61 +144,77 @@ func SetupDatabase() {
 
 	programs := []entity.Program{
 		// Institute of Science
-		{Name: "Mathematics", FacultyID: 1},
-		{Name: "Chemistry", FacultyID: 1},
-		{Name: "Biology", FacultyID: 1},
-		{Name: "Physics", FacultyID: 1},
-		{Name: "Geoinformatics", FacultyID: 1},
-		{Name: "Microbiology", FacultyID: 1},
-		{Name: "Medical Science", FacultyID: 1},
-		{Name: "Sports Science", FacultyID: 1},
-		{Name: "Computer Science", FacultyID: 1},
+		{Name: "คณิตศาสตร์", FacultyID: 1},
+		{Name: "เคมี", FacultyID: 1},
+		{Name: "ชีววิทยา", FacultyID: 1},
+		{Name: "ฟิสิกส์", FacultyID: 1},
+		{Name: "ภูมิสารสนเทศ", FacultyID: 1},
+		{Name: "จุลชีววิทยา", FacultyID: 1},
+		{Name: "วิทยาศาสตร์การแพทย์", FacultyID: 1},
+		{Name: "วิทยาศาสตร์การกีฬา", FacultyID: 1},
+		{Name: "วิทยาการคอมพิวเตอร์", FacultyID: 1},
 
 		// Institute of Social Technology
-		{Name: "Management Technology", FacultyID: 2},
-		{Name: "Innovative Technology in the Service Industry", FacultyID: 2},
+		{Name: "เทคโนโลยีการจัดการ", FacultyID: 2},
+		{Name: "นวัตกรรมเทคโนโลยีในอุตสาหกรรมบริการ", FacultyID: 2},
 
 		// Institute of Agricultural Technology
-		{Name: "Plant production technology", FacultyID: 3},
-		{Name: "Animal Technology and Innovation", FacultyID: 3},
-		{Name: "Food Technology", FacultyID: 3},
+		{Name: "เทคโนโลยีการผลิตพืช", FacultyID: 3},
+		{Name: "เทคโนโลยีและนวัตกรรมการปศุสัตว์", FacultyID: 3},
+		{Name: "เทคโนโลยีอาหาร", FacultyID: 3},
+		// International Program
+		{Name: "ผู้ประกอบการเกษตรเชิงนวัตกรรม (หลักสูตรนานาชาติ)", FacultyID: 3},
 
 		// Institute of Engineering
-		{Name: "Automation and Robotics Manufacturing Engineering", FacultyID: 4},
-		{Name: "Agricultural and Food Engineering", FacultyID: 4},
-		{Name: "Transportation and Logistics Engineering", FacultyID: 4},
-		{Name: "Computer Engineering", FacultyID: 4},
-		{Name: "Chemical Engineering", FacultyID: 4},
-		{Name: "Mechanical Engineering", FacultyID: 4},
-		{Name: "Ceramic Engineering", FacultyID: 4},
-		{Name: "Electrical Engineering", FacultyID: 4},
-		{Name: "Telecommunications and Smart Grid Engineering", FacultyID: 4},
-		{Name: "Geoengineering", FacultyID: 4},
-		{Name: "Petroleum Engineering and Geotechnology", FacultyID: 4},
-		{Name: "Polymer Engineering", FacultyID: 4},
-		{Name: "Industrial Engineering", FacultyID: 4},
-		{Name: "Civil Engineering", FacultyID: 4},
-		{Name: "Metallurgical Engineering", FacultyID: 4},
-		{Name: "Environmental Engineering", FacultyID: 4},
-		{Name: "Electronic Engineering and Embedded Systems", FacultyID: 4},
+		{Name: "วิศวกรรมการผลิตอัตโนมัติและหุ่นยนต์", FacultyID: 4},
+		{Name: "วิศวกรรมเกษตรและอาหาร", FacultyID: 4},
+		{Name: "วิศวกรรมขนส่งและโลจิสติกส์", FacultyID: 4},
+		{Name: "วิศวกรรมคอมพิวเตอร์", FacultyID: 4},
+		{Name: "วิศวกรรมเคมี", FacultyID: 4},
+		{Name: "วิศวกรรมเครื่องกล", FacultyID: 4},
+		{Name: "วิศวกรรมเซรามิก", FacultyID: 4},
+		{Name: "วิศวกรรมโทรคมนาคมและโครงข่ายอัจฉริยะ", FacultyID: 4},
+		{Name: "วิศวกรรมธรณี", FacultyID: 4},
+		{Name: "วิศวกรรมปิโตรเลียมและเทคโนโลยีธรณี", FacultyID: 4},
+		{Name: "วิศวกรรมพอลิเมอร์", FacultyID: 4},
+		{Name: "วิศวกรรมอุตสาหการ", FacultyID: 4},
+		{Name: "วิศวกรรมโยธา", FacultyID: 4},
+		{Name: "วิศวกรรมโลหการ", FacultyID: 4},
+		{Name: "วิศวกรรมสิ่งแวดล้อม", FacultyID: 4},
+		{Name: "วิศวกรรมไฟฟ้า", FacultyID: 4},
+		{Name: "วิศวกรรมอิเล็กทรอนิกส์และระบบฝังตัว", FacultyID: 4},
+		// International program
+		{Name: "วิศวกรรมเครื่องกลและอากาศยาน (หลักสูตรนานาชาติ)", FacultyID: 4},
+		{Name: "วิศวกรรมโยธา (หลักสูตรนานาชาติ)", FacultyID: 4},
+		{Name: "วิศวกรรมปิโตรเคมีและพอลิเมอร์ (หลักสูตรนานาชาติ)", FacultyID: 4},
+		// Special Time Program
+		{Name: "วิศวกรรมเมคคาทรอนิกส์ (หลักสูตรนอกเวลา)", FacultyID: 4},
+		{Name: "วิศวกรรมยานยนต์สมัยใหม่ (หลักสูตรนอกเวลา)", FacultyID: 4},
+		{Name: "วิศวกรรมโยธาและโครงสร้างพื้นธาน (หลักสูตรนอกเวลา)", FacultyID: 4},
+		{Name: "วิศวกรรมไฟฟ้าอุตสาหกรรม (หลักสูตรนอกเวลา)", FacultyID: 4},
+		{Name: "วิศวกรรมระบบสมองกลอัจฉริยะและอิเล็กทรอนิกส์ความถี่สูง (หลักสูตรนอกเวลา)", FacultyID: 4},
+		{Name: "การประกอบการด้วยเทคโนโลยีดิจิทัล (หลักสูตรนอกเวลา)", FacultyID: 4},
+		{Name: "วิศวกรรมอุตสาหการและการจัดการข้อมูล (หลักสูตรนอกเวลา)", FacultyID: 4},
+		{Name: "วิศวกรรมเครื่องกลและกระบวนการผลิต (หลักสูตรนอกเวลา)", FacultyID: 4},
+
 
 		// Institute of Medicine
-		{Name: "Doctor of Medicine Program", FacultyID: 5},
+		{Name: "หลักสูตรแพทยศาสตรบัณฑิต", FacultyID: 5},
 
 		// Institute of Nursing
-		{Name: "Bachelor of Nursing Program", FacultyID: 6},
+		{Name: "หลักสูตรพยาบาลศาสตรบัณฑิต", FacultyID: 6},
 
 		// Institute of Dentistry
-		{Name: "Bachelor of Dentistry Program", FacultyID: 7},
+		{Name: "หลักสูตรทันตแพทยศาสตรบัณฑิต", FacultyID: 7},
 
 		// Institute of Public Health
-		{Name: "Environmental Health", FacultyID: 8},
-		{Name: "Occupational Health and Safety", FacultyID: 8},
-		{Name: "Nutrition and Dietetics", FacultyID: 8},
+		{Name: "อนามัยสิ่งแวดล้อม", FacultyID: 8},
+		{Name: "อาชีวอนามัยและความปลอดภัย", FacultyID: 8},
+		{Name: "โภชนวิทยาและการกำหนดอาหาร", FacultyID: 8},
 
 		// Institute of Digital Arts and Sciences
-		{Name: "Digital Technology", FacultyID: 9},
-		{Name: "Digital Communication Science", FacultyID: 9},
+		{Name: "เทคโนโลยีดิจิทัล", FacultyID: 9},
+		{Name: "นิเทศศาสตร์ดิจิทัล", FacultyID: 9},
 	}
 
 	for _, p := range programs {
@@ -1238,7 +1254,6 @@ func setupSampleActivityHours() {
 	fmt.Println("Sample activity hours setup completed")
 }
 
-
 // Setup สมาชิกชมรม
 func setupClubMembers() {
 	var students []entity.User
@@ -1973,5 +1988,3 @@ func setupClubAnnouncements() {
 
 	fmt.Println("Club announcements setup completed")
 }
-
-

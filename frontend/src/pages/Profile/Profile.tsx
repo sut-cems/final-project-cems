@@ -612,7 +612,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!avatarUrl) {
-      alert("You must have a profile image");
+      alert("กรุณาอัพโหลดรูปประจำตัว");
       return;
     }
 
@@ -782,7 +782,7 @@ export default function Profile() {
             }}
           >
             <ArrowBigLeft size={16} />
-            Back
+            ย้อนกลับ
           </button>
           {/* Avatar */}
           <div
@@ -820,7 +820,7 @@ export default function Profile() {
                 >
                   <Upload size={16} className="text-[#640D5F]" />
                   <span className="text-gray-700 text-sm">
-                    Upload new photo
+                    อัพโหลดรูปประจำตัว
                   </span>
                 </button>
                 {avatarUrl && (
@@ -831,7 +831,7 @@ export default function Profile() {
                     <span className="w-4 h-4 flex items-center justify-center">
                       ×
                     </span>
-                    <span>Remove photo</span>
+                    <span>ลบรูปภาพประจำตัว</span>
                   </button>
                 )}
               </div>
@@ -856,7 +856,7 @@ export default function Profile() {
               className="flex items-center gap-1 px-2 py-1 text-center text-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#640D5F] hover:text-white transition-all duration-300 hover:scale-110"
             >
               <Edit size={16} />
-              Edit Profile
+              แก้ไขข้อมูลส่วนตัว
             </button>
           ) : (
             <>
@@ -870,14 +870,14 @@ export default function Profile() {
                 }`}
               >
                 <Edit size={16} />
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? "กำลังบันทึกข้อมูล..." : "บันทึก"}
               </button>
               <button
                 onClick={handleCancel}
                 className="flex items-center gap-1 px-2 py-1 text-center text-gray-600 border-2 border-gray-400 rounded-lg font-medium hover:bg-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
               >
                 <X size={16} />
-                Cancel
+                ยกเลิก
               </button>
             </>
           )}
@@ -889,7 +889,7 @@ export default function Profile() {
             {/* First Name */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                First name
+                ชื่อจริง
               </label>
               {isEditing ? (
                 <input
@@ -910,7 +910,7 @@ export default function Profile() {
             {/* Last Name */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Last name
+                นามสกุล
               </label>
               {isEditing ? (
                 <input
@@ -931,7 +931,7 @@ export default function Profile() {
             {/* Student ID */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Student ID
+                รหัสนักศึกษา
               </label>
               {isEditing ? (
                 <input
@@ -952,7 +952,7 @@ export default function Profile() {
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Email
+                อีเมล
               </label>
               {isEditing ? (
                 <input
@@ -969,14 +969,14 @@ export default function Profile() {
             {/* Faculty - Now with Combobox */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Faculty
+                สำนักวิชา
               </label>
               {isEditing ? (
                 <Combobox
                   value={profileData.faculty}
                   onChange={(value: any) => handleInputChange("faculty", value)}
                   options={facultyOptions}
-                  placeholder="Select faculty..."
+                  placeholder="เลือกสำนักวิชา..."
                 />
               ) : (
                 <p className="text-gray-900 font-medium">
@@ -988,14 +988,14 @@ export default function Profile() {
             {/* Program - Now with Combobox */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Program
+                สาขาวิชา
               </label>
               {isEditing ? (
                 <Combobox
                   value={profileData.program}
                   onChange={(value: any) => handleInputChange("program", value)}
                   options={programOptions[profileData.faculty] || []}
-                  placeholder="Select program..."
+                  placeholder="เลือกสาขาวิชา..."
                   disabled={!profileData.faculty}
                 />
               ) : (
@@ -1008,7 +1008,7 @@ export default function Profile() {
             {/* Club */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Club
+                ชมรม
               </label>
               <p className="text-gray-900 font-medium">{profileData.club}</p>
             </div>
@@ -1016,7 +1016,7 @@ export default function Profile() {
             {/* Activity Hours */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Activity Hour
+                ชั่วโมงกิจกรรม
               </label>
               <p className="text-gray-900 font-medium">
                 {profileData.activityHours}
