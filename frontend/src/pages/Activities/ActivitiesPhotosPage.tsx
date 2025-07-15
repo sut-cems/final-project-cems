@@ -141,11 +141,17 @@ export default function ActivitiesPhotos() {
 
   useEffect(() => {
     const fetchActivities = async () => {
-      const res = await fetchActivitiesPhotos();
-      setActivities(res);
+      try {
+        const res = await fetchActivitiesPhotos();
+        setActivities(res || []); // Fallback to empty array if res is null
+      } catch (error) {
+        console.error("Error fetching activities:", error);
+        setActivities([]); // Set to empty array on error
+      }
     };
 
     fetchActivities();
+
     const fetchUserRole = async () => {
       const userID = localStorage.getItem("userId");
       if (userID) {
@@ -166,8 +172,6 @@ export default function ActivitiesPhotos() {
       <Navbar />
 
       {/* Main Content */}
-
-      {/* Topic Section */}
       <div className="relative w-full flex items-center">
         <div className="w-full mb-8 -mx-4 px-4 py-12 bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600">
           <div className="container mx-auto">
@@ -199,66 +203,72 @@ export default function ActivitiesPhotos() {
       <div className="flex flex-col container mx-auto h-auto pb-8 px-4">
         <div className="flex flex-col gap-8">
           <div className="space-y-8">
-            {activities
-              .filter((activity) =>
-                activity.title.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .map((activity) => (
-                <div key={activity.id}>
-                  {/* Activity Title with Add Photo Button */}
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-3xl font-bold text-black-700 pl-4 relative select-none ">
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-orange-600 rounded"></span>
-                      {activity.title} ({activity.images.length} รูป)
-                    </h2>
+            {activities &&
+              activities
+                .filter((activity) =>
+                  activity.title
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+                )
+                .map((activity) => (
+                  <div key={activity.id}>
+                    {/* Activity Title with Add Photo Button */}
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-3xl font-bold text-black-700 pl-4 relative select-none ">
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-orange-600 rounded"></span>
+                        {activity.title} ({activity.images.length} รูป)
+                      </h2>
 
-                    {/* Add Photo Button - Only show for club_admin */}
-                    {userRole === "club_admin" && (
-                      <button
-                        onClick={() => handleAddPhoto(activity.id)}
-                        className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg duration-200 font-medium hover:scale-105 hover:cursor-pointer transition-all"
-                      >
-                        <Plus size={20} />
-                        เพิ่มรูปภาพ
-                      </button>
+                      {/* Add Photo Button - Only show for club_admin */}
+                      {userRole === "club_admin" && (
+                        <button
+                          onClick={() => handleAddPhoto(activity.id)}
+                          className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg duration-200 font-medium hover:scale-105 hover:cursor-pointer transition-all"
+                        >
+                          <Plus size={20} />
+                          เพิ่มรูปภาพ
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Images Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                      {activity.images.slice(0, 4).map((image, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-square rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:scale-105 duration-300 hover:ring-4 hover:ring-orange-300"
+                        >
+                          <img
+                            src={image.url}
+                            alt={`Activity ${activity.id} - Image ${index + 1}`}
+                            className="w-full h-full object-contain cursor-pointer transition-transform duration-300"
+                            onClick={() =>
+                              openSlideshow(activity.images, index)
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* View More Button */}
+                    {activity.images.length > 4 && (
+                      <div className="flex justify-end mt-4">
+                        <button
+                          onClick={() => openSlideshow(activity.images)}
+                          className="text-[#640D5F] text-sm font-medium hover:underline flex items-center"
+                        >
+                          ดูทั้งหมด
+                        </button>
+                      </div>
                     )}
                   </div>
-
-                  {/* Images Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    {activity.images.slice(0, 4).map((image, index) => (
-                      <div
-                        key={index}
-                        className="relative aspect-square rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:scale-105 duration-300 hover:ring-4 hover:ring-orange-300"
-                      >
-                        <img
-                          src={image.url}
-                          alt={`Activity ${activity.id} - Image ${index + 1}`}
-                          className="w-full h-full object-contain cursor-pointer transition-transform duration-300"
-                          onClick={() => openSlideshow(activity.images, index)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* View More Button */}
-                  {activity.images.length > 4 && (
-                    <div className="flex justify-end mt-4">
-                      <button
-                        onClick={() => openSlideshow(activity.images)}
-                        className="text-[#640D5F] text-sm font-medium hover:underline flex items-center"
-                      >
-                        ดูทั้งหมด
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
           </div>
         </div>
 
-        {/* No search results message - ADD THIS */}
-        {activities.length > 0 &&
+        {/* No search results message */}
+        {activities &&
+          activities.length > 0 &&
           activities.filter((activity) =>
             activity.title.toLowerCase().includes(searchTerm.toLowerCase())
           ).length === 0 && (
@@ -268,14 +278,14 @@ export default function ActivitiesPhotos() {
           )}
 
         {/* Empty State (when no activities) */}
-        {activities.length === 0 && (
+        {activities && activities.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">
             <div className="text-6xl mb-4">📸</div>
             <h3 className="text-xl font-medium mb-2">
-              ยังไม่มีรูปภาพและวิดีโอ
+              ยังไม่มีรูปภาพจากกิจกรรม
             </h3>
             <p className="text-center">
-              เมื่อมีการอัพโหลดรูปภาพและวิดีโอจากกิจกรรม จะแสดงที่นี่
+              เมื่อมีการอัพโหลดรูปภาพจากกิจกรรม จะแสดงที่นี่
             </p>
           </div>
         )}
