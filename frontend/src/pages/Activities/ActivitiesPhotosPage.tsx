@@ -58,6 +58,10 @@ export default function ActivitiesPhotos() {
     navigate(`/activities/photo/add-photo/${activityId}`);
   };
 
+  const handleAddNewPhoto = () => {
+    navigate(`/activities/photo/add-new-photo/`);
+  };
+
   const openSlideshow = (images: any, startIndex = 0) => {
     setSelectedActivityImages(images);
     setCurrentImageIndex(startIndex);
@@ -195,6 +199,16 @@ export default function ActivitiesPhotos() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+
+            {/* Add Photo Button - Only show for club_admin */}
+            <div className="flex items-center justify-center mx-auto mt-4">
+              {userRole === "club_admin" && (
+                <button onClick={handleAddNewPhoto} className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg duration-200 font-medium hover:scale-105 hover:cursor-pointer transition-all">
+                  <Plus size={20} />
+                  เพิ่มรูปภาพใหม่สำหรับกิจกรรม
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -2,7 +2,6 @@ import { Upload, Spin, Alert, Typography, Button, Space, message } from "antd";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
-import ImgCrop from "antd-img-crop";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -10,6 +9,7 @@ import {
   fetchPhotosByActivityID,
 } from "../../services/http/activities";
 import { fetchUserById } from "../../services/http";
+import { Save, X } from "lucide-react";
 
 const { Title } = Typography;
 
@@ -38,6 +38,7 @@ export default function AddActivitiesPhotos() {
     null
   );
   const [userFullname, setUserFullname] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch activity photos on component mount
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function AddActivitiesPhotos() {
       if (userID) {
         try {
           const userData = await fetchUserById(parseInt(userID));
-          setUserFullname(`${userData.FirstName} ${userData.LastName}`|| "");
+          setUserFullname(`${userData.FirstName} ${userData.LastName}` || "");
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
@@ -235,61 +236,71 @@ export default function AddActivitiesPhotos() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col w-full min-h-screen bg-gray-50">
       <Navbar />
 
-      <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "50px" }}>
-            <Spin size="large" />
-            <p>Loading activity photos...</p>
-          </div>
-        ) : error ? (
-          <Alert
-            message="Error"
-            description={error}
-            type="error"
-            showIcon
-            style={{ marginBottom: "20px" }}
-          />
-        ) : (
-          <>
-            {activityData && (
-              <div style={{ marginBottom: "20px" }}>
-                <Title level={2}>{activityData.title}</Title>
-                <p>Total Photos: {activityData.images.length}</p>
-                {newFileList.length > 0 && (
-                  <p style={{ color: "#1890ff" }}>
-                    New photos ready to upload: {newFileList.length}
-                  </p>
-                )}
-              </div>
-            )}
+      <div className="flex flex-col container mx-auto h-auto justify-center items-center py-8">
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 w-full max-w-2xl max-sm:w-md max-md:w-xl mx-4 p-6">
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "50px" }}>
+              <Spin size="large" />
+              <p>Loading activity photos...</p>
+            </div>
+          ) : error ? (
+            <Alert
+              message="Error"
+              description={error}
+              type="error"
+              showIcon
+              style={{ marginBottom: "20px" }}
+            />
+          ) : (
+            <>
+              {activityData && (
+                <div style={{ marginBottom: "20px" }}>
+                  <h1 className="flex justify-center text-4xl font-bold mb-6">
+                    {activityData.title}
+                  </h1>
+                  <p>Total Photos: {activityData.images.length}</p>
+                  {newFileList.length > 0 && (
+                    <p style={{ color: "#1890ff" }}>
+                      New photos ready to upload: {newFileList.length}
+                    </p>
+                  )}
+                </div>
+              )}
 
-            <ImgCrop rotationSlider>
-              <Upload {...uploadProps}>{"+ Upload"}</Upload>
-            </ImgCrop>
+              <Upload {...uploadProps} multiple={true} accept="image/*">
+                {"+ Upload"}
+              </Upload>
 
-            {newFileList.length > 0 && (
-              <div style={{ marginTop: "20px", textAlign: "center" }}>
-                <Space>
-                  <Button
-                    type="primary"
-                    onClick={handleSave}
-                    loading={uploading}
-                    disabled={uploading}
-                  >
-                    Save ({newFileList.length} photo
-                    {newFileList.length > 1 ? "s" : ""})
-                  </Button>
-                  <Button onClick={handleCancel} disabled={uploading}>
-                    Cancel
-                  </Button>
-                </Space>
-              </div>
-            )}
-          </>
-        )}
+              {newFileList.length > 0 && (
+                <div style={{ marginTop: "20px", textAlign: "center" }}>
+                  <Space>
+                    <button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                      className={`flex items-center gap-1 px-4 py-2 text-center text-white bg-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#7d1470] transition-all duration-300 hover:scale-110 ${
+                        isSaving ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <Save size={16} />
+                      {isSaving ? "กำลังบันทึกข้อมูล..." : "บันทึก"}
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      disabled={isSaving}
+                      className="flex items-center gap-1 px-4 py-2 text-center text-gray-600 border-2 border-gray-400 rounded-lg font-medium hover:bg-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
+                    >
+                      <X size={16} />
+                      ยกเลิก
+                    </button>
+                  </Space>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <Footer />
