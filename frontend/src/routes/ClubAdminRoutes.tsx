@@ -6,6 +6,7 @@ import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubAdminPage from "../pages/Clubs/ClubAdminPage";
 import Activities from "../pages/Activities/ActivitiesPage";
+import EditActivities from "../pages/Activities/EditActivities";
 import ActivitiesDetail from "../pages/Activities/ActivitiesDetail";
 import ActivitiesPhotos from "../pages/Activities/ActivitiesPhotosPage";
 import AddActivitiesPhotos from "../pages/Activities/AddActivitiesPhoto";
@@ -40,6 +41,10 @@ const ClubAdminRoutes = (): RouteObject => {
       {
         path: "/activities",
         element: <Activities />,
+      },
+      {
+        path: "/activities/edit/:id",
+        element: <EditActivities />,
       },
       {
         path: "/activities/:id",

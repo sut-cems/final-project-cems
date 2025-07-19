@@ -12,23 +12,37 @@ const ActivityDetailHeader: React.FC<Props> = ({ activity }) => {
     : `${API_BASE_URL}/${activity.PosterImage}`;
 
   return (
-    <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-8">
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+    <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-2xl mb-4">
+      {/* พื้นหลังเบลอแบบมีมิติ */}
+      <div
+        className="absolute inset-0 bg-cover bg-center blur-md scale-110 transform"
+        style={{ backgroundImage: `url(${imageUrl})` }}
+      />
+
+      {/* แถบสีไล่ระดับเพิ่มความเด่นให้เนื้อหา */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10" />
+
+      {/* ภาพหลักแบบไม่เบลอ */}
       <img
         src={imageUrl}
         alt={activity.Title}
-        className="w-full h-80 md:h-96 object-cover"
+        className="absolute inset-0 w-full h-full object-cover opacity-90 z-0"
       />
+
+      {/* ข้อมูลกิจกรรม */}
       <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-20">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="px-3 py-1 bg-blue-500/80 rounded-full text-sm font-medium backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <span className="px-3 py-1 bg-blue-500/70 rounded-full text-sm font-medium backdrop-blur-sm">
             {activity.Category?.Name || "กิจกรรม"}
           </span>
-          <span className="px-3 py-1 bg-green-500/80 rounded-full text-sm font-medium backdrop-blur-sm">
+          <span className="px-3 py-1 bg-green-500/70 rounded-full text-sm font-medium backdrop-blur-sm">
             {activity.Club?.Name || "ชมรม"}
           </span>
+          <span className="px-3 py-1 bg-orange-500/70 rounded-full text-sm font-medium backdrop-blur-sm">
+            {activity.Status?.Name || "สถานะ"}
+          </span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-2 drop-shadow-lg">
+        <h1 className="text-3xl md:text-4xl font-bold drop-shadow-xl">
           {activity.Title}
         </h1>
       </div>
