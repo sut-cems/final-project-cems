@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import type { Activity } from "../../interfaces/IActivitys";
+import { useNavigate } from 'react-router-dom';
+
 import {
   Clock,
   MapPin,
@@ -32,6 +34,7 @@ const ActivityDetailContent: React.FC<Props> = ({
   const currentParticipants = activity.ActivityRegistrations?.length || 0;
   const availableSpots = activity.Capacity - currentParticipants;
   const isFull = availableSpots <= 0;
+  const navigate = useNavigate();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("th-TH", {
@@ -50,18 +53,13 @@ const ActivityDetailContent: React.FC<Props> = ({
   };
 
   const handleEditActivity = () => {
-    // TODO: Navigate to edit activity page
+    navigate(`/activities/edit/${activity.ID}`);
     console.log("Navigate to edit activity");
   };
 
   const handleManageRegistrations = () => {
-    // TODO: Navigate to manage registrations page
+    navigate(`/activities/edit/${activity.ID}`);
     console.log("Navigate to manage registrations");
-  };
-
-  const handleActivitySettings = () => {
-    // TODO: Navigate to activity settings page
-    console.log("Navigate to activity settings");
   };
 
   return (
@@ -282,14 +280,6 @@ const ActivityDetailContent: React.FC<Props> = ({
                   <span className="ml-auto bg-orange-200 text-orange-800 px-2 py-1 rounded-full text-xs">
                     {currentParticipants}
                   </span>
-                </button>
-
-                <button
-                  onClick={handleActivitySettings}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-100 rounded-lg transition-colors duration-200 text-gray-700"
-                >
-                  <Settings className="w-4 h-4 text-orange-600" />
-                  <span>ตั้งค่ากิจกรรม</span>
                 </button>
               </div>
             </div>

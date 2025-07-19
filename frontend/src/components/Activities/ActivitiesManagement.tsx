@@ -3,7 +3,7 @@ import {  Plus, Sparkles } from 'lucide-react';
 import { message } from 'antd';
 import {  fetchActivityByClubID } from '../../services/http';
 import type { Activity } from '../../interfaces/IActivitys';
-import ActivityCard from '../../components/Activities/ActivitiesCard'; // ✅ ใช้การ์ดที่คุณสร้างไว้
+import ActivityCard from '../../components/Activities/ActivitiesCard';
 
 interface BodyProps {
   clubId: number | null;

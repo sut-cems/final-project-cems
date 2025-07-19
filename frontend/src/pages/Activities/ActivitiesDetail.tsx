@@ -21,10 +21,6 @@ const ActivitiesDetail: React.FC = () => {
         if (id) {
           const res = await fetchActivityById(id);
           setActivity(res);
-          // TODO: Check if user is already registered
-          // setIsRegistered(checkIfUserRegistered(res.ActivityRegistrations));
-
-          // Check if user can manage this activity
           await checkManagePermission(res);
         }
       } catch (err) {

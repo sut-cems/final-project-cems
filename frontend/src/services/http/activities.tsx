@@ -1,4 +1,5 @@
 import type { Activity } from "../../interfaces/IActivitys";
+import type { EventCategory } from "../../interfaces/IEventCategories";
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -59,6 +60,23 @@ export async function fetchActivityById(id: string): Promise<Activity> {
   console.log("FETCH RESULT:", result); 
 
   return result.activity; 
+}
+
+// GET /ActivityCategory
+export async function fetchActivityCategory(): Promise<EventCategory[]> {
+  const response = await fetch(`${API_BASE_URL}/activities/category`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.categories;
 }
 
 export async function fetchActivitiesPhotos() {
