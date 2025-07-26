@@ -151,3 +151,16 @@ export async function addPhotoToActivity(id: number, photoData: { url: string; u
     };
   }
 }
+//update activity
+export async function updateActivity(id: string, formData: FormData): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
+    method: "PATCH",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update activity: ${errorText}`);
+  }
+}
+
