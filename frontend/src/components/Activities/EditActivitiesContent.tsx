@@ -12,23 +12,22 @@ import {
   Tag,
   Image,
   Clock,
-  ImageOff,
 } from "lucide-react";
 import type { EventCategory } from "../../interfaces/IEventCategories";
 import type { Activity } from "../../interfaces/IActivitys";
 import { fetchActivityCategory } from "../../services/http/activities";
 import { fetchActivityById } from "../../services/http/activities";
+import { updateActivity } from "../../services/http/activities";
 import { message } from "antd";
 
 const EditActivityPage = () => {
   const [categoryList, setCategoryList] = useState<EventCategory[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState<boolean>(false);
-
-  console.log("activity:", activity);
 
   const getImageUrl = (path: string): string => {
     if (!path) return "";
@@ -36,35 +35,6 @@ const EditActivityPage = () => {
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return `${API_BASE_URL}${cleanPath}`;
   };
-  console.log("final URL:", getImageUrl(activity?.PosterImage || ""));
-  console.log("PosterImage path:", activity?.PosterImage);
-
-  useEffect(() => {
-    const loadCategory = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchActivityCategory();
-        setCategoryList(res);
-      } catch (err) {
-        message.error("ไม่สามารถโหลดสถานะกิจกรรมได้");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const loadActivity = async () => {
-      if (!id) return;
-      try {
-        const res = await fetchActivityById(id);
-        setActivity(res);
-      } catch (err) {
-        message.error("ไม่สามารถโหลดข้อมูลกิจกรรมได้");
-      }
-    };
-
-    loadActivity();
-    loadCategory();
-  }, [id]);
 
   const handleInputChange = (field: keyof Activity, value: string | number) => {
     if (!activity) return;
@@ -132,21 +102,12 @@ const EditActivityPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      alert("✅ บันทึกข้อมูลกิจกรรมเรียบร้อยแล้ว!");
-    } catch (error) {
-      alert("❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง");
-    } finally {
-      setIsLoading(false);
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const imageUrl = URL.createObjectURL(file);
+      setPreviewImage(imageUrl);
+      setUploadedFile(file);
     }
   };
 
@@ -176,6 +137,60 @@ const EditActivityPage = () => {
 
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
+
+const handleSubmit = async () => {
+  if (!validateForm() || !activity || !id) return;
+
+  setIsLoading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("title", activity.Title);
+    formData.append("description", activity.Description);
+    formData.append("location", activity.Location);
+    formData.append("date_start", new Date(activity.DateStart).toISOString());
+    formData.append("date_end", new Date(activity.DateEnd).toISOString());
+    formData.append("capacity", activity.Capacity.toString());
+    formData.append("category_id", activity.CategoryID.toString());
+
+    if (uploadedFile) {
+      formData.append("poster_image", uploadedFile);
+    }
+
+    await updateActivity(id, formData);
+
+    message.success("✅ บันทึกกิจกรรมเรียบร้อยแล้ว!");
+  } catch (error) {
+    console.error(error);
+    message.error("❌ เกิดข้อผิดพลาดในการบันทึกกิจกรรม");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  useEffect(() => {
+    const loadCategory = async () => {
+      try {
+        const res = await fetchActivityCategory();
+        setCategoryList(res);
+      } catch (err) {
+        message.error("ไม่สามารถโหลดสถานะกิจกรรมได้");
+      }
+    };
+
+    const loadActivity = async () => {
+      if (!id) return;
+      try {
+        const res = await fetchActivityById(id);
+        setActivity(res);
+      } catch (err) {
+        message.error("ไม่สามารถโหลดข้อมูลกิจกรรมได้");
+      }
+    };
+
+    loadActivity();
+    loadCategory();
+  }, [id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -449,11 +464,10 @@ const EditActivityPage = () => {
             </div>
           </div>
 
-
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Poster Image */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-24">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white">
                 <div className="flex items-center gap-3">
                   <Image size={24} />
@@ -463,16 +477,14 @@ const EditActivityPage = () => {
               <div className="p-6 space-y-4">
                 <div className="relative group">
                   <img
-                    src={getImageUrl(activity?.PosterImage || "")}
+                    src={
+                      previewImage || getImageUrl(activity?.PosterImage || "")
+                    }
                     alt="Poster"
                     className="w-full aspect-[3/4] object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition-shadow"
                   />
                   <div className="absolute inset-0  group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white text-sm font-medium">
-                        คลิกเพื่อเปลี่ยนรูป
-                      </p>
-                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
                 </div>
 
@@ -481,7 +493,7 @@ const EditActivityPage = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      //onChange={handleImageUpload}
+                      onChange={handleImageUpload}
                       className="hidden"
                     />
                     <div className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 cursor-pointer transition-all">

@@ -110,6 +110,7 @@ func main() {
 		router.GET("/all/activities", activityHandler.GetAllActivities)
 		router.GET("/activities/category", controllers.GetActivityCategory)
 		router.GET("/activities/:id", activityHandler.GetActivityByID)
+		router.PATCH("/activities/:id", controllers.UpdateActivityByID)
 		router.GET("/activities/club/:id", activityHandler.GetActivityByClubID)
 		router.GET("/activities/statistics", activityHandler.GetActivityStatistics)
 		router.GET("/activities/photo",controllers.GetActivitiesWithPhotos)
