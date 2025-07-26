@@ -5,8 +5,6 @@ import {
   Upload,
   X,
   ArrowBigLeft,
-  ChevronDown,
-  Check,
   CheckCircle,
 } from "lucide-react";
 import Footer from "../../components/Home/Footer";
@@ -17,109 +15,8 @@ import {
   updateUser,
 } from "../../services/http";
 import type { Faculty } from "../../interfaces/IFaculty";
+import Combobox from "../../components/Combobox/Combobox";
 
-// Combobox Component
-const Combobox = ({
-  value,
-  onChange,
-  options,
-  placeholder,
-  disabled = false,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: string[];
-  placeholder?: string;
-  disabled?: boolean;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const comboboxRef = useRef<HTMLDivElement | null>(null);
-
-  const filteredOptions = options.filter((option: string) =>
-    option.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSelect = (option: string) => {
-    onChange(option);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        comboboxRef.current &&
-        !comboboxRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        setSearchTerm("");
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [isOpen]);
-
-  return (
-    <div className="relative" ref={comboboxRef}>
-      <div
-        className={`w-full p-2 border border-gray-300 rounded-md bg-white cursor-pointer flex justify-between items-center ${
-          disabled
-            ? "bg-gray-100 cursor-not-allowed"
-            : "focus-within:ring-2 focus-within:ring-purple-800 focus-within:border-transparent"
-        }`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-      >
-        <span className={value ? "text-gray-900" : "text-gray-500"}>
-          {value || placeholder}
-        </span>
-        <ChevronDown
-          size={16}
-          className={`text-gray-400 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </div>
-
-      {isOpen && !disabled && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60">
-          <div className="p-2 border-b">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full p-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-purple-800"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-          <div className="max-h-48 overflow-auto">
-            {filteredOptions.length === 0 ? (
-              <div className="p-2 text-gray-500 text-sm">No options found</div>
-            ) : (
-              filteredOptions.map((option: string, index: number) => (
-                <div
-                  key={index}
-                  className="p-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center text-sm"
-                  onClick={() => handleSelect(option)}
-                >
-                  <span>{option}</span>
-                  {value === option && (
-                    <Check size={16} className="text-purple-800" />
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // Image Cropper Component
 const ImageCropper = ({
@@ -612,7 +509,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!avatarUrl) {
-      alert("You must have a profile image");
+      alert("กรุณาอัพโหลดรูปประจำตัว");
       return;
     }
 
@@ -782,7 +679,7 @@ export default function Profile() {
             }}
           >
             <ArrowBigLeft size={16} />
-            Back
+            ย้อนกลับ
           </button>
           {/* Avatar */}
           <div
@@ -820,7 +717,7 @@ export default function Profile() {
                 >
                   <Upload size={16} className="text-[#640D5F]" />
                   <span className="text-gray-700 text-sm">
-                    Upload new photo
+                    อัพโหลดรูปประจำตัว
                   </span>
                 </button>
                 {avatarUrl && (
@@ -831,7 +728,7 @@ export default function Profile() {
                     <span className="w-4 h-4 flex items-center justify-center">
                       ×
                     </span>
-                    <span>Remove photo</span>
+                    <span>ลบรูปภาพประจำตัว</span>
                   </button>
                 )}
               </div>
@@ -856,7 +753,7 @@ export default function Profile() {
               className="flex items-center gap-1 px-2 py-1 text-center text-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#640D5F] hover:text-white transition-all duration-300 hover:scale-110"
             >
               <Edit size={16} />
-              Edit Profile
+              แก้ไขข้อมูลส่วนตัว
             </button>
           ) : (
             <>
@@ -870,14 +767,14 @@ export default function Profile() {
                 }`}
               >
                 <Edit size={16} />
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? "กำลังบันทึกข้อมูล..." : "บันทึก"}
               </button>
               <button
                 onClick={handleCancel}
                 className="flex items-center gap-1 px-2 py-1 text-center text-gray-600 border-2 border-gray-400 rounded-lg font-medium hover:bg-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
               >
                 <X size={16} />
-                Cancel
+                ยกเลิก
               </button>
             </>
           )}
@@ -889,7 +786,7 @@ export default function Profile() {
             {/* First Name */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                First name
+                ชื่อจริง
               </label>
               {isEditing ? (
                 <input
@@ -910,7 +807,7 @@ export default function Profile() {
             {/* Last Name */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Last name
+                นามสกุล
               </label>
               {isEditing ? (
                 <input
@@ -931,7 +828,7 @@ export default function Profile() {
             {/* Student ID */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Student ID
+                รหัสนักศึกษา
               </label>
               {isEditing ? (
                 <input
@@ -952,7 +849,7 @@ export default function Profile() {
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Email
+                อีเมล
               </label>
               {isEditing ? (
                 <input
@@ -969,14 +866,14 @@ export default function Profile() {
             {/* Faculty - Now with Combobox */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Faculty
+                สำนักวิชา
               </label>
               {isEditing ? (
                 <Combobox
                   value={profileData.faculty}
                   onChange={(value: any) => handleInputChange("faculty", value)}
                   options={facultyOptions}
-                  placeholder="Select faculty..."
+                  placeholder="เลือกสำนักวิชา..."
                 />
               ) : (
                 <p className="text-gray-900 font-medium">
@@ -988,14 +885,14 @@ export default function Profile() {
             {/* Program - Now with Combobox */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Program
+                สาขาวิชา
               </label>
               {isEditing ? (
                 <Combobox
                   value={profileData.program}
                   onChange={(value: any) => handleInputChange("program", value)}
                   options={programOptions[profileData.faculty] || []}
-                  placeholder="Select program..."
+                  placeholder="เลือกสาขาวิชา..."
                   disabled={!profileData.faculty}
                 />
               ) : (
@@ -1008,7 +905,7 @@ export default function Profile() {
             {/* Club */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Club
+                ชมรม
               </label>
               <p className="text-gray-900 font-medium">{profileData.club}</p>
             </div>
@@ -1016,7 +913,7 @@ export default function Profile() {
             {/* Activity Hours */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Activity Hour
+                ชั่วโมงกิจกรรม
               </label>
               <p className="text-gray-900 font-medium">
                 {profileData.activityHours}

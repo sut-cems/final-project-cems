@@ -30,6 +30,7 @@ const Navbar: React.FC<CEMSNavbarProps> = ({ className = '' }) => {
     { label: 'หน้าหลัก', href: '/' },
     { label: 'ชมรม', href: '/clubs' },
     { label: 'กิจกรรม', href: '/activities' },
+    { label: 'รูปภาพกิจกรรม', href: '/activities/photo' },
     { label: 'รายงาน', href: '/dashboard', requireAdmin: true }, 
     { label: 'เกี่ยวกับเรา', href: '/about', isScrollTarget: true },
   ];

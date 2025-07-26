@@ -76,6 +76,7 @@ func main() {
 
 		// Routes for Users
 		router.GET("/users", controllers.GetUsers)
+		router.GET("/users/search", controllers.SearchUsers)
 		router.GET("/users/:id", controllers.GetUserByID)
 		router.POST("/users", controllers.CreateUser)
 		router.PATCH("/users/:id", controllers.UpdateUser)
@@ -107,6 +108,7 @@ func main() {
 		router.GET("/activities/featured", activityHandler.GetFeaturedActivities)
 		router.GET("/activities", activityHandler.GetActivities)
 		router.GET("/all/activities", activityHandler.GetAllActivities)
+		router.GET("/activities/category", controllers.GetActivityCategory)
 		router.GET("/activities/:id", activityHandler.GetActivityByID)
 		router.GET("/activities/club/:id", activityHandler.GetActivityByClubID)
 		router.GET("/activities/statistics", activityHandler.GetActivityStatistics)
@@ -127,9 +129,10 @@ func main() {
 		router.GET("/charts/activity-hours", reportHandler.GetActivityHoursChart)
 
 		router.GET("/reports", reportHandler.GetReportList)
-		router.POST("/generate-report", reportHandler.GenerateReportsBatch)
+		router.POST("/reports/generate", reportHandler.GenerateReport)
 		router.GET("/download-report/:id", reportHandler.DownloadReport)
 		router.DELETE("/reports/:id", reportHandler.DeleteReport)
+
 
 	}
 

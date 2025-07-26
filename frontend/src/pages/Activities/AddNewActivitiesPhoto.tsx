@@ -1,90 +1,51 @@
-import { Upload, Spin, Alert, Space, message } from "antd";
+import { Upload, Spin, Alert, Space, message, Form } from "antd";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
+import Combobox from "../../components/Combobox/Combobox";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   addPhotoToActivity,
-  fetchPhotosByActivityID,
+  fetchActivityAll,
 } from "../../services/http/activities";
 import { fetchUserById } from "../../services/http";
 import { ArrowBigLeft, Save, X } from "lucide-react";
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 
-interface ActivityPhoto {
-  url: string;
-  uploadedBy: string;
-  uploadedDate: string;
-}
-
-interface ActivityResponse {
-  id: number;
-  title: string;
-  images: ActivityPhoto[];
+interface ActivityOption {
+  ID: number;
+  Title: string;
 }
 
 export default function AddActivitiesPhotos() {
   const { id } = useParams<{ id: string }>();
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
+
+  // State for activities
+  const [activities, setActivities] = useState<ActivityOption[]>([]);
+  const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
+    id ? parseInt(id) : null
+  );
+  const [selectedActivityValue, setSelectedActivityValue] = useState<string>(
+    id || ""
+  );
+  const [loadingActivities, setLoadingActivities] = useState(true);
+
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [newFileList, setNewFileList] = useState<UploadFile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
-  const [activityData, setActivityData] = useState<ActivityResponse | null>(
-    null
-  );
+
   const [userFullname, setUserFullname] = useState<string>("");
+
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch activity photos on component mount
+  // Fetch user data
   useEffect(() => {
-    const fetchActivityPhotos = async () => {
-      if (!id) {
-        setError("Activity ID is required");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const result = await fetchPhotosByActivityID(Number(id));
-
-        // Check if the API call was successful
-        if (result.success === false) {
-          throw new Error(result.error || "Failed to fetch activity photos");
-        }
-
-        // Assuming the result is the ActivityResponse when successful
-        const data: ActivityResponse = result;
-        setActivityData(data);
-
-        // Transform API response to UploadFile format
-        const transformedFileList: UploadFile[] = data.images.map(
-          (photo, index) => ({
-            uid: `${data.id}-${index}`,
-            name: `photo-${index + 1}.jpg`,
-            status: "done",
-            url: photo.url,
-            response: {
-              uploadedBy: photo.uploadedBy,
-              uploadedDate: photo.uploadedDate,
-            },
-          })
-        );
-
-        setFileList(transformedFileList);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        setFileList([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchActivityPhotos();
-
     const fetchUserFullname = async () => {
       const userID = localStorage.getItem("userId");
       if (userID) {
@@ -97,7 +58,54 @@ export default function AddActivitiesPhotos() {
       }
     };
     fetchUserFullname();
-  }, [id]);
+  }, []);
+
+  // Fetch activities for combobox
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoadingActivities(true);
+        const result = await fetchActivityAll();
+        setActivities(result);
+
+        // Set initial value if id is provided
+        if (id && result.length > 0) {
+          const foundActivity = result.find(
+            (activity) => activity.ID === parseInt(id)
+          );
+          if (foundActivity) {
+            setSelectedActivityValue(foundActivity.Title);
+            setSelectedActivityId(foundActivity.ID);
+            form.setFieldsValue({
+              activityId: foundActivity.Title,
+            });
+          }
+        }
+        setLoading(true);
+      } catch (error) {
+        setError("Failed to load existing photos");
+      } finally {
+        setLoading(false);
+        setLoadingActivities(false);
+      }
+    };
+
+    fetchActivities();
+  }, [id, form]);
+
+  const handleActivityChange = (value: string) => {
+    // Find the activity by title
+    const selectedActivity = activities.find(
+      (activity) => activity.Title === value
+    );
+    if (selectedActivity) {
+      setSelectedActivityId(selectedActivity.ID);
+      setSelectedActivityValue(value);
+      form.setFieldsValue({ activityId: value });
+      // Clear new uploads when switching activities
+      setNewFileList([]);
+    }
+  };
 
   const onChange: UploadProps["onChange"] = ({ fileList: newFileList }) => {
     // Separate existing photos from new uploads
@@ -127,9 +135,12 @@ export default function AddActivitiesPhotos() {
     imgWindow?.document.write(image.outerHTML);
   };
 
-  // Handle save button click - upload all new photos
-  // Alternative approach using base64 encoding
   const handleSave = async () => {
+    if (!selectedActivityId) {
+      message.error("Please select an activity");
+      return;
+    }
+
     if (newFileList.length === 0) {
       message.info("No new photos to upload");
       return;
@@ -152,7 +163,7 @@ export default function AddActivitiesPhotos() {
             });
 
             // Add the photo to the activity using base64 URL
-            const result = await addPhotoToActivity(Number(id), {
+            const result = await addPhotoToActivity(selectedActivityId, {
               url: base64Url,
               uploadedBy: userFullname,
             });
@@ -183,37 +194,15 @@ export default function AddActivitiesPhotos() {
 
       // Clear new file list after upload
       setNewFileList([]);
-
-      // Refresh the activity photos
-      const result = await fetchPhotosByActivityID(Number(id));
-      if (result.success !== false) {
-        const data: ActivityResponse = result;
-        setActivityData(data);
-
-        const transformedFileList: UploadFile[] = data.images.map(
-          (photo, index) => ({
-            uid: `${data.id}-${index}`,
-            name: `photo-${index + 1}.jpg`,
-            status: "done",
-            url: photo.url,
-            response: {
-              uploadedBy: photo.uploadedBy,
-              uploadedDate: photo.uploadedDate,
-            },
-          })
-        );
-
-        setFileList(transformedFileList);
-      }
     } catch (error) {
       message.error("An error occurred while uploading photos");
       console.error("Upload error:", error);
     } finally {
       setIsSaving(false);
+      navigate("/activities/photo");
     }
   };
 
-  // Handle cancel button click - remove new uploads
   const handleCancel = () => {
     // Remove new uploads and keep only existing photos
     const existingPhotos = fileList.filter(
@@ -235,7 +224,6 @@ export default function AddActivitiesPhotos() {
   return (
     <div className="flex flex-col w-full min-h-screen bg-gray-50">
       <Navbar />
-
       <div className="flex flex-col container mx-auto h-auto justify-center items-center py-8">
         <div className="relative w-full mb-[4vh]">
           <button
@@ -248,62 +236,72 @@ export default function AddActivitiesPhotos() {
             ย้อนกลับ
           </button>
           <div className="flex-col mx-auto bg-white rounded-lg shadow-md border border-gray-200 w-full max-w-2xl max-sm:w-md max-md:w-xl p-6">
-            {loading ? (
-              <div style={{ textAlign: "center", padding: "50px" }}>
-                <Spin size="large" />
-                <p>Loading activity photos...</p>
-              </div>
-            ) : error ? (
-              <Alert
-                message="Error"
-                description={error}
-                type="error"
-                showIcon
-                style={{ marginBottom: "20px" }}
-              />
-            ) : (
+            <h1 className="flex justify-center text-4xl font-bold mb-6">
+              เพิ่มรูปภาพใหม่สำหรับกิจกรรม
+            </h1>
+
+            <Combobox
+              value={selectedActivityValue}
+              onChange={handleActivityChange}
+              options={activities.map((activity) => activity.Title)}
+              placeholder="เลือกกิจกรรม..."
+              disabled={loadingActivities}
+            />
+
+            {selectedActivityId && (
               <>
-                {activityData && (
-                  <div style={{ marginBottom: "20px" }}>
-                    <h1 className="flex justify-center text-4xl font-bold mb-6">
-                      {activityData.title}
-                    </h1>
-                    <p>Total Photos: {activityData.images.length}</p>
+                {loading ? (
+                  <div style={{ textAlign: "center", padding: "20px" }}>
+                    <Spin size="large" />
+                    <p>Loading activity photos...</p>
+                  </div>
+                ) : error ? (
+                  <Alert
+                    message="Error"
+                    description={error}
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: "20px" }}
+                  />
+                ) : (
+                  <>
+                    <div className="my-4">
+                      {newFileList.length > 0 && (
+                        <p style={{ color: "#1890ff" }}>
+                          New photos ready to upload: {newFileList.length}
+                        </p>
+                      )}
+                    </div>
+
+                    <Upload {...uploadProps} multiple={true} accept="image/*">
+                      {"+ อัพโหลด"}
+                    </Upload>
+
                     {newFileList.length > 0 && (
-                      <p style={{ color: "#1890ff" }}>
-                        New photos ready to upload: {newFileList.length}
-                      </p>
+                      <div style={{ textAlign: "center", marginTop: "20px" }}>
+                        <Space size="middle">
+                          <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className={`flex items-center gap-1 px-4 py-2 text-center text-white bg-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#7d1470] transition-all duration-300 hover:scale-110 ${
+                              isSaving ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                          >
+                            <Save size={16} />
+                            {isSaving ? "กำลังบันทึกข้อมูล..." : "บันทึก"}
+                          </button>
+                          <button
+                            onClick={handleCancel}
+                            disabled={isSaving}
+                            className="flex items-center gap-1 px-4 py-2 text-center text-gray-600 border-2 border-gray-400 rounded-lg font-medium hover:bg-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
+                          >
+                            <X size={16} />
+                            ยกเลิก
+                          </button>
+                        </Space>
+                      </div>
                     )}
-                  </div>
-                )}
-
-                <Upload {...uploadProps} multiple={true} accept="image/*">
-                  {"+ อัพโหลด"}
-                </Upload>
-
-                {newFileList.length > 0 && (
-                  <div style={{ marginTop: "20px", textAlign: "center" }}>
-                    <Space>
-                      <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className={`flex items-center gap-1 px-4 py-2 text-center text-white bg-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#7d1470] transition-all duration-300 hover:scale-110 ${
-                          isSaving ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                      >
-                        <Save size={16} />
-                        {isSaving ? "กำลังบันทึกข้อมูล..." : "บันทึก"}
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        disabled={isSaving}
-                        className="flex items-center gap-1 px-4 py-2 text-center text-gray-600 border-2 border-gray-400 rounded-lg font-medium hover:bg-gray-400 hover:text-white transition-all duration-300 hover:scale-110"
-                      >
-                        <X size={16} />
-                        ยกเลิก
-                      </button>
-                    </Space>
-                  </div>
+                  </>
                 )}
               </>
             )}

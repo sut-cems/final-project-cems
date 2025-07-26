@@ -6,10 +6,12 @@ import Profile from "../pages/Profile/Profile";
 import Clubs from "../pages/Clubs/ClubCategories";
 import ClubAdminPage from "../pages/Clubs/ClubAdminPage";
 import Activities from "../pages/Activities/ActivitiesPage";
+import EditActivities from "../pages/Activities/EditActivities";
 import ActivitiesDetail from "../pages/Activities/ActivitiesDetail";
 import ActivitiesPhotos from "../pages/Activities/ActivitiesPhotosPage";
 import AddActivitiesPhotos from "../pages/Activities/AddActivitiesPhoto";
 import CreateClub from "../pages/Clubs/CreateClub";
+import AddNewActivitiesPhotos from "../pages/Activities/AddNewActivitiesPhoto";
 
 const ClubAdminRoutes = (): RouteObject => {
   return {
@@ -41,12 +43,20 @@ const ClubAdminRoutes = (): RouteObject => {
         element: <Activities />,
       },
       {
+        path: "/activities/edit/:id",
+        element: <EditActivities />,
+      },
+      {
         path: "/activities/:id",
         element: <ActivitiesDetail />,
       },
       {
         path: "/activities/photo",
         element: <ActivitiesPhotos />,
+      },
+      {
+        path: "/activities/photo/add-new-photo/",
+        element: <AddNewActivitiesPhotos />,
       },
       {
         path: "/activities/photo/add-photo/:id",

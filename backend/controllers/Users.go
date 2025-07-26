@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"final-project/cems/config"
 	"final-project/cems/entity"
@@ -90,4 +91,44 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted"})
+}
+
+// GET /users/search?q=<search_term> - ค้นหาผู้ใช้ด้วยชื่อ, นามสกุล, รหัสนักศึกษา
+func SearchUsers(c *gin.Context) {
+	db := config.DB()
+	query := c.Query("q")
+	
+	// ตรวจสอบว่ามี query parameter หรือไม่
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Search query is required"})
+		return
+	}
+	
+	// ทำความสะอาด query
+	query = strings.TrimSpace(query)
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Search query cannot be empty"})
+		return
+	}
+	
+	var users []entity.User
+	
+	// สร้าง search pattern สำหรับ LIKE query
+	searchPattern := "%" + query + "%"
+	
+	// ค้นหาใน FirstName, LastName, StudentID และ ID
+	if err := db.Preload("Role").Preload("Faculty").Preload("Program").
+		Where("first_name LIKE ? OR last_name LIKE ? OR student_id LIKE ? OR CONCAT(first_name, ' ', last_name) LIKE ? OR id = ?", 
+			searchPattern, searchPattern, searchPattern, searchPattern, query).
+		Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Search completed successfully",
+		"query": query,
+		"count": len(users),
+		"data": users,
+	})
 }
