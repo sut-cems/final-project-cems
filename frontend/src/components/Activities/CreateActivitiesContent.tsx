@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../services/http";
 import {
   Save,
@@ -15,32 +15,34 @@ import {
 } from "lucide-react";
 import type { EventCategory } from "../../interfaces/IEventCategories";
 import type { Activity } from "../../interfaces/IActivitys";
-import type { ActivityStatus } from "../../interfaces/IActivityStatuses";
 import {
-  updateActivity,
-  fetchActivityStatus,
   fetchActivityCategory,
-  fetchActivityById,
+  fetchActivityStatus,
+  createActivity
 } from "../../services/http/activities";
+import type { ActivityStatus } from "../../interfaces/IActivityStatuses";
 import {
   ConfirmModal,
   StatusModal,
 } from "../../components/Activities/ConfirmModal";
 import { message } from "antd";
-import { useNavigate } from "react-router-dom";
 
-const EditActivityContent = () => {
+interface BodyProps {
+  clubId: number | null;
+
+}
+
+const CreateActivitiesContent: React.FC <BodyProps> = (clubId) => {
   const [categoryList, setCategoryList] = useState<EventCategory[]>([]);
   const [statusList, setStatusList] = useState<ActivityStatus[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [activity, setActivity] = useState<Activity | null>(null);
-  const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const navigate = useNavigate();
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusType, setStatusType] = useState<"loading" | "success" | "error">(
     "loading"
@@ -54,21 +56,25 @@ const EditActivityContent = () => {
     allowedStatusIDs.includes(status.ID)
   );
 
-  const getImageUrl = (path: string): string => {
-    if (!path) return "";
-    if (path.startsWith("http://") || path.startsWith("https://")) return path;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    return `${API_BASE_URL}${cleanPath}`;
-  };
+  const [activity, setActivity] = useState<Partial<Activity>>({
+    Title: "",
+    Description: "",
+    Location: "",
+    DateStart: "",
+    DateEnd: "",
+    Capacity: 1,
+    CategoryID: 0,
+    StatusID: 0,
+    PosterImage: "",
+  });
 
   const handleInputChange = (field: keyof Activity, value: string | number) => {
-    if (!activity) return;
-
     setActivity((prev) => ({
-      ...prev!,
+      ...prev,
       [field]: value,
     }));
 
+    // ล้าง error เมื่อผู้ใช้เริ่มพิมพ์
     if (errors[field]) {
       setErrors((prev) => ({
         ...prev,
@@ -78,22 +84,21 @@ const EditActivityContent = () => {
   };
 
   const validateForm = () => {
-    if (!activity) return false;
     const newErrors: { [key: string]: string } = {};
 
-    if (!activity.Title.trim()) {
+    if (!activity.Title?.trim()) {
       newErrors.Title = "กรุณากรอกชื่อกิจกรรม";
     } else if (activity.Title.length < 3) {
       newErrors.Title = "ชื่อกิจกรรมต้องมีอย่างน้อย 3 ตัวอักษร";
     }
 
-    if (!activity.Description.trim()) {
+    if (!activity.Description?.trim()) {
       newErrors.Description = "กรุณากรอกรายละเอียดกิจกรรม";
     } else if (activity.Description.length < 10) {
       newErrors.Description = "รายละเอียดต้องมีอย่างน้อย 10 ตัวอักษร";
     }
 
-    if (!activity.Location.trim()) {
+    if (!activity.Location?.trim()) {
       newErrors.Location = "กรุณากรอกสถานที่จัดกิจกรรม";
     }
 
@@ -113,7 +118,7 @@ const EditActivityContent = () => {
       newErrors.DateEnd = "วันเวลาสิ้นสุดต้องมาหลังวันเวลาเริ่มกิจกรรม";
     }
 
-    if (activity.Capacity < 1) {
+    if (!activity.Capacity || activity.Capacity < 1) {
       newErrors.Capacity = "จำนวนผู้เข้าร่วมต้องมากกว่า 0 คน";
     } else if (activity.Capacity > 10000) {
       newErrors.Capacity = "จำนวนผู้เข้าร่วมต้องไม่เกิน 10,000 คน";
@@ -121,6 +126,11 @@ const EditActivityContent = () => {
 
     if (!activity.CategoryID) {
       newErrors.CategoryID = "กรุณาเลือกประเภทกิจกรรม";
+    }
+
+    // ตรวจสอบรูปภาพ (บังคับสำหรับการสร้างใหม่)
+    if (!uploadedFile) {
+      newErrors.PosterImage = "กรุณาอัปโหลดโปสเตอร์กิจกรรม";
     }
 
     setErrors(newErrors);
@@ -133,6 +143,14 @@ const EditActivityContent = () => {
       const imageUrl = URL.createObjectURL(file);
       setPreviewImage(imageUrl);
       setUploadedFile(file);
+
+      // ล้าง error ของรูปภาพ
+      if (errors.PosterImage) {
+        setErrors((prev) => ({
+          ...prev,
+          PosterImage: "",
+        }));
+      }
     }
   };
 
@@ -164,7 +182,7 @@ const EditActivityContent = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm() || !activity || !id) return;
+    if (!validateForm()) return;
 
     // ตรวจสอบวันที่ให้แน่ใจว่าไม่เป็น null/undefined
     if (!activity.DateStart || !activity.DateEnd) {
@@ -172,50 +190,100 @@ const EditActivityContent = () => {
       return;
     }
 
-    // ตรวจสอบว่า uploadedFile (ถ้ามี) ต้องเป็น File จริง
-    if (uploadedFile && !(uploadedFile instanceof File)) {
-      message.error("ไฟล์รูปภาพไม่ถูกต้อง");
+    // ตรวจสอบว่ามี uploadedFile
+    if (!uploadedFile) {
+      message.error("กรุณาอัปโหลดโปสเตอร์กิจกรรม");
       return;
     }
 
     setIsLoading(true);
     setConfirmOpen(false); // ปิด confirm modal
     setStatusType("loading");
-    setStatusMessage("กำลังบันทึกข้อมูล...");
+    setStatusMessage("กำลังสร้างกิจกรรม...");
     setStatusOpen(true);
 
     try {
       const formData = new FormData();
-      formData.append("title", activity.Title);
-      formData.append("description", activity.Description);
-      formData.append("location", activity.Location);
+      formData.append("title", activity.Title!);
+      formData.append("description", activity.Description!);
+      formData.append("location", activity.Location!);
       formData.append("date_start", new Date(activity.DateStart).toISOString());
       formData.append("date_end", new Date(activity.DateEnd).toISOString());
-      formData.append("capacity", activity.Capacity.toString());
-      formData.append("category_id", activity.CategoryID.toString());
-      formData.append("status_id", activity.StatusID.toString());
+      formData.append("capacity", activity.Capacity!.toString());
+      formData.append("category_id", activity.CategoryID!.toString());
+      formData.append("status_id", activity.StatusID!.toString());
+      formData.append("poster_image", uploadedFile);
+      formData.append("club_id", clubId.clubId!.toString());
 
-      if (uploadedFile) {
-        formData.append("poster_image", uploadedFile);
-      }
+      console.log("clubId: ",clubId)
 
-      await updateActivity(id, formData);
+      await createActivity(formData);
 
       setStatusType("success");
-      setStatusMessage("บันทึกข้อมูลสำเร็จแล้ว!");
-    } catch (error: any) {
-      console.error("❌ อัปเดตกิจกรรมล้มเหลว:", error);
+      setStatusMessage("สร้างกิจกรรมสำเร็จแล้ว!");
 
+      // เปลี่ยนไปหน้ารายละเอียดของกิจกรรมที่สร้างใหม่
+      setTimeout(() => {
+        setStatusOpen(false);
+        navigate(`/activities/management`);
+      }, 2000);
+    } catch (error: any) {
+      console.error("❌ สร้างกิจกรรมล้มเหลว:", error);
+
+      setStatusType("error");
       if (error.response) {
         console.error("🔴 Response:", error.response.data);
-        message.error(
+        setStatusMessage(
           `เกิดข้อผิดพลาด: ${error.response.data.message || "ไม่ทราบสาเหตุ"}`
         );
       } else {
-        message.error("❌ เกิดข้อผิดพลาดในการบันทึกกิจกรรม");
+        setStatusMessage("❌ เกิดข้อผิดพลาดในการสร้างกิจกรรม");
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // รีเซ็ตฟอร์ม
+  const handleReset = () => {
+    setActivity({
+      Title: "",
+      Description: "",
+      Location: "",
+      DateStart: "",
+      DateEnd: "",
+      Capacity: 1,
+      CategoryID: 0,
+      StatusID: 0,
+      PosterImage: "",
+    });
+    setPreviewImage(null);
+    setUploadedFile(null);
+    setErrors({});
+    setResetConfirmOpen(false);
+    message.success("รีเซ็ตฟอร์มสำเร็จ");
+  };
+
+  // ตรวจสอบว่ามีข้อมูลในฟอร์มหรือไม่
+  const hasFormData = () => {
+    return (
+      activity.Title ||
+      activity.Description ||
+      activity.Location ||
+      activity.DateStart ||
+      activity.DateEnd ||
+      (activity.Capacity && activity.Capacity > 1) ||
+      activity.CategoryID ||
+      activity.StatusID ||
+      uploadedFile
+    );
+  };
+
+  const handleResetClick = () => {
+    if (hasFormData()) {
+      setResetConfirmOpen(true);
+    } else {
+      message.info("ไม่มีข้อมูลในฟอร์มที่ต้องรีเซ็ต");
     }
   };
 
@@ -225,10 +293,9 @@ const EditActivityContent = () => {
         const res = await fetchActivityCategory();
         setCategoryList(res);
       } catch (err) {
-        message.error("ไม่สามารถโหลดสถานะกิจกรรมได้");
+        message.error("ไม่สามารถโหลดประเภทกิจกรรมได้");
       }
     };
-
     const loadStatus = async () => {
       try {
         const res = await fetchActivityStatus();
@@ -237,29 +304,9 @@ const EditActivityContent = () => {
         message.error("ไม่สามารถโหลดสถานะกิจกรรมได้");
       }
     };
-
-    const loadActivity = async () => {
-      if (!id) return;
-      try {
-        const res = await fetchActivityById(id);
-        setActivity(res);
-      } catch (err) {
-        message.error("ไม่สามารถโหลดข้อมูลกิจกรรมได้");
-      }
-    };
-
-    loadActivity();
-    loadCategory();
     loadStatus();
-    if (statusOpen && statusType === "success") {
-      const timeout = setTimeout(() => {
-        setStatusOpen(false);
-        navigate(`/activities/${id}`);
-      }, 5000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [id, statusOpen, statusType, navigate]);
+    loadCategory();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -269,7 +316,7 @@ const EditActivityContent = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate(`/activities/${id}`)}
+                onClick={() => navigate("/activities/management")}
                 className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 cursor-pointer"
               >
                 <ArrowLeft size={20} />
@@ -278,8 +325,11 @@ const EditActivityContent = () => {
               <div className="h-6 border-l border-gray-300"></div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
-                  แก้ไขกิจกรรม
+                  สร้างกิจกรรมใหม่
                 </h1>
+                <p className="text-sm text-gray-600">
+                  กรอกข้อมูลเพื่อสร้างกิจกรรมใหม่
+                </p>
               </div>
             </div>
           </div>
@@ -307,7 +357,7 @@ const EditActivityContent = () => {
                   </label>
                   <input
                     type="text"
-                    value={activity?.Title}
+                    value={activity.Title || ""}
                     onChange={(e) => handleInputChange("Title", e.target.value)}
                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
                       errors.Title
@@ -329,7 +379,7 @@ const EditActivityContent = () => {
                     รายละเอียดกิจกรรม *
                   </label>
                   <textarea
-                    value={activity?.Description}
+                    value={activity.Description || ""}
                     onChange={(e) =>
                       handleInputChange("Description", e.target.value)
                     }
@@ -348,7 +398,7 @@ const EditActivityContent = () => {
                       </p>
                     ) : (
                       <p className="text-gray-500 text-xs">
-                        จำนวนตัวอักษร: {activity?.Description.length}
+                        จำนวนตัวอักษร: {activity.Description?.length || 0}
                       </p>
                     )}
                   </div>
@@ -361,7 +411,7 @@ const EditActivityContent = () => {
                   </label>
                   <input
                     type="text"
-                    value={activity?.Location}
+                    value={activity.Location || ""}
                     onChange={(e) =>
                       handleInputChange("Location", e.target.value)
                     }
@@ -399,7 +449,7 @@ const EditActivityContent = () => {
                     </label>
                     <input
                       type="datetime-local"
-                      value={toDateTimeLocal(activity?.DateStart)}
+                      value={toDateTimeLocal(activity.DateStart)}
                       onChange={(e) =>
                         handleInputChange("DateStart", e.target.value)
                       }
@@ -414,9 +464,9 @@ const EditActivityContent = () => {
                         <span>⚠️</span> {errors.DateStart}
                       </p>
                     )}
-                    {activity?.DateStart && (
+                    {activity.DateStart && (
                       <p className="text-gray-600 text-xs mt-1">
-                        📅 {formatDateTime(activity?.DateStart)}
+                        📅 {formatDateTime(activity.DateStart)}
                       </p>
                     )}
                   </div>
@@ -428,7 +478,7 @@ const EditActivityContent = () => {
                     </label>
                     <input
                       type="datetime-local"
-                      value={toDateTimeLocal(activity?.DateEnd)}
+                      value={toDateTimeLocal(activity.DateEnd)}
                       onChange={(e) =>
                         handleInputChange("DateEnd", e.target.value)
                       }
@@ -443,7 +493,7 @@ const EditActivityContent = () => {
                         <span>⚠️</span> {errors.DateEnd}
                       </p>
                     )}
-                    {activity?.DateEnd && (
+                    {activity.DateEnd && (
                       <p className="text-gray-600 text-xs mt-1">
                         📅 {formatDateTime(activity.DateEnd)}
                       </p>
@@ -475,7 +525,7 @@ const EditActivityContent = () => {
                       type="number"
                       min="1"
                       max="10000"
-                      value={activity?.Capacity}
+                      value={activity.Capacity || ""}
                       onChange={(e) =>
                         handleInputChange(
                           "Capacity",
@@ -505,7 +555,7 @@ const EditActivityContent = () => {
                       ประเภทกิจกรรม *
                     </label>
                     <select
-                      value={activity?.CategoryID}
+                      value={activity.CategoryID || ""}
                       onChange={(e) =>
                         handleInputChange(
                           "CategoryID",
@@ -543,22 +593,39 @@ const EditActivityContent = () => {
               <div className="px-6 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white">
                 <div className="flex items-center gap-3">
                   <Image size={24} />
-                  <h2 className="text-lg font-semibold">โปสเตอร์กิจกรรม</h2>
+                  <h2 className="text-lg font-semibold">โปสเตอร์กิจกรรม *</h2>
                 </div>
               </div>
               <div className="p-6 space-y-4">
-                <div className="relative group">
-                  <img
-                    src={
-                      previewImage || getImageUrl(activity?.PosterImage || "")
-                    }
-                    alt="Poster"
-                    className="w-full aspect-[3/3.25] object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition-shadow"
-                  />
-                  <div className="absolute inset-0  group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                {previewImage ? (
+                  <div className="relative group">
+                    <img
+                      src={previewImage}
+                      alt="Poster Preview"
+                      className="w-full aspect-[3/3] object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition-shadow"
+                    />
+                    <div className="absolute inset-0 group-hover:bg-black group-hover:bg-opacity-20 rounded-lg transition-all flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => {
+                            setPreviewImage(null);
+                            setUploadedFile(null);
+                          }}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm"
+                        >
+                          ลบรูป
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                    <div className="text-center">
+                      <Image size={48} className="mx-auto text-gray-400 mb-2" />
+                      <p className="text-gray-500 text-sm">ยังไม่มีโปสเตอร์</p>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block">
@@ -568,20 +635,30 @@ const EditActivityContent = () => {
                       onChange={handleImageUpload}
                       className="hidden"
                     />
-                    <div className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 cursor-pointer transition-all">
-                      <Upload size={18} className="text-blue-600" />
-                      <span className="text-blue-700 font-medium">
-                        เปลี่ยนโปสเตอร์
+                    <div
+                      className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-all ${
+                        errors.PosterImage
+                          ? "border-red-300 bg-red-50 text-red-600"
+                          : "border-blue-300 bg-blue-50 text-blue-700 hover:border-blue-400 hover:bg-blue-100"
+                      }`}
+                    >
+                      <Upload size={18} />
+                      <span className="font-medium">
+                        {previewImage ? "เปลี่ยนโปสเตอร์" : "อัปโหลดโปสเตอร์"}
                       </span>
                     </div>
                   </label>
+                  {errors.PosterImage && (
+                    <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                      <span>⚠️</span> {errors.PosterImage}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 mt-2 text-center">
                     รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 5MB)
                   </p>
                 </div>
               </div>
             </div>
-
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-green-600 text-white">
                 <div className="flex items-center gap-3">
@@ -624,9 +701,8 @@ const EditActivityContent = () => {
                 </div>
               </div>
             </div>
-
             {/* Action Buttons */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 ">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="space-y-3">
                 <button
                   onClick={() => setConfirmOpen(true)}
@@ -636,19 +712,28 @@ const EditActivityContent = () => {
                   {isLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                      <span>กำลังบันทึก...</span>
+                      <span>กำลังสร้าง...</span>
                     </>
                   ) : (
                     <>
                       <Save size={20} />
-                      <span>บันทึกการแก้ไข</span>
+                      <span>สร้างกิจกรรม</span>
                     </>
                   )}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => navigate(`/activities/${id}`)}
+                  onClick={handleResetClick}
+                  disabled={isLoading}
+                  className="w-full px-6 py-3 text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer disabled:opacity-50"
+                >
+                  รีเซ็ตฟอร์ม
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/activities")}
                   className="w-full px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium cursor-pointer"
                 >
                   ยกเลิก
@@ -658,17 +743,31 @@ const EditActivityContent = () => {
           </div>
         </div>
       </div>
+
       {/* Confirm Modal */}
       <ConfirmModal
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleSubmit}
-        title="ยืนยันการแก้ไข"
-        message="คุณต้องการบันทึกข้อมูลกิจกรรมนี้ใช่หรือไม่?"
+        title="ยืนยันการสร้างกิจกรรม"
+        message="คุณต้องการสร้างกิจกรรมนี้ใช่หรือไม่?"
         type="info"
-        confirmText="บันทึก"
+        confirmText="สร้าง"
         cancelText="ยกเลิก"
         isLoading={isLoading}
+      />
+
+      {/* Reset Confirm Modal */}
+      <ConfirmModal
+        isOpen={resetConfirmOpen}
+        onClose={() => setResetConfirmOpen(false)}
+        onConfirm={handleReset}
+        title="ยืนยันการรีเซ็ตฟอร์ม"
+        message="คุณต้องการล้างข้อมูลทั้งหมดในฟอร์มใช่หรือไม่? ข้อมูลที่กรอกไว้จะหายไปทั้งหมด"
+        type="warning"
+        confirmText="รีเซ็ต"
+        cancelText="ยกเลิก"
+        isLoading={false}
       />
 
       {/* Status Modal */}
@@ -677,16 +776,16 @@ const EditActivityContent = () => {
         onClose={() => {
           setStatusOpen(false);
           if (statusType === "success") {
-            navigate(`/activities/${id}`);
+            navigate("/activities");
           }
         }}
         status={statusType}
         message={statusMessage}
         autoClose={statusType === "success"}
-        autoCloseDelay={5000}
+        autoCloseDelay={3000}
       />
     </div>
   );
 };
 
-export default EditActivityContent;
+export default CreateActivitiesContent;
