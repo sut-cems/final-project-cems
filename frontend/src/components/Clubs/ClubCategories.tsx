@@ -221,9 +221,9 @@ const ClubCategories: React.FC<ClubCategoriesProps> = ({ searchTerm }) => {
         <div className="text-center text-gray-500 text-lg">ไม่พบชมรมที่ตรงกับคำค้นหา</div>
       ) : (
         categories.map((category) => {
-          const filteredClubs = category.clubs.filter((club) =>
-            club.name.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+          const filteredClubs = category.clubs
+            .filter((club) => club.status_id !== 3)
+            .filter((club) => club.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
           if (filteredClubs.length === 0) return null;
 

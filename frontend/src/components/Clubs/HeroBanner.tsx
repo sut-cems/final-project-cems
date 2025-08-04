@@ -64,7 +64,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ searchTerm, setSearchTerm, onCr
               <div>
                 <button
                   onClick={onCreateClub}
-                  className="group relative bg-[#D91656] text-white px-6 py-2 rounded-full font-semibold text-sm shadow hover:shadow-lg transform hover:scale-105 transition duration-300"
+                  className="cursor-pointer group relative bg-[#D91656] text-white px-6 py-2 rounded-full font-semibold text-sm shadow hover:shadow-lg transform hover:scale-105 transition duration-300"
                 >
                   <span className="flex items-center gap-2">
                     <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90"/>

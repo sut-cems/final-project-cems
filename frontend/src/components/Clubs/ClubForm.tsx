@@ -114,14 +114,18 @@ const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
     }
 
     const categoryID = parseInt(formData.category);
-    const createdBy = Number(localStorage.getItem("id"));
+    const createdBy =
+      Number(localStorage.getItem("userId")) ||
+      Number(localStorage.getItem("id")) ||
+      0;
 
-    if (isNaN(categoryID) || isNaN(createdBy)) {
+    if (isNaN(categoryID) || createdBy === 0) {
       setSuccessMessage("Category ID หรือ CreatedBy ไม่ถูกต้อง");
       setNotificationType("error");
       setIsSuccessOpen(true);
       return;
     }
+
 
     setIsSubmitting(true);
 
@@ -288,7 +292,7 @@ const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
                   type="text"
                   value={formData.clubName}
                   onChange={(e) => handleInputChange('clubName', e.target.value)}
-                  placeholder="ชื่อชมรมของคุณ"
+                  placeholder="กรอกชื่อชมรมของคุณ เช่น คอมพิวเตอร์"
                   className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-300 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all text-lg bg-white/70"
                 />
               </div>
