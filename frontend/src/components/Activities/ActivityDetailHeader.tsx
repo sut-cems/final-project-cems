@@ -7,9 +7,14 @@ interface Props {
 }
 
 const ActivityDetailHeader: React.FC<Props> = ({ activity }) => {
-  const imageUrl = activity.PosterImage?.startsWith("http")
-    ? activity.PosterImage
-    : `${API_BASE_URL}/${activity.PosterImage}`;
+  const getImageUrl = (path: string): string => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${API_BASE_URL}${cleanPath}`;
+  };
+
+  const imageUrl = getImageUrl(activity.PosterImage); // ✅ เพิ่มบรรทัดนี้
 
   return (
     <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-2xl mb-4">

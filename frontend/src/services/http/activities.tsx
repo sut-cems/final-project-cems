@@ -1,5 +1,6 @@
 import type { Activity } from "../../interfaces/IActivitys";
 import type { EventCategory } from "../../interfaces/IEventCategories";
+import type { ActivityStatus } from "../../interfaces/IActivityStatuses";
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -79,6 +80,23 @@ export async function fetchActivityCategory(): Promise<EventCategory[]> {
   return result.categories;
 }
 
+// GET /ActivityStatus
+export async function fetchActivityStatus(): Promise<ActivityStatus[]> {
+  const response = await fetch(`${API_BASE_URL}/activities/status`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.status;
+}
+
 export async function fetchActivitiesPhotos() {
   try {
     const response = await fetch(`${API_BASE_URL}/activities/photo`, {
@@ -151,3 +169,28 @@ export async function addPhotoToActivity(id: number, photoData: { url: string; u
     };
   }
 }
+//update activity
+export async function updateActivity(id: string, formData: FormData): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
+    method: "PATCH",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update activity: ${errorText}`);
+  }
+}
+
+export async function createActivity(formData: FormData): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/activities`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update activity: ${errorText}`);
+  }
+}
+
