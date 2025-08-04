@@ -29,48 +29,6 @@ export async function GetClubByID(id: string){
   return result.data;
 }
 
-// export const LeaveClub = async (clubId: string) => {
-//   try {
-//     // ตรวจสอบ token จากทั้ง 2 ตำแหน่ง
-//     const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-    
-//     if (!token) {
-//       throw new Error("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
-//     }
-
-//     const response = await fetch(`${API_BASE_URL}/clubs/${clubId}/leave`, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-
-//     // ตรวจสอบ response อย่างละเอียด
-//     if (!response.ok) {
-//       const contentType = response.headers.get("content-type");
-//       let errorData;
-      
-//       if (contentType?.includes("application/json")) {
-//         errorData = await response.json();
-//       } else {
-//         errorData = { error: await response.text() };
-//       }
-      
-//       console.error("[API Error]", errorData);
-//       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-//     }
-
-//     const data = await response.json();
-//     console.log("[API Response]", data);
-//     return data;
-    
-//   } catch (error) {
-//     console.error("[API] LeaveClub failed:", error);
-//     throw error;
-//   }
-// };
-
 export const requestJoinClub = async (clubId: string) => {
   try {
     const token = localStorage.getItem("authToken") || localStorage.getItem("token");
@@ -126,22 +84,6 @@ export async function GetMembersByClubID(clubId: string) {
     throw err;
   }
 }
-
-// export async function removeMember(clubId: string, userId: number) {
-//   try {
-//     const response = await fetch(`${API_BASE_URL}/clubs/${clubId}/members/${userId}`, {
-//       method: "DELETE",
-//     });
-//     if (!response.ok) {
-//       const error = await response.json();
-//       throw new Error(error.error || "Failed to remove member");
-//     }
-//     return await response.json();
-//   } catch (err) {
-//     console.error("Failed to remove member:", err);
-//     throw err;
-//   }
-// }
 
 export async function changePresident(clubId: string, newPresidentId: number) {
   try {
@@ -246,4 +188,39 @@ export async function createClub(data: {
   return result.club;
 }
 
+export async function ApproveClub(id: string) {
+  const response = await fetch(`${API_BASE_URL}/clubs/${id}/approve`, {
+    method: "PATCH",
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "ไม่สามารถอนุมัติชมรมได้");
+  }
+
+  const result = await response.json();
+  if (!result.message) {
+    throw new Error("Approve club failed");
+  }
+
+  return result;
+}
+
+export async function RejectClub(id: string) {
+  const response = await fetch(`${API_BASE_URL}/clubs/${id}/reject`, {
+    method: "PATCH",
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "ไม่สามารถปฏิเสธชมรมได้");
+  }
+
+  const result = await response.json();
+  if (!result.message) {
+    throw new Error("Reject club failed");
+  }
+
+  return result;
+}
 

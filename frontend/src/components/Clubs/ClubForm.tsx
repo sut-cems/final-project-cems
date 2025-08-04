@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Building, Users, Calendar, MapPin, Phone, Send } from 'lucide-react';
+import { ArrowLeft, Building, Users, Calendar, MapPin, Phone, Send, Upload, Image, X } from 'lucide-react';
 import { createClub, GetCategoriesWithClubs } from '../../services/http/clubs';
+import SuccessNotification from "./SuccessNotification";
 
 interface ClubCategory {
   id: number;
@@ -14,6 +15,11 @@ interface ClubFormProps {
 const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
   const [clubCategories, setClubCategories] = useState<ClubCategory[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
 
   const [formData, setFormData] = useState({
     clubName: '',
@@ -54,47 +60,101 @@ const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setFormData(prev => ({ ...prev, imageFile: e.target.files![0] }));
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, imageFile: file }));
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setFormData(prev => ({ ...prev, imageFile: file }));
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeFile = () => {
+    setFormData(prev => ({ ...prev, imageFile: null }));
+    setPreviewUrl(null);
+  };
+
   const handleSubmit = async () => {
-  if (!formData.clubName || !formData.category || !formData.targetMembers ||
+    if (
+      !formData.clubName || !formData.category || !formData.targetMembers ||
       !formData.description || !formData.meetingDate || !formData.meetingLocation ||
-      !formData.contact || !formData.imageFile) {
-    alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-    return;
-  }
+      !formData.contact || !formData.imageFile
+    ) {
+      setSuccessMessage("กรุณากรอกข้อมูลให้ครบถ้วน");
+      setNotificationType("error");
+      setIsSuccessOpen(true);
+      return;
+    }
 
-  const categoryID = parseInt(formData.category);
-  const createdBy = Number(localStorage.getItem("id"));
+    const categoryID = parseInt(formData.category);
+    const createdBy =
+      Number(localStorage.getItem("userId")) ||
+      Number(localStorage.getItem("id")) ||
+      0;
 
-  if (isNaN(categoryID) || isNaN(createdBy)) {
-    alert("Category ID หรือ CreatedBy ไม่ถูกต้อง");
-    return;
-  }
+    if (isNaN(categoryID) || createdBy === 0) {
+      setSuccessMessage("Category ID หรือ CreatedBy ไม่ถูกต้อง");
+      setNotificationType("error");
+      setIsSuccessOpen(true);
+      return;
+    }
 
-  setIsSubmitting(true);
 
-  try {
-    await createClub({
-      Name: formData.clubName,
-      Description: formData.description,
-      CategoryID: categoryID,
-      CreatedBy: createdBy,
-      imageFile: formData.imageFile,
-    });
+    setIsSubmitting(true);
 
-    alert("สร้างชมรมสำเร็จ");
-    if (onBack) onBack();
-  } catch (error: any) {
-    console.error(error);
-    alert("เกิดข้อผิดพลาด: " + error.message);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      await createClub({
+        Name: formData.clubName,
+        Description: formData.description,
+        CategoryID: categoryID,
+        CreatedBy: createdBy,
+        imageFile: formData.imageFile,
+      });
+
+      setSuccessMessage("สร้างชมรมสำเร็จแล้ว!");
+      setNotificationType("success");
+      setIsSuccessOpen(true);
+
+      setTimeout(() => {
+        if (onBack) onBack();
+      }, 2000);
+
+    } catch (error: any) {
+      console.error(error);
+      setSuccessMessage("เกิดข้อผิดพลาด: " + error.message);
+      setNotificationType("error");
+      setIsSuccessOpen(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
   const handleClearForm = () => {
@@ -108,6 +168,7 @@ const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
       contact: '',
       imageFile: null,
     });
+    setPreviewUrl(null);
   };
 
   return (
@@ -116,47 +177,112 @@ const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
         
         {/* Header */}
         <div className="text-center mb-12">
-         
           <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
-            
             <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
               สร้างชมรมใหม่
             </span>
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            กรอกข้อมูลเพื่อสร้างชมรมของคุณและเชิญเพื่อนๆ มาร่วมสนุก
+            กรอกข้อมูลเพื่อสร้างชมรมของคุณ
           </p>
         </div>
-        
 
         {/* Form */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-slate-200/50 p-8 md:p-12">
           <div className="space-y-8">
             
+            {/* Back Button */}
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="inline-flex items-center gap-2 text-slate-600 hover:text-violet-600 transition-colors mb-6"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                กลับไปหน้าหลัก
+              </button>
+            )}
+
+            {/* Beautiful Upload Section */}
+            <div>
+              <label className="block text-lg font-semibold text-slate-700 mb-3">
+                อัปโหลดโลโก้ชมรม *
+              </label>
+              
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  id="file-upload"
+                />
+                
+                <div
+                  className={`
+                    relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 ease-in-out
+                    ${isDragging 
+                      ? 'border-violet-400 bg-violet-50 scale-105' 
+                      : 'border-slate-300 hover:border-violet-400 hover:bg-slate-50'
+                    }
+                    ${formData.imageFile ? 'border-green-400 bg-green-50' : ''}
+                    cursor-pointer group
+                  `}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  {previewUrl ? (
+                    <div className="relative flex flex-col items-center">
+                      <div className="w-32 h-32 bg-slate-100 rounded-lg overflow-hidden shadow-md">
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        onClick={removeFile}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-lg"
+                        type="button"
+                      >
+                        <X size={16} />
+                      </button>
+                      <div className="mt-4 text-center">
+                        <p className="text-sm text-green-600 font-medium">
+                          ✓ อัปโหลดสำเร็จ: {formData.imageFile?.name}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          คลิกเพื่อเปลี่ยนไฟล์
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="mx-auto w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Upload className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-700 mb-2">
+                        อัปโหลดโลโก้ชมรม
+                      </h3>
+                      <p className="text-slate-500 mb-4">
+                        ลากและวางไฟล์ที่นี่ หรือคลิกเพื่อเลือกไฟล์
+                      </p>
+                      <div className="flex items-center justify-center space-x-2 text-sm text-slate-400">
+                        <Image size={16} />
+                        <span>รองรับไฟล์: PNG, JPG, GIF</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="mt-2 text-xs text-slate-500 text-center">
+                ขนาดไฟล์สูงสุด: 5MB
+              </div>
+            </div>
+
             {/* Club Name */}
             <div>
-               {onBack && (
-                  <button
-                    onClick={onBack}
-                    className="inline-flex items-center gap-2 text-slate-600 hover:text-violet-600 transition-colors mb-6"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                    กลับไปหน้าหลัก
-                  </button>
-                )}
-                {/* Upload Image */}
-                  <div>
-                    <label className="block text-lg font-semibold text-slate-700 mb-3">
-                      อัปโหลดโลโก้ชมรม *
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="w-full"
-                    />
-                  </div>
-
               <label className="block text-lg font-semibold text-slate-700 mb-3">
                 ชื่อชมรม *
               </label>
@@ -166,7 +292,7 @@ const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
                   type="text"
                   value={formData.clubName}
                   onChange={(e) => handleInputChange('clubName', e.target.value)}
-                  placeholder="ชื่อชมรมของคุณ"
+                  placeholder="กรอกชื่อชมรมของคุณ เช่น คอมพิวเตอร์"
                   className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-300 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all text-lg bg-white/70"
                 />
               </div>
@@ -308,6 +434,13 @@ const ClubForm: React.FC<ClubFormProps> = ({ onBack }) => {
           </div>
         </div>
       </div>
+        <SuccessNotification
+          isOpen={isSuccessOpen}
+          message={successMessage}
+          onClose={() => setIsSuccessOpen(false)}
+          type={notificationType}
+        />
+
     </div>
   );
 };

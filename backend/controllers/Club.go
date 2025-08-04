@@ -4,33 +4,34 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"regexp"
 
 	"final-project/cems/config"
 	"final-project/cems/entity"
+	"final-project/cems/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type ClubMemberInfo struct {
-	ID        uint   `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	ClubRole  string `json:"club_role"`
+	ID        uint      `json:"id"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Email     string    `json:"email"`
+	ClubRole  string    `json:"club_role"`
 	JoinedAt  time.Time `json:"joined_at"`
 }
 
 type EnhancedClubCategory struct {
-	ID          uint                `json:"id"`
-	Name        string              `json:"name"`
-	Description string              `json:"description"`
-	ClubCount   int64               `json:"club_count"`
-	Clubs       []EnhancedClub      `json:"clubs"`
+	ID          uint           `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	ClubCount   int64          `json:"club_count"`
+	Clubs       []EnhancedClub `json:"clubs"`
 }
 
 type EnhancedClub struct {
@@ -77,7 +78,8 @@ func GetCategoriesWithClubs(c *gin.Context) {
 	var enhancedCategories []EnhancedClubCategory
 
 	// Preload all related data
-	if err := db.Preload("Clubs.Status").
+	if err := db.Preload("Clubs").
+		Preload("Clubs.Status").
 		Preload("Clubs.Members").
 		Preload("Clubs.Activities").
 		Find(&categories).Error; err != nil {
@@ -142,7 +144,7 @@ func RemoveClubMember(c *gin.Context) {
 		return
 	}
 
-	tokenString := strings.TrimPrefix(authHeader, "Bearer " )
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 	claims, err := jwtService.ValidateToken(tokenString)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token ไม่ถูกต้อง"})
@@ -182,9 +184,7 @@ func RemoveClubMember(c *gin.Context) {
 		return
 	}
 
-	// เงื่อนไขการอนุญาต:
 	if user.ID != targetUserID {
-		// ไม่ใช่เจ้าตัวเอง ต้องเช็คว่าเป็นหัวหน้า
 		var adminMember entity.ClubMember
 		if err := db.Where("club_id = ? AND user_id = ?", clubIDInt, user.ID).First(&adminMember).Error; err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "ไม่มีสิทธิ์ลบสมาชิกคนอื่น"})
@@ -202,7 +202,6 @@ func RemoveClubMember(c *gin.Context) {
 		return
 	}
 
-	// ระบุการกระทำสำหรับ frontend
 	action := "remove"
 	if user.ID == targetUserID {
 		if member.Role == "pending" {
@@ -212,12 +211,29 @@ func RemoveClubMember(c *gin.Context) {
 		}
 	}
 
+	var club entity.Club
+	if err := db.First(&club, clubIDInt).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบข้อมูลชมรม"})
+		return
+	}
+
+	if member.Role == "pending" && user.ID != targetUserID {
+		var student entity.User
+		if err := db.First(&student, member.UserID).Error; err == nil {
+			subject := "❌ คำขอเข้าร่วมชมรมของคุณถูกปฏิเสธ"
+			htmlBody, _ := services.RenderTemplate("reject_member.html", map[string]string{
+				"ClubName": club.Name,
+			})
+			go services.SendEmailHTML(student.Email, subject, htmlBody)
+
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ลบสมาชิกเรียบร้อยแล้ว",
 		"action":  action,
 	})
 }
-
 
 func RequestJoinClub(c *gin.Context) {
 	db := config.DB()
@@ -268,11 +284,30 @@ func RequestJoinClub(c *gin.Context) {
 		return
 	}
 
+	var club entity.Club
+	if err := db.First(&club, clubIDInt).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบชมรม"})
+		return
+	}
+
+	var president entity.User
+	if err := db.First(&president, club.CreatedBy).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบผู้สร้างชมรม"})
+		return
+	}
+
+	subject := fmt.Sprintf("📬 คำขอเข้าร่วมชมรม %s", club.Name)
+	htmlBody, _ := services.RenderTemplate("join_club.html", map[string]string{
+		"ClubName":  club.Name,
+		"FirstName": user.FirstName,
+		"LastName":  user.LastName,
+	})
+	go services.SendEmailHTML(president.Email, subject, htmlBody)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ส่งคำขอเข้าร่วมชมรมเรียบร้อยแล้ว โปรดรอการอนุมัติ",
 	})
 }
-
 
 func ApproveClubMember(c *gin.Context) {
 	db := config.DB()
@@ -293,6 +328,21 @@ func ApproveClubMember(c *gin.Context) {
 		return
 	}
 
+	var club entity.Club
+	if err := db.First(&club, clubIDInt).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบข้อมูลชมรม"})
+		return
+	}
+	// หานักศึกษา
+	var student entity.User
+	if err := db.First(&student, userIDInt).Error; err == nil {
+		subject := "🎉 คำขอเข้าร่วมชมรมของคุณได้รับการอนุมัติแล้ว"
+		htmlBody, _ := services.RenderTemplate("approve_member.html", map[string]string{
+			"ClubName": club.Name,
+		})
+		go services.SendEmailHTML(student.Email, subject, htmlBody)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "อนุมัติสมาชิกเรียบร้อยแล้ว"})
 }
 
@@ -300,40 +350,40 @@ func GetMembersByClubID(c *gin.Context) {
 	db := config.DB()
 	clubID := c.Param("id")
 
-    authHeader := c.GetHeader("Authorization")
-    if authHeader == "" {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "No Authorization header"})
-        return
-    }
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No Authorization header"})
+		return
+	}
 
-    tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-    if tokenString == authHeader {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Bearer token format"})
-        return
-    }
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenString == authHeader {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Bearer token format"})
+		return
+	}
 
-    claims, err := jwtService.ValidateToken(tokenString)
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: " + err.Error()})
-        return
-    }
-	
-    var user entity.User
-    if err := db.Where("email = ?", claims.Email).First(&user).Error; err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-        return
-    }
+	claims, err := jwtService.ValidateToken(tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: " + err.Error()})
+		return
+	}
+
+	var user entity.User
+	if err := db.Where("email = ?", claims.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
 
 	var clubMember entity.ClubMember
-	
+
 	err = db.Preload("Role").First(&user, user.ID).Error
 	if err == nil && user.Role.RoleName == "club_admin" {
-		
+
 	} else {
-		err = db.Where("club_id = ? AND user_id = ? AND role IN (?)", 
+		err = db.Where("club_id = ? AND user_id = ? AND role IN (?)",
 			clubID, user.ID, []string{"president", "vice_president"}).
 			First(&clubMember).Error
-		
+
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				c.JSON(http.StatusForbidden, gin.H{"error": "คุณไม่มีสิทธิ์ดูรายชื่อสมาชิกของชมรมนี้"})
@@ -353,7 +403,6 @@ func GetMembersByClubID(c *gin.Context) {
 		Where("club_members.club_id = ?", clubID).
 		Where("club_members.deleted_at IS NULL").
 		Scan(&members).Error
-
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลสมาชิกได้"})
@@ -409,13 +458,28 @@ func ChangeClubPresident(c *gin.Context) {
 		return
 	}
 
+	if err := db.Model(&entity.Club{}).
+		Where("id = ?", clubID).
+		Update("created_by", req.NewPresidentID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตผู้สร้างชมรมไม่สำเร็จ"})
+		return
+	}
+
+	var club entity.Club
+	if err := db.First(&club, clubID).Error; err == nil {
+		subject := "📢 คุณได้รับสิทธิ์เป็นหัวหน้าชมรม"
+		htmlBody, _ := services.RenderTemplate("new_president.html", map[string]string{
+			"ClubName": club.Name,
+		})
+		go services.SendEmailHTML(newPresident.Email, subject, htmlBody)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "เปลี่ยนหัวหน้าชมรมเรียบร้อยแล้ว",
 		"token":   token,
 	})
 }
-
 
 func GetClubAnnouncements(c *gin.Context) {
 	db := config.DB()
@@ -431,30 +495,59 @@ func GetClubAnnouncements(c *gin.Context) {
 }
 
 func CreateClub(c *gin.Context) {
-	name := c.PostForm("Name")
-	description := c.PostForm("Description")
-	categoryID, err := strconv.ParseUint(c.PostForm("CategoryID"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "CategoryID ต้องเป็นตัวเลข"})
+	name := strings.TrimSpace(c.PostForm("Name"))
+	description := strings.TrimSpace(c.PostForm("Description"))
+	categoryIDStr := c.PostForm("CategoryID")
+	createdByStr := c.PostForm("CreatedBy")
+
+	//Validate ชื่อชมรม
+	if name == "" || len(name) < 3 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ชื่อชมรมต้องมีความยาวอย่างน้อย 3 ตัวอักษร"})
 		return
 	}
-	createdBy, _ := strconv.ParseUint(c.PostForm("CreatedBy"), 10, 32)
 
+	//Validate คำอธิบาย
+	if description == "" || len(description) < 10 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "คำอธิบายชมรมต้องมีความยาวอย่างน้อย 10 ตัวอักษร"})
+		return
+	}
+
+	//Validate category
+	categoryID, err := strconv.ParseUint(categoryIDStr, 10, 32)
+	if err != nil || categoryID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "CategoryID ไม่ถูกต้อง"})
+		return
+	}
+
+	//Validate CreatedBy
+	createdBy, err := strconv.ParseUint(createdByStr, 10, 32)
+	if err != nil || createdBy == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "CreatedBy ไม่ถูกต้อง"})
+		return
+	}
+
+	//Validate ไฟล์รูปภาพ
 	file, err := c.FormFile("Image")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบไฟล์รูปภาพ"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ต้องแนบโลโก้ชมรม (Image) มาด้วย"})
+		return
+	}
+	if file.Size > 5*1024*1024 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ขนาดไฟล์ต้องไม่เกิน 5MB"})
 		return
 	}
 
-	uploadPath := fmt.Sprintf("images/clubs/%s/%s", slugify(name), file.Filename)
-	if err := c.SaveUploadedFile(file, uploadPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปโหลดรูปภาพไม่สำเร็จ"})
-		return
-	}
-
+	//ตรวจสอบ status pending
 	var pendingStatus entity.ClubStatus
 	if err := config.DB().Where("name = ?", "pending").First(&pendingStatus).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบสถานะ pending"})
+		return
+	}
+
+	//อัปโหลดไฟล์
+	uploadPath := fmt.Sprintf("images/clubs/%s/%s", slugify(name), file.Filename)
+	if err := c.SaveUploadedFile(file, uploadPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปโหลดโลโก้ไม่สำเร็จ"})
 		return
 	}
 
@@ -467,11 +560,104 @@ func CreateClub(c *gin.Context) {
 		LogoImage:   "/" + uploadPath,
 	}
 	if err := config.DB().Create(&club).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "สร้างชมรมไม่สำเร็จ"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้างชมรมได้"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "สร้างชมรมสำเร็จ", "club": club})
+	member := entity.ClubMember{
+		UserID: uint(createdBy),
+		ClubID: club.ID,
+		Role:   "president",
+	}
+	if err := config.DB().Create(&member).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "เพิ่มสมาชิกประธานชมรมไม่สำเร็จ"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "สร้างชมรมสำเร็จ",
+		"club":    club,
+	})
 }
 
+func ApproveClub(c *gin.Context) {
+	id := c.Param("id")
 
+	var approvedStatus entity.ClubStatus
+	if err := config.DB().Where("name = ?", "approved").First(&approvedStatus).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบสถานะ approved"})
+		return
+	}
+
+	var club entity.Club
+	if err := config.DB().Where("id = ?", id).First(&club).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบชมรม"})
+		return
+	}
+
+	if err := config.DB().Model(&club).
+		Update("status_id", approvedStatus.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "อนุมัติชมรมไม่สำเร็จ"})
+		return
+	}
+
+	var creator entity.User
+	if err := config.DB().First(&creator, club.CreatedBy).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบข้อมูลผู้สร้างชมรม"})
+		return
+	}
+
+	// ถ้า role เป็น student (1) → เปลี่ยนเป็น club_admin (2)
+	if creator.RoleID == 1 {
+		if err := config.DB().Model(&entity.User{}).Where("id = ?", creator.ID).Update("role_id", 2).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตบทบาทผู้ใช้ไม่สำเร็จ"})
+			return
+		}
+	}
+
+	subject := "✅ ชมรมของคุณได้รับการอนุมัติแล้ว"
+	htmlBody, err := services.RenderTemplate("approve_club.html", map[string]string{
+		"ClubName": club.Name,
+	})
+	if err != nil {
+		fmt.Println("❌ Error rendering email template:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้างเนื้อหาอีเมลได้"})
+		return
+	}
+
+	go services.SendEmailHTML(creator.Email, subject, htmlBody)
+
+	c.JSON(http.StatusOK, gin.H{"message": "อนุมัติชมรมเรียบร้อยแล้ว"})
+}
+
+func RejectClub(c *gin.Context) {
+	id := c.Param("id")
+
+	var club entity.Club
+	if err := config.DB().First(&club, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบชมรม"})
+		return
+	}
+
+	var suspendedStatus entity.ClubStatus
+	if err := config.DB().Where("name = ?", "suspended").First(&suspendedStatus).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบสถานะ suspended"})
+		return
+	}
+
+	if err := config.DB().Model(&club).Update("status_id", suspendedStatus.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ปฏิเสธชมรมไม่สำเร็จ"})
+		return
+	}
+
+	var creator entity.User
+	if err := config.DB().First(&creator, club.CreatedBy).Error; err == nil {
+		subject := "❌ ชมรมของคุณถูกปฏิเสธ"
+		htmlBody, _ := services.RenderTemplate("reject_club.html", map[string]string{
+			"ClubName": club.Name,
+		})
+		go services.SendEmailHTML(creator.Email, subject, htmlBody)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "ปฏิเสธชมรมเรียบร้อยแล้ว", "club_id": club.ID})
+}

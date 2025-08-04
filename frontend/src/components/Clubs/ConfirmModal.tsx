@@ -48,8 +48,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
       case 'join':
         return <UserPlus className="w-12 h-12 text-green-500" />;
       case 'leave':
-      case 'remove':
         return <UserMinus className="w-12 h-12 text-red-500" />;
+      case 'remove':
+        return <X className="w-12 h-12 text-red-500" />;
       case 'change-president':
         return <ShieldCheck className="w-12 h-12 text-yellow-500" />;
       case 'approve':
@@ -129,7 +130,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
 
            {type === 'remove' && (
             <div className="text-sm text-red-600 mb-6">
-              การลบสมาชิกจะไม่สามารถย้อนกลับได้
+              หากยืนยัน ระบบจะดำเนินการทันทีและไม่สามารถเปลี่ยนแปลงได้
             </div>
           )}
 
