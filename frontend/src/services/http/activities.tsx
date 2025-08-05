@@ -145,6 +145,30 @@ export async function fetchPhotosByActivityID(id: number) {
   }
 }
 
+export async function fetchAllActivitiesWithoutPhotos() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/activities/without-photo`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to fetch activity statistics:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export async function addPhotoToActivity(id: number, photoData: { url: string; uploadedBy: string }) {
   try {
     const response = await fetch(`${API_BASE_URL}/activities/photo/${id}`, {

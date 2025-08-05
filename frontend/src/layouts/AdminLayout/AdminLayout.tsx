@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   User,
@@ -14,15 +14,16 @@ import {
   Crown,
   Star,
   FolderKanban,
-} from 'lucide-react';
-import { API_BASE_URL, fetchUserById } from '../../services/http';
-import type { Users } from '../../interfaces/IUsers';
-import { CEMSLogoNoText } from '../../components/Logo/CEMSLogo';
-import LogoutConfirmationModal from '../../components/Modal/Logout';
-import { TooltipCustom } from '../../components/Home/ProfileDropdown';
-import { ToastNotification } from '../../components/Modal/DeleteButtonModal';
-import NotificationModal from '../../components/Modal/NotificationModal';
-import { useNotifications } from '../../components/Home/UseNotifications';
+  Database,
+} from "lucide-react";
+import { API_BASE_URL, fetchUserById } from "../../services/http";
+import type { Users } from "../../interfaces/IUsers";
+import { CEMSLogoNoText } from "../../components/Logo/CEMSLogo";
+import LogoutConfirmationModal from "../../components/Modal/Logout";
+import { TooltipCustom } from "../../components/Home/ProfileDropdown";
+import { ToastNotification } from "../../components/Modal/DeleteButtonModal";
+import NotificationModal from "../../components/Modal/NotificationModal";
+import { useNotifications } from "../../components/Home/UseNotifications";
 
 interface MenuItem {
   id: string;
@@ -37,18 +38,22 @@ const TruncatedText: React.FC<{
   text: string;
   maxLength: number;
   className?: string;
-  tooltipPosition?: 'top' | 'bottom' | 'left' | 'right';
+  tooltipPosition?: "top" | "bottom" | "left" | "right";
   showTooltip?: boolean;
-}> = ({ text, maxLength, className = "", tooltipPosition = 'top', showTooltip = true }) => {
+}> = ({
+  text,
+  maxLength,
+  className = "",
+  tooltipPosition = "top",
+  showTooltip = true,
+}) => {
   const shouldTruncate = text.length > maxLength;
   const displayText = shouldTruncate ? `${text.slice(0, maxLength)}...` : text;
 
   if (shouldTruncate && showTooltip) {
     return (
       <TooltipCustom text={text} position={tooltipPosition}>
-        <span className={`cursor-default ${className}`}>
-          {displayText}
-        </span>
+        <span className={`cursor-default ${className}`}>{displayText}</span>
       </TooltipCustom>
     );
   }
@@ -64,29 +69,34 @@ const AdminLayout: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [toast, setToast] = useState<{
     message: string;
-    type: 'success' | 'error' | 'info';
+    type: "success" | "error" | "info";
     title?: string;
     isVisible: boolean;
   }>({
-    message: '',
-    type: 'info',
-    isVisible: false
+    message: "",
+    type: "info",
+    isVisible: false,
   });
-  
+
   const [user, setUser] = useState<Users | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(true);
-  const userId = localStorage.getItem('userId');
-  const { notifications, loading: notificationsLoading, markAsRead, markAllAsRead } = useNotifications(Number(userId));
+  const userId = localStorage.getItem("userId");
+  const {
+    notifications,
+    loading: notificationsLoading,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications(Number(userId));
 
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const userId = localStorage.getItem('userId');
+        const userId = localStorage.getItem("userId");
         if (!userId) {
-          setError('ไม่พบ User ID');
+          setError("ไม่พบ User ID");
           setLoading(false);
           return;
         }
@@ -95,8 +105,8 @@ const AdminLayout: React.FC = () => {
         setError(null);
         setImageError(false);
       } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
+        console.error("Error fetching user data:", err);
+        setError("ไม่สามารถโหลดข้อมูลผู้ใช้ได้");
       } finally {
         setLoading(false);
       }
@@ -106,35 +116,41 @@ const AdminLayout: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     {
-      id: 'dashboard',
-      label: 'แดชบอร์ด',
+      id: "dashboard",
+      label: "แดชบอร์ด",
       icon: <BarChart3 className="w-5 h-5" />,
-      path: '/'
+      path: "/",
     },
     {
-      id: 'clubs',
-      label: 'ชมรม',
+      id: "clubs",
+      label: "ชมรม",
       icon: <University className="w-5 h-5" />,
-      path: '/manage/clubs'
+      path: "/manage/clubs",
     },
     {
-      id: 'activities',
-      label: 'กิจกรรม',
+      id: "activities",
+      label: "กิจกรรม",
       icon: <Activity className="w-5 h-5" />,
-      path: '/manage/activities'
+      path: "/manage/activities",
     },
     {
-      id: 'users',
-      label: 'ผู้ใช้',
+      id: "users",
+      label: "ผู้ใช้",
       icon: <UserCheck className="w-5 h-5" />,
-      path: '/manage/users'
+      path: "/manage/users",
     },
     {
-      id: 'reports',
-      label: 'รายงาน',
+      id: "reports",
+      label: "รายงาน",
       icon: <FolderKanban className="w-5 h-5" />,
-      path: '/manage-reports'
-    }
+      path: "/manage-reports",
+    },
+    {
+      id: "university-info",
+      label: "ข้อมูลมหาวิทยาลัย",
+      icon: <Database className="w-5 h-5" />,
+      path: "/university-info",
+    },
   ];
 
   const handleMenuClick = (path: string) => {
@@ -147,23 +163,29 @@ const AdminLayout: React.FC = () => {
   };
 
   const getCurrentPageTitle = () => {
-    const currentItem = menuItems.find(item => item.path === location.pathname);
-    return currentItem?.label || 'Dashboard';
+    const currentItem = menuItems.find(
+      (item) => item.path === location.pathname
+    );
+    return currentItem?.label || "Dashboard";
   };
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info', title?: string) => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info",
+    title?: string
+  ) => {
     setToast({
       message,
       type,
       title,
-      isVisible: true
+      isVisible: true,
     });
   };
 
   const hideToast = () => {
-    setToast(prev => ({
+    setToast((prev) => ({
       ...prev,
-      isVisible: false
+      isVisible: false,
     }));
   };
 
@@ -175,32 +197,31 @@ const AdminLayout: React.FC = () => {
     setIsLoggingOut(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       setShowLogoutModal(false);
       setIsLoggingOut(false);
 
-      showToast('กำลังออกจากระบบ...', 'info', 'ออกจากระบบ');
+      showToast("กำลังออกจากระบบ...", "info", "ออกจากระบบ");
 
       setTimeout(() => {
-        showToast('ออกจากระบบสำเร็จ!', 'success', 'สำเร็จ');
+        showToast("ออกจากระบบสำเร็จ!", "success", "สำเร็จ");
       }, 1000);
 
       setTimeout(() => {
-        showToast('กำลังเคลียร์ข้อมูล...', 'info', 'ดำเนินการ');
+        showToast("กำลังเคลียร์ข้อมูล...", "info", "ดำเนินการ");
       }, 2500);
 
       setTimeout(() => {
-        showToast('เสร็จสิ้น! ขอบคุณที่ใช้บริการ', 'success', 'เสร็จสิ้น');
+        showToast("เสร็จสิ้น! ขอบคุณที่ใช้บริการ", "success", "เสร็จสิ้น");
       }, 4000);
 
       setTimeout(() => {
         localStorage.clear();
-        navigate('/login');
+        navigate("/login");
       }, 5500);
-
     } catch (error) {
       setIsLoggingOut(false);
-      showToast('เกิดข้อผิดพลาดในการออกจากระบบ', 'error', 'ข้อผิดพลาด');
+      showToast("เกิดข้อผิดพลาดในการออกจากระบบ", "error", "ข้อผิดพลาด");
     }
   };
 
@@ -219,8 +240,8 @@ const AdminLayout: React.FC = () => {
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleSidebar = () => {
@@ -238,15 +259,20 @@ const AdminLayout: React.FC = () => {
 
   const getInitials = () => {
     if (loading || error || !user) return "A";
-    return `${user.FirstName?.charAt(0) || ''}${user.LastName?.charAt(0) || ''}`.toUpperCase();
+    return `${user.FirstName?.charAt(0) || ""}${
+      user.LastName?.charAt(0) || ""
+    }`.toUpperCase();
   };
 
   const hasValidProfileImage = () => {
-    return user?.ProfileImage && user.ProfileImage.trim() !== '' && !imageError;
+    return user?.ProfileImage && user.ProfileImage.trim() !== "" && !imageError;
   };
 
   const getImageUrl = (profileImage: string) => {
-    if (profileImage.startsWith('http://') || profileImage.startsWith('https://')) {
+    if (
+      profileImage.startsWith("http://") ||
+      profileImage.startsWith("https://")
+    ) {
       return profileImage;
     }
     return `${API_BASE_URL}${profileImage}`;
@@ -256,7 +282,10 @@ const AdminLayout: React.FC = () => {
     setImageError(true);
   };
 
-  const renderProfileAvatar = (size: string = "w-8 h-8", showBorder: boolean = false) => {
+  const renderProfileAvatar = (
+    size: string = "w-8 h-8",
+    showBorder: boolean = false
+  ) => {
     const borderClass = showBorder ? "ring-2 ring-[#640D5F] ring-offset-2" : "";
 
     if (hasValidProfileImage()) {
@@ -277,7 +306,9 @@ const AdminLayout: React.FC = () => {
 
     return (
       <div className={`relative ${size} ${borderClass} rounded-full`}>
-        <div className={`${size} rounded-full bg-[#640D5F] flex items-center justify-center text-white font-medium shadow-sm`}>
+        <div
+          className={`${size} rounded-full bg-[#640D5F] flex items-center justify-center text-white font-medium shadow-sm`}
+        >
           <span className="text-xs">{getInitials()}</span>
         </div>
         {user?.IsActive && (
@@ -304,15 +335,20 @@ const AdminLayout: React.FC = () => {
         {/* Floating Sidebar */}
         <div
           className={`fixed lg:absolute inset-y-0 left-0 z-50 mb-6 transition-all duration-300 ease-in-out
-    ${screenSize >= 1024 && isCollapsed ? 'w-24' : 'w-64'} 
-    ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+    ${screenSize >= 1024 && isCollapsed ? "w-24" : "w-64"} 
+    ${
+      isMobileSidebarOpen
+        ? "translate-x-0"
+        : "-translate-x-full lg:translate-x-0"
+    }
   `}
         >
           {/* Floating Container */}
-          <div className={`h-full m-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 transition-all duration-300 flex flex-col
-            ${screenSize >= 1024 && isCollapsed ? 'mx-2' : 'mr-2'}
-          `}>
-
+          <div
+            className={`h-full m-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 transition-all duration-300 flex flex-col
+            ${screenSize >= 1024 && isCollapsed ? "mx-2" : "mr-2"}
+          `}
+          >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100/50">
               {screenSize >= 1024 && isCollapsed ? (
@@ -372,24 +408,27 @@ const AdminLayout: React.FC = () => {
                       className={`
                 w-full flex items-center text-sm font-medium rounded-xl
                 transition-all duration-200 group relative overflow-hidden
-                ${isActive
-                          ? 'bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20'
-                          : 'text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F] hover:shadow-md'
-                        }
-                ${shouldShowTooltip ? 'justify-center p-3' : 'px-3 py-3'}
+                ${
+                  isActive
+                    ? "bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20"
+                    : "text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F] hover:shadow-md"
+                }
+                ${shouldShowTooltip ? "justify-center p-3" : "px-3 py-3"}
               `}
                       style={{
-                        animationDelay: `${index * 0.1}s`
+                        animationDelay: `${index * 0.1}s`,
                       }}
                     >
                       {isActive && (
                         <div className="absolute inset-0 bg-gradient-to-r from-[#640D5F] to-[#D91656] rounded-xl opacity-10 animate-pulse"></div>
                       )}
 
-                      <div className={`
+                      <div
+                        className={`
                 relative z-10 flex items-center justify-center w-6 h-6
-                ${!shouldShowTooltip ? 'mr-3' : ''}
-              `}>
+                ${!shouldShowTooltip ? "mr-3" : ""}
+              `}
+                      >
                         {item.icon}
                       </div>
 
@@ -443,15 +482,15 @@ const AdminLayout: React.FC = () => {
 
               {/* Menu Items */}
               <div className="space-y-2">
-             {/* Profile Menu Item */}
+                {/* Profile Menu Item */}
                 {screenSize >= 1024 && isCollapsed ? (
                   <TooltipCustom text="โปรไฟล์ของฉัน" position="right">
-                    <button 
-                      onClick={() => handleMenuClick('/profile')}
+                    <button
+                      onClick={() => handleMenuClick("/profile")}
                       className={`w-full flex items-center justify-center p-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md group relative overflow-hidden ${
-                        isActiveRoute('/profile') 
-                          ? 'bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20' 
-                          : 'text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]'
+                        isActiveRoute("/profile")
+                          ? "bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20"
+                          : "text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]"
                       }`}
                     >
                       <div className="relative z-10">
@@ -461,18 +500,20 @@ const AdminLayout: React.FC = () => {
                     </button>
                   </TooltipCustom>
                 ) : (
-                  <button 
-                    onClick={() => handleMenuClick('/profile')}
+                  <button
+                    onClick={() => handleMenuClick("/profile")}
                     className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md group relative overflow-hidden ${
-                      isActiveRoute('/profile') 
-                        ? 'bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20' 
-                        : 'text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]'
+                      isActiveRoute("/profile")
+                        ? "bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20"
+                        : "text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]"
                     }`}
                   >
                     <div className="relative z-10 flex items-center justify-center w-6 h-6 mr-3">
                       <User className="w-5 h-5" />
                     </div>
-                    <span className="relative z-10 font-medium">โปรไฟล์ของฉัน</span>
+                    <span className="relative z-10 font-medium">
+                      โปรไฟล์ของฉัน
+                    </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                   </button>
                 )}
@@ -521,7 +562,9 @@ const AdminLayout: React.FC = () => {
                     <div className="relative z-10 flex items-center justify-center w-6 h-6 mr-3">
                       <LogOut className="w-5 h-5" />
                     </div>
-                    <span className="relative z-10 font-medium">ออกจากระบบ</span>
+                    <span className="relative z-10 font-medium">
+                      ออกจากระบบ
+                    </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-red-50/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                   </button>
                 )}
@@ -532,18 +575,26 @@ const AdminLayout: React.FC = () => {
             {!(screenSize >= 1024 && isCollapsed) && (
               <div className="absolute top-4 right-4 flex space-x-1">
                 <div className="w-2 h-2 bg-[#27AE60] rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-[#FFB200] rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-                <div className="w-2 h-2 bg-[#D91656] rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div
+                  className="w-2 h-2 bg-[#FFB200] rounded-full animate-pulse"
+                  style={{ animationDelay: "0.5s" }}
+                ></div>
+                <div
+                  className="w-2 h-2 bg-[#D91656] rounded-full animate-pulse"
+                  style={{ animationDelay: "1s" }}
+                ></div>
               </div>
             )}
           </div>
         </div>
 
         {/* Main Content */}
-        <div className={`
+        <div
+          className={`
   flex-1 flex flex-col transition-all duration-300
-  ${isCollapsed ? 'lg:ml-24' : 'lg:ml-72'}
-`}>
+  ${isCollapsed ? "lg:ml-24" : "lg:ml-72"}
+`}
+        >
           {/* Floating Top Bar */}
           <header className="bg-transparent p-4 z-60">
             <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 px-6 py-4">
@@ -594,7 +645,7 @@ const AdminLayout: React.FC = () => {
         isOpen={showLogoutModal}
         onClose={cancelLogout}
         onConfirm={confirmLogout}
-        userName={user ? `${user.FirstName} ${user.LastName}` : 'Admin User'}
+        userName={user ? `${user.FirstName} ${user.LastName}` : "Admin User"}
         user={user}
         isLoggingOut={isLoggingOut}
       />

@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   addPhotoToActivity,
-  fetchActivityAll,
+  fetchAllActivitiesWithoutPhotos,
 } from "../../services/http/activities";
 import { fetchUserById } from "../../services/http";
 import { ArrowBigLeft, Save, X } from "lucide-react";
@@ -15,9 +15,44 @@ import { ArrowBigLeft, Save, X } from "lucide-react";
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 
 interface ActivityOption {
-  ID: number;
-  Title: string;
+  id: number;
+  title: string;
+  date_start: string;
+  date_end: string;
 }
+
+const formatThaiDateRange = (startStr: string, endStr: string) => {
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+
+  const thaiYear = (year: number) => year + 543;
+
+  const startDay = start.getDate();
+  const startMonth = start.toLocaleString("th-TH", { month: "long" });
+  const startYear = thaiYear(start.getFullYear());
+
+  const endDay = end.getDate();
+  const endMonth = end.toLocaleString("th-TH", { month: "long" });
+  const endYear = thaiYear(end.getFullYear());
+
+  const isSameDay =
+    startDay === endDay &&
+    start.getMonth() === end.getMonth() &&
+    start.getFullYear() === end.getFullYear();
+
+  const isSameMonth = start.getMonth() === end.getMonth();
+  const isSameYear = start.getFullYear() === end.getFullYear();
+
+  if (isSameDay) {
+    return `${startDay} ${startMonth} ${startYear}`;
+  }
+
+  if (isSameMonth && isSameYear) {
+    return `${startDay} - ${endDay} ${startMonth} ${startYear}`;
+  }
+
+  return `${startDay} ${startMonth} ${startYear} - ${endDay} ${endMonth} ${endYear}`;
+};
 
 export default function AddActivitiesPhotos() {
   const { id } = useParams<{ id: string }>();
@@ -36,7 +71,6 @@ export default function AddActivitiesPhotos() {
 
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [newFileList, setNewFileList] = useState<UploadFile[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -65,27 +99,31 @@ export default function AddActivitiesPhotos() {
     const fetchActivities = async () => {
       try {
         setLoadingActivities(true);
-        const result = await fetchActivityAll();
-        setActivities(result);
-
+        const result = await fetchAllActivitiesWithoutPhotos();
+        const activitiesArray = result.data || [];
+        setActivities(activitiesArray);
         // Set initial value if id is provided
-        if (id && result.length > 0) {
-          const foundActivity = result.find(
-            (activity) => activity.ID === parseInt(id)
+        if (id) {
+          const foundActivity = activitiesArray.find(
+            (activity: ActivityOption) => activity.id === parseInt(id)
           );
           if (foundActivity) {
-            setSelectedActivityValue(foundActivity.Title);
-            setSelectedActivityId(foundActivity.ID);
+            const displayValue = `${
+              foundActivity.title
+            } | ${formatThaiDateRange(
+              foundActivity.date_start,
+              foundActivity.date_end
+            )}`;
+            setSelectedActivityValue(displayValue);
+            setSelectedActivityId(foundActivity.id);
             form.setFieldsValue({
-              activityId: foundActivity.Title,
+              activityId: displayValue,
             });
           }
         }
-        setLoading(true);
       } catch (error) {
-        setError("Failed to load existing photos");
+        setError("Failed to load activities");
       } finally {
-        setLoading(false);
         setLoadingActivities(false);
       }
     };
@@ -94,13 +132,16 @@ export default function AddActivitiesPhotos() {
   }, [id, form]);
 
   const handleActivityChange = (value: string) => {
+    // Extract the title part (before the " | " separator)
+    const title = value.split(" | ")[0];
+
     // Find the activity by title
     const selectedActivity = activities.find(
-      (activity) => activity.Title === value
+      (activity) => activity.title === title
     );
     if (selectedActivity) {
-      setSelectedActivityId(selectedActivity.ID);
-      setSelectedActivityValue(value);
+      setSelectedActivityId(selectedActivity.id);
+      setSelectedActivityValue(value); // Keep the full display value
       form.setFieldsValue({ activityId: value });
       // Clear new uploads when switching activities
       setNewFileList([]);
@@ -243,17 +284,27 @@ export default function AddActivitiesPhotos() {
             <Combobox
               value={selectedActivityValue}
               onChange={handleActivityChange}
-              options={activities.map((activity) => activity.Title)}
+              options={
+                Array.isArray(activities)
+                  ? activities.map(
+                      (activity) =>
+                        `${activity.title} | ${formatThaiDateRange(
+                          activity.date_start,
+                          activity.date_end
+                        )}`
+                    )
+                  : []
+              }
               placeholder="เลือกกิจกรรม..."
               disabled={loadingActivities}
             />
 
             {selectedActivityId && (
               <>
-                {loading ? (
+                {loadingActivities ? (
                   <div style={{ textAlign: "center", padding: "20px" }}>
                     <Spin size="large" />
-                    <p>Loading activity photos...</p>
+                    <p>Loading activities...</p>
                   </div>
                 ) : error ? (
                   <Alert
