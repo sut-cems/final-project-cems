@@ -2,9 +2,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
   User,
   Calendar,
   Search,
@@ -20,13 +17,10 @@ import { fetchActivitiesPhotos } from "../../services/http/activities";
 export default function ActivitiesPhotos() {
   const [showSlideshow, setShowSlideshow] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedActivityImages, setSelectedActivityImages] = useState<any[]>(
-    []
-  );
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+  const [selectedActivityImages, setSelectedActivityImages] = useState<
+    ActivityImage[]
+  >([]);
+
   const [activities, setActivities] = useState<Activity[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userRole, setUserRole] = useState<string>("");
@@ -36,12 +30,13 @@ export default function ActivitiesPhotos() {
     url: string;
     uploadedBy: string;
     uploadedDate: string;
-    uploadTime?: string;
   }
 
   interface Activity {
     id: number;
     title: string;
+    date_start: string;
+    date_end: string;
     images: ActivityImage[];
   }
 
@@ -52,6 +47,39 @@ export default function ActivitiesPhotos() {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const formatThaiDateRange = (startStr: string, endStr: string) => {
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+
+    const thaiYear = (year: number) => year + 543;
+
+    const startDay = start.getDate();
+    const startMonth = start.toLocaleString("th-TH", { month: "long" });
+    const startYear = thaiYear(start.getFullYear());
+
+    const endDay = end.getDate();
+    const endMonth = end.toLocaleString("th-TH", { month: "long" });
+    const endYear = thaiYear(end.getFullYear());
+
+    const isSameDay =
+      startDay === endDay &&
+      start.getMonth() === end.getMonth() &&
+      start.getFullYear() === end.getFullYear();
+
+    const isSameMonth = start.getMonth() === end.getMonth();
+    const isSameYear = start.getFullYear() === end.getFullYear();
+
+    if (isSameDay) {
+      return `${startDay} ${startMonth} ${startYear}`;
+    }
+
+    if (isSameMonth && isSameYear) {
+      return `${startDay} - ${endDay} ${startMonth} ${startYear}`;
+    }
+
+    return `${startDay} ${startMonth} ${startYear} - ${endDay} ${endMonth} ${endYear}`;
   };
 
   const handleAddPhoto = (activityId: number) => {
@@ -66,81 +94,24 @@ export default function ActivitiesPhotos() {
     setSelectedActivityImages(images);
     setCurrentImageIndex(startIndex);
     setShowSlideshow(true);
-    setZoomLevel(1);
-    setPanPosition({ x: 0, y: 0 });
   };
 
   const closeSlideshow = () => {
     setShowSlideshow(false);
     setCurrentImageIndex(0);
     setSelectedActivityImages([]);
-    setZoomLevel(1);
-    setPanPosition({ x: 0, y: 0 });
   };
 
   const goToPrevious = () => {
     setCurrentImageIndex((prev) =>
       prev === 0 ? selectedActivityImages.length - 1 : prev - 1
     );
-    setZoomLevel(1);
-    setPanPosition({ x: 0, y: 0 });
   };
 
   const goToNext = () => {
     setCurrentImageIndex((prev) =>
       prev === selectedActivityImages.length - 1 ? 0 : prev + 1
     );
-    setZoomLevel(1);
-    setPanPosition({ x: 0, y: 0 });
-  };
-
-  const zoomIn = () => {
-    setZoomLevel((prev) => Math.min(prev + 1, 5)); // Zoom by 100% each time, max 5x
-  };
-
-  const zoomOut = () => {
-    setZoomLevel((prev) => Math.max(prev - 1, 0.25)); // Zoom out by 100% each time, min 0.25x
-  };
-
-  const resetZoom = () => {
-    setZoomLevel(1);
-    setPanPosition({ x: 0, y: 0 });
-  };
-
-  // Enhanced mouse/touch handling for panning
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoomLevel > 1) {
-      setIsPanning(true);
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-      e.preventDefault();
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isPanning && zoomLevel > 1) {
-      const deltaX = e.clientX - lastPanPoint.x;
-      const deltaY = e.clientY - lastPanPoint.y;
-
-      setPanPosition((prev) => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY,
-      }));
-
-      setLastPanPoint({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsPanning(false);
-  };
-
-  // Double click to zoom
-  const handleDoubleClick = () => {
-    if (zoomLevel === 1) {
-      setZoomLevel(2);
-    } else {
-      resetZoom();
-    }
   };
 
   useEffect(() => {
@@ -204,7 +175,10 @@ export default function ActivitiesPhotos() {
             {/* Add Photo Button - Only show for club_admin */}
             <div className="flex items-center justify-center mx-auto mt-4">
               {userRole === "club_admin" && (
-                <button onClick={handleAddNewPhoto} className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg duration-200 font-medium hover:scale-105 hover:cursor-pointer transition-all">
+                <button
+                  onClick={handleAddNewPhoto}
+                  className="flex items-center gap-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg duration-200 font-medium hover:scale-105 hover:cursor-pointer transition-all"
+                >
                   <Plus size={20} />
                   เพิ่มรูปภาพใหม่สำหรับกิจกรรม
                 </button>
@@ -230,7 +204,13 @@ export default function ActivitiesPhotos() {
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-3xl font-bold text-black-700 pl-4 relative select-none ">
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-orange-600 rounded"></span>
-                        {activity.title} ({activity.images.length} รูป)
+                        {activity.title}
+                        {" | วันที่ "}
+                        {formatThaiDateRange(
+                          activity.date_start,
+                          activity.date_end
+                        )}{" "}
+                        ({activity.images.length} รูป)
                       </h2>
 
                       {/* Add Photo Button - Only show for club_admin */}
@@ -322,11 +302,26 @@ export default function ActivitiesPhotos() {
 
             {/* Activity title */}
             <div className="absolute top-4 left-4 text-white text-lg font-semibold z-10 bg-black bg-opacity-50 px-3 py-2 rounded">
-              {activities.find(
-                (activity) =>
-                  JSON.stringify(activity.images) ===
-                  JSON.stringify(selectedActivityImages)
-              )?.title || "Activity"}
+              {
+                activities.find(
+                  (activity) =>
+                    JSON.stringify(activity.images) ===
+                    JSON.stringify(selectedActivityImages)
+                )?.title
+              }{" "}
+              {" | วันที่ "}
+              {formatThaiDateRange(
+                activities.find(
+                  (act) =>
+                    JSON.stringify(act.images) ===
+                    JSON.stringify(selectedActivityImages)
+                )?.date_start || "",
+                activities.find(
+                  (act) =>
+                    JSON.stringify(act.images) ===
+                    JSON.stringify(selectedActivityImages)
+                )?.date_end || ""
+              )}
             </div>
 
             {/* Upload info in slideshow */}
@@ -341,9 +336,8 @@ export default function ActivitiesPhotos() {
                 <Calendar size={14} />
                 <span className="text-xs">
                   {formatDate(
-                    selectedActivityImages[currentImageIndex]?.uploadDate
-                  )}{" "}
-                  • {selectedActivityImages[currentImageIndex]?.uploadTime}
+                    selectedActivityImages[currentImageIndex]?.uploadedDate
+                  )}
                 </span>
               </div>
             </div>
@@ -357,30 +351,11 @@ export default function ActivitiesPhotos() {
             </button>
 
             {/* Current image container */}
-            <div
-              className="max-w-4xl max-h-full flex justify-center items-center overflow-hidden select-none"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-              onDoubleClick={handleDoubleClick}
-            >
+            <div className="max-w-4xl max-h-full flex justify-center items-center overflow-hidden select-none">
               <img
                 src={selectedActivityImages[currentImageIndex].url}
                 alt={`Slideshow image ${currentImageIndex + 1}`}
                 className="max-w-full max-h-full object-contain transition-transform duration-300"
-                style={{
-                  transform: `scale(${zoomLevel}) translate(${
-                    panPosition.x / zoomLevel
-                  }px, ${panPosition.y / zoomLevel}px)`,
-                  cursor:
-                    zoomLevel > 1
-                      ? isPanning
-                        ? "grabbing"
-                        : "grab"
-                      : "default",
-                }}
-                draggable={false}
               />
             </div>
 
@@ -393,7 +368,7 @@ export default function ActivitiesPhotos() {
             </button>
 
             {/* Enhanced Zoom controls */}
-            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 z-10">
+            {/* <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 z-10">
               <button
                 onClick={zoomOut}
                 className="bg-black bg-opacity-70 text-white px-3 py-2 rounded-lg hover:bg-opacity-80 transition-all duration-200 flex items-center gap-1"
@@ -425,10 +400,10 @@ export default function ActivitiesPhotos() {
                 <RotateCcw size={16} />
                 <span className="text-sm">Reset</span>
               </button>
-            </div>
+            </div> */}
 
             {/* Image counter */}
-            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
+            <div className="absolute bottom-30 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black bg-opacity-50 px-3 py-1 rounded">
               {currentImageIndex + 1} / {selectedActivityImages.length}
             </div>
 
@@ -439,8 +414,6 @@ export default function ActivitiesPhotos() {
                   key={index}
                   onClick={() => {
                     setCurrentImageIndex(index);
-                    setZoomLevel(1);
-                    setPanPosition({ x: 0, y: 0 });
                   }}
                   className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 transition-all duration-200 ${
                     index === currentImageIndex
@@ -456,19 +429,6 @@ export default function ActivitiesPhotos() {
                 </button>
               ))}
             </div>
-
-            {/* Instructions */}
-            {zoomLevel === 1 && (
-              <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 text-white text-xs bg-black bg-opacity-50 px-3 py-1 rounded">
-                Double-click to zoom • Use zoom controls above
-              </div>
-            )}
-
-            {zoomLevel > 1 && (
-              <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 text-white text-xs bg-black bg-opacity-50 px-3 py-1 rounded">
-                Drag to pan • Double-click to reset zoom
-              </div>
-            )}
           </div>
         </div>
       )}
