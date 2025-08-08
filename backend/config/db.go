@@ -52,6 +52,7 @@ func SetupDatabase() {
 		&entity.Program{},
 		&entity.ActivityPhoto{},
 		&entity.University{},
+		&entity.PasswordReset{},
 	)
 	if err != nil {
 		log.Fatal("AutoMigrate error:", err)

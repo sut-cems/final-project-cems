@@ -1,8 +1,12 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"final-project/cems/config"
 	"final-project/cems/entity"
@@ -131,4 +135,66 @@ func SearchUsers(c *gin.Context) {
 		"count": len(users),
 		"data": users,
 	})
+}
+// PATCH /users/:id/profile - อัปเดตโปรไฟล์ผู้ใช้ (รวมถึงรูปภาพ)
+func UpdateUserProfile(c *gin.Context) {
+    userID := c.Param("id")
+    db := config.DB()
+
+    // 1. Find user in DB
+    var user entity.User
+    if err := db.First(&user, "id = ?", userID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+        return
+    }
+
+    // 2. Parse form fields (text)
+    user.FirstName = c.PostForm("FirstName")
+    user.LastName = c.PostForm("LastName")
+    user.Email = c.PostForm("Email")
+    user.StudentID = c.PostForm("StudentID")
+
+    // 3. Parse multipart form (file)
+    file, err := c.FormFile("profile_picture")
+    if err == nil {
+        // 3.1 Validate file type
+        ext := strings.ToLower(filepath.Ext(file.Filename))
+        if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Only JPG, JPEG, and PNG are allowed"})
+            return
+        }
+
+        // 3.2 Remove old profile image
+        imageDir := filepath.Join("images", "profiles", "admins")
+        pattern := fmt.Sprintf("admin%s.*", userID)
+        matches, _ := filepath.Glob(filepath.Join(imageDir, pattern))
+        for _, match := range matches {
+            _ = os.Remove(match)
+        }
+
+        // 3.3 Set new file path with timestamp to avoid caching issues
+        timestamp := time.Now().Unix()
+        filename := fmt.Sprintf("admin%s_%d%s", userID, timestamp, ext)
+        path := filepath.Join(imageDir, filename)
+
+        // 3.4 Save new file
+        if err := c.SaveUploadedFile(file, path); err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to save file"})
+            return
+        }
+
+        // 3.5 Update image path
+        user.ProfileImage = "/" + path
+    }
+
+    // 4. Save updated user
+    if err := db.Save(&user).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message":         "Profile updated successfully",
+        "profile_picture": user.ProfileImage,
+    })
 }

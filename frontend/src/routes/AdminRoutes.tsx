@@ -6,6 +6,7 @@ import CEMSDashboard from "../pages/Admin/Dashboard";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 import ReportsManagemet from "../components/Reports/ReportsDashboard";
 import ClubPage from "../pages/Admin/Club";
+import AdminProfile from "../pages/Profile/AdminProfile";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -17,8 +18,16 @@ const AdminRoutes = (): RouteObject => {
 				element: <CEMSDashboard />
 			},
 			{
+				path: "/dashboard",
+				element: <CEMSDashboard />
+			},
+			{
 				path: "/manage-reports",
 				element: <ReportsManagemet />
+			},
+			{
+				path: "/profile",
+				element: <AdminProfile />
 			},
 			{
                 path: "/university-info",

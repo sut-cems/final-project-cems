@@ -5,7 +5,6 @@ import {
   User,
   Menu,
   X,
-  Settings,
   LogOut,
   ChevronDown,
   Activity,
@@ -14,7 +13,6 @@ import {
   Crown,
   Star,
   FolderKanban,
-  Database,
 } from "lucide-react";
 import { API_BASE_URL, fetchUserById } from "../../services/http";
 import type { Users } from "../../interfaces/IUsers";
@@ -30,7 +28,7 @@ interface MenuItem {
   label: string;
   icon: React.ReactNode;
   path: string;
-  isActive?: boolean;
+  activePaths?: string[];
 }
 
 // Custom Text Truncate Component
@@ -82,14 +80,12 @@ const AdminLayout: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(true);
-  const userId = localStorage.getItem("userId");
-  const {
-    notifications,
-    loading: notificationsLoading,
-    markAsRead,
-    markAllAsRead,
-  } = useNotifications(Number(userId));
-
+  const userId = localStorage.getItem('userId');
+  const { notifications, loading: notificationsLoading, markAsRead, markAllAsRead } = useNotifications(Number(userId));
+  const isMenuItemActive = (item: MenuItem) => {
+    const activePaths = item.activePaths ?? [item.path];
+    return activePaths.includes(location.pathname);
+  };
   // Load user data
   useEffect(() => {
     const loadUserData = async () => {
@@ -119,37 +115,32 @@ const AdminLayout: React.FC = () => {
       id: "dashboard",
       label: "แดชบอร์ด",
       icon: <BarChart3 className="w-5 h-5" />,
-      path: "/",
+      path: '/dashboard',
+      activePaths: ['/', '/dashboard'],
     },
     {
       id: "clubs",
       label: "ชมรม",
       icon: <University className="w-5 h-5" />,
-      path: "/manage/clubs",
+      path: '/manage/clubs',
     },
     {
       id: "activities",
       label: "กิจกรรม",
       icon: <Activity className="w-5 h-5" />,
-      path: "/manage/activities",
+      path: '/manage/activities',
     },
     {
       id: "users",
       label: "ผู้ใช้",
       icon: <UserCheck className="w-5 h-5" />,
-      path: "/manage/users",
+      path: '/manage/users',
     },
     {
       id: "reports",
       label: "รายงาน",
       icon: <FolderKanban className="w-5 h-5" />,
-      path: "/manage-reports",
-    },
-    {
-      id: "university-info",
-      label: "ข้อมูลมหาวิทยาลัย",
-      icon: <Database className="w-5 h-5" />,
-      path: "/university-info",
+      path: '/manage-reports',
     },
   ];
 
@@ -163,10 +154,8 @@ const AdminLayout: React.FC = () => {
   };
 
   const getCurrentPageTitle = () => {
-    const currentItem = menuItems.find(
-      (item) => item.path === location.pathname
-    );
-    return currentItem?.label || "Dashboard";
+    const currentItem = menuItems.find(item => item.path === location.pathname);
+    return currentItem?.label || 'โปรไฟล์';
   };
 
   const showToast = (
@@ -217,7 +206,7 @@ const AdminLayout: React.FC = () => {
 
       setTimeout(() => {
         localStorage.clear();
-        navigate("/login");
+        navigate('/');
       }, 5500);
     } catch (error) {
       setIsLoggingOut(false);
@@ -270,8 +259,9 @@ const AdminLayout: React.FC = () => {
 
   const getImageUrl = (profileImage: string) => {
     if (
-      profileImage.startsWith("http://") ||
-      profileImage.startsWith("https://")
+      profileImage.startsWith('http://') ||
+      profileImage.startsWith('https://') ||
+      profileImage.startsWith('data:image')
     ) {
       return profileImage;
     }
@@ -399,7 +389,7 @@ const AdminLayout: React.FC = () => {
             <nav className="px-3 py-4 flex-1">
               <ul className="space-y-2">
                 {menuItems.map((item, index) => {
-                  const isActive = isActiveRoute(item.path);
+                  const isActive = isMenuItemActive(item);
                   const shouldShowTooltip = screenSize >= 1024 && isCollapsed;
 
                   const buttonContent = (
@@ -481,17 +471,16 @@ const AdminLayout: React.FC = () => {
               )}
 
               {/* Menu Items */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {/* Profile Menu Item */}
                 {screenSize >= 1024 && isCollapsed ? (
-                  <TooltipCustom text="โปรไฟล์ของฉัน" position="right">
+                  <TooltipCustom text="โปรไฟล์" position="right">
                     <button
-                      onClick={() => handleMenuClick("/profile")}
-                      className={`w-full flex items-center justify-center p-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md group relative overflow-hidden ${
-                        isActiveRoute("/profile")
-                          ? "bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20"
-                          : "text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]"
-                      }`}
+                      onClick={() => handleMenuClick('/profile')}
+                      className={`w-full flex items-center justify-center p-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md group relative overflow-hidden ${isActiveRoute('/profile')
+                        ? 'bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20'
+                        : 'text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]'
+                        }`}
                     >
                       <div className="relative z-10">
                         <User className="w-5 h-5" />
@@ -501,39 +490,16 @@ const AdminLayout: React.FC = () => {
                   </TooltipCustom>
                 ) : (
                   <button
-                    onClick={() => handleMenuClick("/profile")}
-                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md group relative overflow-hidden ${
-                      isActiveRoute("/profile")
-                        ? "bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20"
-                        : "text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]"
-                    }`}
+                    onClick={() => handleMenuClick('/profile')}
+                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-md group relative overflow-hidden ${isActiveRoute('/profile')
+                      ? 'bg-[#640D5F] text-white shadow-lg shadow-[#640D5F]/20'
+                      : 'text-gray-700 hover:bg-gray-100/70 hover:text-[#640D5F]'
+                      }`}
                   >
                     <div className="relative z-10 flex items-center justify-center w-6 h-6 mr-3">
                       <User className="w-5 h-5" />
                     </div>
-                    <span className="relative z-10 font-medium">
-                      โปรไฟล์ของฉัน
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  </button>
-                )}
-
-                {/* Settings Menu Item */}
-                {screenSize >= 1024 && isCollapsed ? (
-                  <TooltipCustom text="ตั้งค่า" position="right">
-                    <button className="w-full flex items-center justify-center p-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-100/70 hover:text-[#640D5F] transition-all duration-200 hover:shadow-md group relative overflow-hidden">
-                      <div className="relative z-10">
-                        <Settings className="w-5 h-5" />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                    </button>
-                  </TooltipCustom>
-                ) : (
-                  <button className="w-full flex items-center px-3 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-100/70 hover:text-[#640D5F] transition-all duration-200 hover:shadow-md group relative overflow-hidden">
-                    <div className="relative z-10 flex items-center justify-center w-6 h-6 mr-3">
-                      <Settings className="w-5 h-5" />
-                    </div>
-                    <span className="relative z-10 font-medium">ตั้งค่า</span>
+                    <span className="relative z-10 font-medium">โปรไฟล์</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                   </button>
                 )}

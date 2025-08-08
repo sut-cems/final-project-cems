@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, ArrowRight, AlertCircle, ImageOff } from 'lucide-react';
+import { Users, ArrowRight, AlertCircle } from 'lucide-react';
 import { API_BASE_URL, fetchPopularClubs, fetchClubStatistics } from '../../services/http';
 import type { ClubStatus } from '../../interfaces/IClubStatuses';
 import type { ClubCategory } from '../../interfaces/IClubCategories';
@@ -18,11 +18,6 @@ interface ClubResponse {
   activities?: Activity[];
   members?: any[];
 }
-
-interface ClubDisplay {
-  club: ClubResponse;
-}
-
 interface Statistics {
   total_clubs: number;
   total_members: number;
@@ -38,6 +33,34 @@ const PopularClubs: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
+
+  const customStyles = `
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(5deg); }
+    }
+    @keyframes float-delayed {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-8px) scale(1.1); }
+    }
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+    .animate-float-delayed {
+      animation: float-delayed 4s ease-in-out infinite;
+      animation-delay: 1s;
+    }
+  `;
+
+  useEffect(() => {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = customStyles;
+    document.head.appendChild(styleSheet);
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -94,9 +117,6 @@ const PopularClubs: React.FC = () => {
     setImageErrors(prev => new Set(prev).add(clubId));
   };
 
-  const clubDisplayConfig: ClubDisplay[] = clubs.map(club => ({
-    club
-  }));
   function handleToClubs() {
     navigate('/clubs');
     setTimeout(() => {
@@ -104,14 +124,41 @@ const PopularClubs: React.FC = () => {
     }, 100);
   }
 
+  const handleToClubPage = (clubId: number) => {
+    navigate(`/clubs/${clubId}`);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
+  // Color palette matching FeaturedEvents
+  const colors = {
+    primary: '#640D5F',    // Deep purple
+    secondary: '#D91656',  // Pink/Red
+    accent1: '#EB5B00',    // Orange
+    accent2: '#FFB200'     // Yellow
+  };
+
+  const getCategoryColor = (categoryName: string) => {
+    const colorMap: { [key: string]: string } = {
+      'วิชาการ': colors.primary,
+      'บำเพ็ญประโยชน์': colors.secondary,
+      'กีฬา': colors.accent1,
+      'วัฒนธรรม': colors.primary,
+      'ทักษะชีวิต': colors.accent2,
+      'สังสรรค์': colors.accent1,
+    };
+    return colorMap[categoryName] || '#6B7280';
+  };
+
   // Loading state
   if (loading) {
     return (
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="container mx-auto px-4">
+      <section className="py-12 md:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-900 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">กำลังโหลดชมรม...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#640D5F] border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600">กำลังโหลดชมรม...</p>
           </div>
         </div>
       </section>
@@ -121,15 +168,15 @@ const PopularClubs: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="container mx-auto px-4">
+      <section className="py-12 md:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">เกิดข้อผิดพลาด</h3>
+            <AlertCircle className="w-12 h-12 text-[#D91656] mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">เกิดข้อผิดพลาด</h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-purple-900 text-white rounded-lg hover:bg-purple-800 transition-colors"
+              className="px-6 py-2 bg-[#640D5F] text-white rounded-lg hover:bg-[#640D5F]/90 transition-colors"
             >
               ลองใหม่อีกครั้ง
             </button>
@@ -142,10 +189,10 @@ const PopularClubs: React.FC = () => {
   // No clubs state
   if (clubs.length === 0) {
     return (
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="container mx-auto px-4">
+      <section className="py-12 md:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">ไม่มีชมรมแนะนำในขณะนี้</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">ไม่มีชมรมแนะนำในขณะนี้</h3>
             <p className="text-gray-600">กรุณาติดตามชมรมใหม่ๆ ในเร็วๆ นี้</p>
           </div>
         </div>
@@ -154,170 +201,255 @@ const PopularClubs: React.FC = () => {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-900 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-500 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="container mx-auto px-4 relative z-10">
+    <section className="py-12 md:py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-block">
-            <h2 className="text-5xl font-bold bg-gradient-to-r from-purple-900 via-pink-600 to-orange-500 bg-clip-text text-transparent mb-4">
-              ชมรมยอดนิยม
-            </h2>
-            <div className="h-1 w-24 bg-gradient-to-r from-purple-900 to-orange-500 mx-auto rounded-full"></div>
-          </div>
-          <p className="text-gray-600 mt-6 text-lg max-w-2xl mx-auto">
+        <div className="text-center mb-12 md:mb-16">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+            ชมรม
+            <span className="text-[#640D5F]">ยอดนิยม</span>
+          </h2>
+          <div className="w-24 h-1 bg-[#640D5F] mx-auto rounded-full mb-6"></div>
+          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto">
             ชมรมที่มีกิจกรรมน่าสนใจและมีสมาชิกเข้าร่วมมากที่สุด
           </p>
         </div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {clubDisplayConfig.map((clubDisplay) => (
+        {/* Clubs Grid with staggered animation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-12 md:mb-16">
+          {clubs.map((club, index) => (
             <div
-              key={clubDisplay.club.id}
-              className={`group relative bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500 transform hover:scale-105 hover:shadow-2xl cursor-pointer ${hoveredCard === clubDisplay.club.id ? 'ring-4 ring-orange-300' : ''
+              key={club.id}
+              className={`group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer flex flex-col h-full ${hoveredCard === club.id ? 'ring-2 ring-[#FFB200] ring-opacity-50 shadow-xl' : ''
                 }`}
-              onMouseEnter={() => setHoveredCard(clubDisplay.club.id)}
+              style={{
+                animationDelay: `${index * 0.1}s`,
+                opacity: loading ? 0 : 1,
+                transform: loading ? 'translateY(20px)' : 'translateY(0)'
+              }}
+              onMouseEnter={() => setHoveredCard(club.id)}
               onMouseLeave={() => setHoveredCard(null)}
+              onClick={() => handleToClubPage(club.id)}
             >
-              {/* Card Header with Dynamic Background */}
-              <div className="h-48 relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-                {/* Logo Image or Fallback */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {clubDisplay.club.logo_image && !imageErrors.has(clubDisplay.club.id) ? (
-                    <>
-                      <img
-                        src={getImageUrl(clubDisplay.club.logo_image)}
-                        alt={`${clubDisplay.club.name} logo`}
-                        className="w-40 h-40 object-contain transform group-hover:scale-110 transition-transform duration-500 shadow-2xl rounded-xl border-2 border-white/50 bg-white/10 backdrop-blur-sm p-2"
-                        onError={() => handleImageError(clubDisplay.club.id)}
-                        loading="lazy"
-                      />
-                      {/* Hidden image for error detection */}
-                      <img
-                        src={getImageUrl(clubDisplay.club.logo_image)}
-                        alt={`${clubDisplay.club.name} logo`}
-                        className="hidden"
-                        onError={() => handleImageError(clubDisplay.club.id)}
-                        loading="lazy"
-                      />
-                    </>
-                  ) : (
-                    <div className="transform group-hover:scale-110 transition-transform duration-500 flex flex-col items-center space-y-3">
-                      <div className="w-40 h-40 bg-gradient-to-br from-purple-400 via-pink-500 to-orange-400 rounded-xl flex items-center justify-center shadow-xl border-2 border-white relative overflow-hidden">
-                        {/* Animated background pattern */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-                        <div className="absolute top-2 right-2 w-4 h-4 bg-white/30 rounded-full animate-ping"></div>
-                        <div className="absolute bottom-3 left-3 w-6 h-6 bg-white/20 rounded-full animate-pulse"></div>
+              {/* Logo Section - Modern Design */}
+              <div className="h-48 md:h-56 relative overflow-hidden">
+                {club.logo_image && !imageErrors.has(club.id) ? (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center relative">
+                    {/* Floating geometric shapes */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      <div
+                        className="absolute top-4 right-8 w-12 h-12 rounded-lg opacity-10 rotate-12 animate-float"
+                        style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                      ></div>
+                      <div
+                        className="absolute bottom-6 left-6 w-8 h-8 rounded-full opacity-15 animate-float-delayed"
+                        style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                      ></div>
+                      <div
+                        className="absolute top-1/2 left-4 w-4 h-16 opacity-8 rotate-45 animate-pulse"
+                        style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                      ></div>
+                    </div>
 
-                        {/* Content */}
-                        <div className="text-center text-white relative z-10">
-                          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-2 mx-auto backdrop-blur-sm">
-                            <ImageOff className="w-8 h-8" />
-                          </div>
-                          <span className="text-xs font-medium drop-shadow-sm">ไม่มีโลโก้</span>
+                    {/* Main logo container */}
+                    <div className="relative z-10 group-hover:scale-105 transition-transform duration-500">
+                      {/* Glassmorphism container */}
+                      <div className="relative p-6">
+                        {/* Outer glow */}
+                        <div
+                          className="absolute inset-0 rounded-2xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity duration-500"
+                          style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                        ></div>
+
+                        {/* Glass card */}
+                        <div className="relative bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50 group-hover:bg-white/90 transition-all duration-500">
+                          <img
+                            src={getImageUrl(club.logo_image)}
+                            alt={`${club.name} logo`}
+                            className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto filter drop-shadow-sm group-hover:drop-shadow-md transition-all duration-500"
+                            onError={() => handleImageError(club.id)}
+                            loading="lazy"
+                          />
+
+                          {/* Subtle reflection effect */}
+                          <div className="absolute inset-x-6 bottom-6 h-1 bg-gradient-to-r from-transparent via-black/5 to-transparent"></div>
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-100 via-white to-gray-50 flex items-center justify-center relative overflow-hidden">
+                    {/* Modern geometric background */}
+                    <div className="absolute inset-0">
+                      {/* Grid pattern */}
+                      <div className="absolute inset-0 opacity-5">
+                        <div className="grid grid-cols-8 grid-rows-6 h-full w-full">
+                          {[...Array(48)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="border-r border-b border-gray-300"
+                              style={{ animationDelay: `${i * 0.05}s` }}
+                            ></div>
+                          ))}
+                        </div>
+                      </div>
 
-                {/* Club Category Badge */}
-                <div className="absolute top-4 left-4 px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white text-xs font-medium backdrop-blur-sm shadow-lg border border-white/20">
-                  {clubDisplay.club.category.Name}
-                </div>
+                      {/* Floating elements */}
+                      <div
+                        className="absolute top-6 right-6 w-16 h-16 rounded-2xl rotate-12 opacity-10 animate-float"
+                        style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                      ></div>
+                      <div
+                        className="absolute bottom-8 left-8 w-10 h-10 rounded-full opacity-15 animate-bounce"
+                        style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                      ></div>
+                      <div
+                        className="absolute top-1/3 left-1/4 w-6 h-6 rounded rotate-45 opacity-10 animate-pulse"
+                        style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                      ></div>
+                    </div>
 
-                {/* Status Indicator */}
-                {clubDisplay.club.status.IsActive && (
-                  <div className="absolute top-4 right-4 flex items-center space-x-1">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg"></div>
-                    <div className="w-2 h-2 bg-green-300 rounded-full animate-ping"></div>
+                    {/* Modern club placeholder */}
+                    <div className="relative z-10 group-hover:scale-105 transition-transform duration-500">
+                      <div className="relative">
+                        {/* Glassmorphism container */}
+                        <div className="relative bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/30 group-hover:bg-white/80 group-hover:shadow-2xl transition-all duration-500">
+                          {/* Modern icon with category color */}
+                          <div
+                            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto shadow-lg group-hover:shadow-xl transition-shadow duration-500"
+                            style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                          >
+                            <Users className="w-8 h-8 text-white" />
+                          </div>
+
+                          {/* Club info */}
+                          <div className="text-center space-y-1">
+                            <div className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                              {club.category?.Name}
+                            </div>
+                            <div className="text-sm font-bold text-gray-900 leading-tight">
+                              {club.name.length > 15 ? `${club.name.slice(0, 15)}...` : club.name}
+                            </div>
+                          </div>
+
+                          {/* Bottom accent */}
+                          <div
+                            className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 rounded-t-full opacity-50"
+                            style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {/* Decorative elements */}
-                <div className="absolute bottom-6 left-6 w-3 h-3 bg-white/40 rounded-full animate-bounce"></div>
-                <div className="absolute top-1/2 right-8 w-2 h-2 bg-orange-300/60 rounded-full animate-pulse"></div>
+                {/* Status Badge - Only show if active */}
+                {club.status?.IsActive && (
+                  <div className="absolute top-3 left-3 bg-green-500/90 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs font-medium shadow-lg">
+                    <div className="flex items-center space-x-1">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                      <span>เปิดรับสมาชิก</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Category Badge */}
+                <div
+                  className="absolute top-3 right-3 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg"
+                  style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                >
+                  {club.category?.Name}
+                </div>
               </div>
 
-              {/* Card Content */}
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-3 text-gray-800 group-hover:text-purple-900 transition-colors duration-300">
-                  {clubDisplay.club.name}
+              {/* Content Section */}
+              <div className="p-4 flex flex-col flex-grow">
+                {/* Club Name */}
+                <h3 className="text-base md:text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-[#640D5F] transition-colors min-h-[2.5rem] flex items-start leading-tight">
+                  {club.name}
                 </h3>
-                <p className="text-gray-600 text-sm mb-4 leading-relaxed line-clamp-3">
-                  {clubDisplay.club.description}
+
+                {/* Description */}
+                <p className="text-gray-600 text-xs md:text-sm mb-3 leading-relaxed line-clamp-2 h-[2rem] md:h-[2.5rem] overflow-hidden">
+                  {club.description}
                 </p>
 
-                {/* Members count and status */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2 text-gray-500">
-                    <Users className="w-4 h-4" />
-                    <span className="text-sm font-medium">สมาชิก: {clubDisplay.club.member_count} คน</span>
+                {/* Stats */}
+                <div className="flex items-center justify-between mb-3 text-xs md:text-sm">
+                  <div className="flex items-center text-gray-600">
+                    <Users className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+                    <span className="font-medium">{club.member_count}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <div
+                      className="w-2 h-2 rounded-full mr-1"
+                      style={{ backgroundColor: getCategoryColor(club.category?.Name || '') }}
+                    ></div>
+                    <span>{club.activity_count || 0} กิจกรรม</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-400">
-                    {clubDisplay.club.activity_count
-                      ? `จำนวนกิจกรรม: ${clubDisplay.club.activity_count} กิจกรรม`
-                      : 'ขณะนี้ยังไม่มีกิจกรรมที่จัดขึ้น'}
-                  </div>
-                  <div className="flex items-center space-x-1 text-orange-500 group-hover:text-purple-900 transition-colors duration-300">
-                    <span className="text-sm font-medium">ดูรายละเอียด</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
+                {/* Spacer */}
+                <div className="flex-grow"></div>
+
+                {/* Footer - Simple CTA */}
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-center space-x-1 text-[#640D5F] group-hover:text-[#D91656] transition-colors">
+                    <span className="text-xs font-medium">ดูชมรม</span>
+                    <ArrowRight className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </div>
-
-              {/* Hover effect overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-900 to-orange-500 opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none"></div>
             </div>
           ))}
         </div>
 
-        <div className="text-center mt-16">
-          <button className="group relative px-8 py-4 bg-gradient-to-r from-purple-900 via-pink-600 to-orange-500 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105  transition-all duration-300 overflow-hidden"
-            onClick={handleToClubs}>
-            <span className="relative z-10 flex items-center space-x-2">
-              <span>ดูชมรมทั้งหมด</span>
-              <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        {/* Enhanced CTA with gradient */}
+        <div className="text-center mb-12 md:mb-16">
+          <button
+            className="inline-flex items-center space-x-2 bg-[#640D5F] hover:bg-[#640D5F]/90 text-white px-8 py-4 rounded-full font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer"
+            onClick={handleToClubs}
+          >
+            <span>สำรวจชมรมทั้งหมด</span>
+            <ArrowRight className="w-5 h-5" />
           </button>
         </div>
 
         {/* Statistics */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-purple-900 mb-2">
-              {statistics?.total_members || clubDisplayConfig.reduce((total, club) => total + club.club.member_count, 0)}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          {[
+            {
+              value: statistics?.total_members || clubs.reduce((total, club) => total + club.member_count, 0),
+              label: 'สมาชิกทั้งหมด',
+              color: 'text-[#640D5F]',
+              icon: Users
+            },
+            {
+              value: statistics?.total_activities || clubs.reduce((total, club) => total + (club.activity_count || 0), 0),
+              label: 'กิจกรรมทั้งหมด',
+              color: 'text-[#D91656]',
+              icon: ArrowRight
+            },
+            {
+              value: statistics?.active_clubs || clubs.filter(club => club.status?.IsActive).length,
+              label: 'ชมรมที่อนุมัติแล้ว',
+              color: 'text-[#EB5B00]',
+              icon: AlertCircle
+            },
+            {
+              value: statistics?.total_clubs || clubs.length,
+              label: 'ชมรมทั้งหมด',
+              color: 'text-[#FFB200]',
+              icon: Users
+            }
+          ].map((stat, index) => (
+            <div key={index} className="text-center p-4 rounded-xl">
+              <div className={`text-3xl md:text-4xl font-bold mb-2 ${stat.color}`}>
+                {stat.value}
+              </div>
+              <p className="text-gray-600 text-sm md:text-base">{stat.label}</p>
             </div>
-            <p className="text-gray-600">สมาชิกทั้งหมด</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-pink-600 mb-2">
-              {statistics?.total_activities || clubDisplayConfig.reduce((total, club) => total + (club.club.activities?.length || 0), 0) || 0}
-            </div>
-            <p className="text-gray-600">กิจกรรมทั้งหมด</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-orange-500 mb-2">
-              {statistics?.active_clubs || clubDisplayConfig.filter(club => club.club.status.IsActive).length}
-            </div>
-            <p className="text-gray-600">ชมรมที่อนุมัติแล้ว</p>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-yellow-500 mb-2">
-              {statistics?.total_clubs || clubDisplayConfig.length}
-            </div>
-            <p className="text-gray-600">ชมรมทั้งหมด</p>
-          </div>
+          ))}
         </div>
       </div>
     </section>

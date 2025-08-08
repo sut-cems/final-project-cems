@@ -53,16 +53,17 @@ func main() {
 
 	// สร้าง ClubHandler instance
 	db := config.DB() // รับ *gorm.DB จาก config
-	clubHandler := &controllers.ClubHandler{
-		DB: db, // ใช้ db ที่ได้มา
-	}
+	clubHandler := &controllers.ClubHandler{DB: db}
 	activityHandler := controllers.NewActivityHandler(db)
 
 	notificationHandler := controllers.NewNotificationHandler(db)
 	
-	reportHandler := &controllers.ReportHandler{
-		DB: db,
-	}
+	reportHandler := &controllers.ReportHandler{DB: db}
+
+	authHandler := &controllers.AuthHandler{DB: db}
+
+	dashboardHandler := &controllers.DashboardHandler{DB: db}
+
 	router := r.Group("/")
 	{
 		// ตั้งค่า CORS
@@ -81,6 +82,7 @@ func main() {
 		router.POST("/users", controllers.CreateUser)
 		router.PATCH("/users/:id", controllers.UpdateUser)
 		router.DELETE("/users/:id", controllers.DeleteUser)
+		router.PATCH("/users/:id/profile", controllers.UpdateUserProfile)
 
 		// Routes for Roles
 		router.GET("/roles", controllers.GetRoles)
@@ -140,12 +142,24 @@ func main() {
 		router.GET("/charts/participation", reportHandler.GetParticipationChart)
 		router.GET("/charts/activity-hours", reportHandler.GetActivityHoursChart)
 
+
 		router.GET("/reports", reportHandler.GetReportList)
 		router.POST("/reports/generate", reportHandler.GenerateReport)
 		router.GET("/download-report/:id", reportHandler.DownloadReport)
 		router.DELETE("/reports/:id", reportHandler.DeleteReport)
 
+		// Routes for Homepage
+		router.GET("/homepage/stats", dashboardHandler.GetHomePageStats)
+		router.GET("/top-activities", dashboardHandler.GetTopActivities)
+		router.GET("/average-attendance", dashboardHandler.GetAverageAttendanceRate)
+		router.GET("/club-statistics", dashboardHandler.GetClubStatistics)
+		router.GET("/activity-statuses", dashboardHandler.GetActivityStatusDistribution)
+		router.GET("/review-stats", dashboardHandler.GetReviewStats)
 
+		// Routes for Forgot Password
+		router.POST("/forgot-password", authHandler.ForgotPassword)
+		router.GET("/verify-password", authHandler.VerifyResetToken)
+		router.POST("/reset-password", authHandler.ResetPassword)
 	}
 
 	r.GET("/", func(c *gin.Context) {
