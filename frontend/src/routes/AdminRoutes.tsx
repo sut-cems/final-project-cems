@@ -1,8 +1,8 @@
 import type { RouteObject } from "react-router-dom";
-import Profile from "../pages/Profile/Profile";
 import CEMSDashboard from "../pages/Admin/Dashboad";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 import ReportsManagemet from "../components/Reports/ReportsDashboard";
+import AdminProfile from "../pages/Profile/AdminProfile";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -14,12 +14,16 @@ const AdminRoutes = (): RouteObject => {
 				element: <CEMSDashboard />
 			},
 			{
+				path: "/dashboard",
+				element: <CEMSDashboard />
+			},
+			{
 				path: "/manage-reports",
 				element: <ReportsManagemet />
 			},
 			{
                 path: "/profile",
-                element: <Profile />,
+                element: <AdminProfile />,
             },
 		]
 	}

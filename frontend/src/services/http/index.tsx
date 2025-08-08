@@ -104,6 +104,19 @@ export async function updateUser(id: string, data: Partial<Users>): Promise<User
   return result.data;
 }
 
+export async function updateUserProfile(id: string, data: FormData): Promise<Users> {
+  const response = await fetch(`${API_BASE_URL}/users/${id}/profile`, {
+    method: "PATCH",
+    body: data,
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to update user");
+  }
+  const result = await response.json();
+  return result.data;
+}
+
 // DELETE /users/:id
 export async function deleteUser(id: string): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/users/${id}`, {

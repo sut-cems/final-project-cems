@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { API_BASE_URL, signup } from '../../../services/http';
 import { useNavigate } from 'react-router-dom';
+import LoginModal from './Login';
 
 const LoadingDots = () => {
     return (
@@ -10,7 +11,7 @@ const LoadingDots = () => {
                 <div
                     key={i}
                     className="w-3 h-3 bg-gradient-to-r from-[#640D5F] to-[#D91656] rounded-full animate-bounce shadow-lg"
-                    style={{ 
+                    style={{
                         animationDelay: `${i * 0.2}s`,
                         animationDuration: '1s'
                     }}
@@ -53,15 +54,15 @@ const ModernLoadingSpinner = () => {
     return (
         <div className="relative flex items-center justify-center">
             <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
-            
+
             <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-[#640D5F] border-r-[#D91656] rounded-full animate-spin"></div>
-            
+
             <div className="absolute inset-2 w-12 h-12 border-2 border-transparent border-b-[#EB5B00] border-l-[#FFB200] rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-            
+
             <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-4 h-4 bg-gradient-to-br from-[#D91656] via-[#EB5B00] to-[#FFB200] rounded-full animate-pulse shadow-lg"></div>
             </div>
-            
+
             <div className="absolute inset-0 w-16 h-16 rounded-full bg-gradient-to-r from-[#640D5F]/20 to-[#D91656]/20 animate-ping"></div>
         </div>
     );
@@ -77,7 +78,7 @@ const StatusIcon = ({ type }: { type: 'success' | 'error' }) => {
             </div>
         );
     }
-    
+
     if (type === 'error') {
         return (
             <div className="w-12 h-12 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center animate-bounceIn shadow-lg">
@@ -87,16 +88,16 @@ const StatusIcon = ({ type }: { type: 'success' | 'error' }) => {
             </div>
         );
     }
-    
+
     return null;
 };
 
-const LoadingModal = ({ 
-    isOpen, 
-    status, 
-    progress, 
-    isComplete 
-}: { 
+const LoadingModal = ({
+    isOpen,
+    status,
+    progress,
+    isComplete
+}: {
     isOpen: boolean;
     status: { message: string; submessage?: string; type: 'success' | 'error' | 'loading' };
     progress: number;
@@ -129,7 +130,7 @@ const LoadingModal = ({
                         </div>
                     )}
 
-                    <StatusMessage 
+                    <StatusMessage
                         message={status.message}
                         submessage={status.submessage}
                     />
@@ -173,6 +174,7 @@ const SignUp = () => {
         type: 'loading'
     });
     const [isComplete, setIsComplete] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
     interface SignUpFormData {
         firstName: string;
@@ -221,9 +223,9 @@ const SignUp = () => {
                 timestamp: Date.now(),
                 fromSignup: true
             };
-            
+
             sessionStorage.setItem('cems_login_prefill', JSON.stringify(loginData));
-            
+
             console.log('Login data saved to session storage');
         } catch (error) {
             console.error('Error saving login data to session:', error);
@@ -235,7 +237,7 @@ const SignUp = () => {
         setIsLoading(true);
         setIsComplete(false);
         setProgress(0);
-        
+
         const progressInterval = setInterval(() => {
             setProgress(prev => {
                 if (prev >= 100) {
@@ -266,7 +268,7 @@ const SignUp = () => {
                 submessage: 'เตรียมข้อมูลสำหรับเข้าสู่ระบบ',
                 type: 'loading'
             });
-            
+
             saveLoginDataToSession();
         }, 2000);
 
@@ -366,7 +368,7 @@ const SignUp = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#640D5F] via-[#D91656] to-[#EB5B00] relative overflow-hidden">
-            <LoadingModal 
+            <LoadingModal
                 isOpen={showLoadingModal}
                 status={status}
                 progress={progress}
@@ -385,20 +387,20 @@ const SignUp = () => {
                     <div className="max-w-lg">
                         <div className="mb-4">
                             <div className="text-sm font-medium text-white/80 tracking-wider uppercase mb-4">
-                                CLUB & EVENT MANAGEMENT SYSTEM IN UNIVERSITY
+                                ระบบจัดการชมรมและกิจกรรมในมหาวิทยาลัย
                             </div>
                             <div className="w-16 h-1 bg-[#FFB200] rounded-full mb-8"></div>
                         </div>
-                        
+
                         <h1 className="text-6xl font-bold mb-4">
-                            Welcome to
+                            ยินดีต้อนรับสู่
                         </h1>
                         <h2 className="text-7xl font-bold mb-8 bg-gradient-to-r from-[#FFB200] to-white bg-clip-text text-transparent">
                             CEMS
                         </h2>
-                        
+
                         <p className="text-xl text-white/90 leading-relaxed mb-12 max-w-md">
-                            Level up your campus life — create your account.
+                            ยกระดับชีวิตมหาวิทยาลัยของคุณ — สร้างบัญชีผู้ใช้
                         </p>
                     </div>
                 </div>
@@ -412,12 +414,12 @@ const SignUp = () => {
                                 {/* Mobile Logo */}
                                 <div className="lg:hidden text-center mb-6">
                                     <h1 className="text-3xl font-bold text-[#640D5F] mb-1">CEMS</h1>
-                                    <p className="text-gray-500 text-sm">Club & Event Management System</p>
+                                    <p className="text-gray-500 text-sm">ระบบจัดการชมรมและกิจกรรม</p>
                                 </div>
 
                                 <div className="text-center lg:text-left">
-                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign Up</h2>
-                                    <p className="text-gray-600">Enter your account details</p>
+                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">สมัครสมาชิก</h2>
+                                    <p className="text-gray-600">กรอกข้อมูลบัญชีของคุณ</p>
                                 </div>
                             </div>
 
@@ -426,18 +428,17 @@ const SignUp = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            First Name
+                                            ชื่อจริง
                                         </label>
                                         <div className="relative">
-                                        <input
+                                            <input
                                                 type="text"
                                                 name="firstName"
                                                 value={formData.firstName}
                                                 onChange={handleInputChange}
-                                                className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${
-                                                    errors.firstName ? 'ring-2 ring-red-300 bg-red-50' : ''
-                                                }`}
-                                                placeholder="Enter first name"
+                                                className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${errors.firstName ? 'ring-2 ring-red-300 bg-red-50' : ''
+                                                    }`}
+                                                placeholder="กรอกชื่อจริง"
                                             />
                                         </div>
                                         {errors.firstName && (
@@ -447,7 +448,7 @@ const SignUp = () => {
 
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Last Name
+                                            นามสกุล
                                         </label>
                                         <div className="relative">
                                             <input
@@ -455,10 +456,9 @@ const SignUp = () => {
                                                 name="lastName"
                                                 value={formData.lastName}
                                                 onChange={handleInputChange}
-                                                className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${
-                                                    errors.lastName ? 'ring-2 ring-red-300 bg-red-50' : ''
-                                                }`}
-                                                placeholder="Enter last name"
+                                                className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${errors.lastName ? 'ring-2 ring-red-300 bg-red-50' : ''
+                                                    }`}
+                                                placeholder="กรอกนามสกุล"
                                             />
                                         </div>
                                         {errors.lastName && (
@@ -470,17 +470,16 @@ const SignUp = () => {
                                 {/* Student ID */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Student ID
+                                        รหัสนักศึกษา
                                     </label>
                                     <input
                                         type="text"
                                         name="studentId"
                                         value={formData.studentId}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${
-                                            errors.studentId ? 'ring-2 ring-red-300 bg-red-50' : ''
-                                        }`}
-                                        placeholder="Enter your student ID"
+                                        className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${errors.studentId ? 'ring-2 ring-red-300 bg-red-50' : ''
+                                            }`}
+                                        placeholder="กรอกรหัสนักศึกษา"
                                     />
                                     {errors.studentId && (
                                         <p className="text-red-500 text-xs mt-2 ml-1">{errors.studentId}</p>
@@ -490,17 +489,16 @@ const SignUp = () => {
                                 {/* Email */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Email or Student ID
+                                        อีเมล
                                     </label>
                                     <input
                                         type="email"
                                         name="email"
                                         value={formData.email}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${
-                                            errors.email ? 'ring-2 ring-red-300 bg-red-50' : ''
-                                        }`}
-                                        placeholder="Enter your email or student ID"
+                                        className={`w-full px-4 py-4 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${errors.email ? 'ring-2 ring-red-300 bg-red-50' : ''
+                                            }`}
+                                        placeholder="กรอกอีเมลของคุณ"
                                     />
                                     {errors.email && (
                                         <p className="text-red-500 text-xs mt-2 ml-1">{errors.email}</p>
@@ -510,7 +508,7 @@ const SignUp = () => {
                                 {/* Password */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Password
+                                        รหัสผ่าน
                                     </label>
                                     <div className="relative">
                                         <input
@@ -518,10 +516,9 @@ const SignUp = () => {
                                             name="password"
                                             value={formData.password}
                                             onChange={handleInputChange}
-                                            className={`w-full px-4 py-4 pr-12 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${
-                                                errors.password ? 'ring-2 ring-red-300 bg-red-50' : ''
-                                            }`}
-                                            placeholder="Enter your password"
+                                            className={`w-full px-4 py-4 pr-12 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${errors.password ? 'ring-2 ring-red-300 bg-red-50' : ''
+                                                }`}
+                                            placeholder="กรอกรหัสผ่าน"
                                         />
                                         <button
                                             type="button"
@@ -539,7 +536,7 @@ const SignUp = () => {
                                 {/* Confirm Password */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Confirm Password
+                                        ยืนยันรหัสผ่าน
                                     </label>
                                     <div className="relative">
                                         <input
@@ -547,10 +544,9 @@ const SignUp = () => {
                                             name="confirmPassword"
                                             value={formData.confirmPassword}
                                             onChange={handleInputChange}
-                                            className={`w-full px-4 py-4 pr-12 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${
-                                                errors.confirmPassword ? 'ring-2 ring-red-300 bg-red-50' : ''
-                                            }`}
-                                            placeholder="Confirm your password"
+                                            className={`w-full px-4 py-4 pr-12 border-0 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-[#D91656] focus:bg-white transition-all duration-200 placeholder-gray-400 ${errors.confirmPassword ? 'ring-2 ring-red-300 bg-red-50' : ''
+                                                }`}
+                                            placeholder="ยืนยันรหัสผ่าน"
                                         />
                                         <button
                                             type="button"
@@ -576,13 +572,13 @@ const SignUp = () => {
                                             className="w-5 h-5 text-[#D91656] border-2 border-gray-300 rounded-lg focus:ring-[#D91656] focus:ring-2 mt-0.5"
                                         />
                                         <span className="text-sm text-gray-600 leading-relaxed">
-                                            I agree to the{' '}
+                                            ฉันยอมรับ{' '}
                                             <a href="/signup" className="text-[#D91656] hover:text-[#640D5F] font-semibold underline decoration-2">
-                                                Terms and Conditions
+                                                เงื่อนไขการใช้บริการ
                                             </a>{' '}
-                                            and{' '}
+                                            และ{' '}
                                             <a href="/signup" className="text-[#D91656] hover:text-[#640D5F] font-semibold underline decoration-2">
-                                                Privacy Policy
+                                                นโยบายความเป็นส่วนตัว
                                             </a>
                                         </span>
                                     </label>
@@ -610,10 +606,10 @@ const SignUp = () => {
                                     {isLoading ? (
                                         <div className="flex items-center space-x-3">
                                             <Loader2 className="w-5 h-5 animate-spin" />
-                                            <span>Sign Up</span>
+                                            <span>สมัครสมาชิก</span>
                                         </div>
                                     ) : (
-                                        'Sign Up'
+                                        'สมัครสมาชิก'
                                     )}
                                 </button>
 
@@ -624,7 +620,7 @@ const SignUp = () => {
                                             <div className="w-full border-t border-gray-200"></div>
                                         </div>
                                         <div className="relative flex justify-center text-sm">
-                                            <span className="px-4 bg-[red-300] text-gray-500">or</span>
+                                            <span className="px-4 bg-white text-gray-500">หรือ</span>
                                         </div>
                                     </div>
                                 </div>
@@ -641,23 +637,27 @@ const SignUp = () => {
                                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                                     </svg>
-                                    Continue with Google
+                                    เข้าสู่ระบบด้วย Google
                                 </button>
-
 
                                 <div className="text-center pt-6 border-t border-gray-100">
                                     <p className="text-gray-600">
-                                        Don't have an account?{' '}
-                                        <a href="/login" className="text-[#D91656] hover:text-[#640D5F] font-semibold underline decoration-2">
-                                            Sign in
-                                        </a>
+                                        มีบัญชีผู้ใช้แล้ว?{' '}
+                                        <button
+                                            onClick={() => setShowLoginModal(true)}
+                                            className="text-[#D91656] hover:text-[#640D5F] font-semibold underline decoration-2"
+                                        >
+                                            เข้าสู่ระบบ
+                                        </button>
                                     </p>
                                 </div>
+
                             </form>
                         </div>
                     </div>
                 </div>
             </div>
+            <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
         </div>
     );
 };

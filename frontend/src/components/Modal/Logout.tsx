@@ -85,7 +85,7 @@ const LogoutConfirmationModal: React.FC<{
   };
 
   const getImageUrl = (profileImage: string) => {
-    if (profileImage.startsWith('http://') || profileImage.startsWith('https://')) {
+    if (profileImage.startsWith('http://') || profileImage.startsWith('https://') || profileImage.startsWith('data:image')) {
       return profileImage;
     }
     

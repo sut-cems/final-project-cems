@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ProfileDropdown, ProfileDropdownMobile } from './ProfileDropdown';
 import CEMSLogo from '../Logo/CEMSLogo';
+import LoginModal from '../../pages/Auth/Login/Login';
 
 interface NavItem {
   label: string;
@@ -24,7 +25,8 @@ const Navbar: React.FC<CEMSNavbarProps> = ({ className = '' }) => {
   const [logoutMessage] = useState('');
   const [logoutStep] = useState(0);
   const location = useLocation();
-  
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   // สร้างรายการเมนูพื้นฐาน
   const allNavItems: NavItem[] = [
     { label: 'หน้าหลัก', href: '/' },
@@ -244,26 +246,29 @@ const Navbar: React.FC<CEMSNavbarProps> = ({ className = '' }) => {
             )}
 
             {/* Desktop Auth Buttons */}
-            <div className="hidden lg:flex items-center space-x-4">
-              {isLoggedIn ? (
-                <ProfileDropdown />
-              ) : (
-                <>
-                  <a
-                    href="/login"
-                    className="px-6 py-2 text-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#640D5F] hover:text-white transition-all duration-300 transform hover:scale-105"
-                  >
-                    เข้าสู่ระบบ
-                  </a>
-                  <a
-                    href="/signup"
-                    className="px-6 py-2 bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white rounded-lg font-medium hover:from-[#D91656] hover:to-[#EB5B00] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                  >
-                    ลงทะเบียน
-                  </a>
-                </>
-              )}
-            </div>
+      <div className="hidden lg:flex items-center space-x-4">
+        {isLoggedIn ? (
+          <ProfileDropdown />
+        ) : (
+          <>
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="px-6 py-2 text-[#640D5F] border-2 border-[#640D5F] rounded-lg font-medium hover:bg-[#640D5F] hover:text-white transition-all duration-300 transform hover:scale-105 cursor-pointer"
+            >
+              เข้าสู่ระบบ
+            </button>
+            <a
+              href="/signup"
+              className="px-6 py-2 bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white rounded-lg font-medium hover:from-[#D91656] hover:to-[#EB5B00] transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              ลงทะเบียน
+            </a>
+          </>
+        )}
+      </div>
+
+      {/* Modal Login */}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
 
             {/* Mobile Menu Button */}
             <div className="lg:hidden">

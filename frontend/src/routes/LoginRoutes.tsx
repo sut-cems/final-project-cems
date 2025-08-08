@@ -1,22 +1,18 @@
 import type { RouteObject } from "react-router-dom";
-import Login from "../pages/Auth/Login/Login";
 import SignUp from "../pages/Auth/Login/SignUp";
+import ResetPassword from "../pages/Auth/ResetPassword/ResetPassword";
 
 const LoginRoutes = (): RouteObject => {
   return {
     path: "/",
     children: [
       {
-        path: "/",
-        element: <Login/>,
-      },
-      {
-        path: "/login",
-        element: <Login/>,
-      },
-      {
         path: "/signup",
         element: <SignUp/>,
+      },
+      {
+        path: "/reset-password",
+        element: <ResetPassword />,
       },
     ],
   };
