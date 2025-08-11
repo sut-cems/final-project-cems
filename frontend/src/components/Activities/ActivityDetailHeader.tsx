@@ -14,7 +14,7 @@ const ActivityDetailHeader: React.FC<Props> = ({ activity }) => {
     return `${API_BASE_URL}${cleanPath}`;
   };
 
-  const imageUrl = getImageUrl(activity.PosterImage); // ✅ เพิ่มบรรทัดนี้
+  const imageUrl = getImageUrl(activity.PosterImage);
 
   return (
     <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-2xl mb-4">
