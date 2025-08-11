@@ -20,6 +20,8 @@ interface Props {
   isRegistered: boolean;
   isLoading: boolean;
   canManageActivity: boolean;
+  onRegisterClick: () => void;
+  isFull: boolean;
 }
 
 const ActivityDetailContent: React.FC<Props> = ({
@@ -28,12 +30,13 @@ const ActivityDetailContent: React.FC<Props> = ({
   isRegistered,
   isLoading,
   canManageActivity,
+  onRegisterClick,   
+  isFull,            
 }) => {
   const [showManageMenu, setShowManageMenu] = useState(false);
 
   const currentParticipants = activity.ActivityRegistrations?.length || 0;
   const availableSpots = activity.Capacity - currentParticipants;
-  const isFull = availableSpots <= 0;
   const navigate = useNavigate();
 
   const formatDate = (dateString: string) => {
@@ -51,6 +54,7 @@ const ActivityDetailContent: React.FC<Props> = ({
       minute: "2-digit",
     });
   };
+  
 
   const handleEditActivity = () => {
     navigate(`/activities/edit/${activity.ID}`);
@@ -58,7 +62,7 @@ const ActivityDetailContent: React.FC<Props> = ({
   };
 
   const handleManageRegistrations = () => {
-    navigate(`/activities/edit/${activity.ID}`);
+    navigate(`/activities/register/${activity.ID}`);
     console.log("Navigate to manage registrations");
   };
 
@@ -174,7 +178,7 @@ const ActivityDetailContent: React.FC<Props> = ({
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
-                onClick={onRegister}
+                onClick={onRegisterClick}
                 disabled={isLoading || isFull || isRegistered}
                 className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
                   isRegistered

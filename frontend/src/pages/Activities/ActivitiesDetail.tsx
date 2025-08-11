@@ -1,89 +1,91 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchActivityById } from "../../services/http/activities";
+import { message } from "antd";
+import {
+  fetchActivityById,
+  createActivityRegister,
+} from "../../services/http/activities";
 import { fetchClubMembersByUserID } from "../../services/http";
 import type { Activity } from "../../interfaces/IActivitys";
 import Footer from "../../components/Home/Footer";
 import Navbar from "../../components/Home/Navbar";
+import ConfirmModal from "../../components/Activities/ConfirmModal";
 import ActivityDetailHeader from "../../components/Activities/ActivityDetailHeader";
 import ActivityDetailContent from "../../components/Activities/ActivityDetailContent";
 
 const ActivitiesDetail: React.FC = () => {
   const { id } = useParams();
   const [activity, setActivity] = useState<Activity | null>(null);
+  const userId = Number(localStorage.getItem("userId"));
   const [isRegistered, setIsRegistered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [canManageActivity, setCanManageActivity] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (id) {
-          const res = await fetchActivityById(id);
-          setActivity(res);
-          await checkManagePermission(res);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      if (id) {
+        const res = await fetchActivityById(id);
+        setActivity(res);
+
+        // ตรวจสอบว่าผู้ใช้สมัครหรือยัง
+        const userId = localStorage.getItem("userId");
+        if (userId && res.ActivityRegistrations) {
+          const alreadyRegistered = res.ActivityRegistrations.some(
+            (reg) => Number(reg.UserID) === Number(userId)
+          );
+          setIsRegistered(alreadyRegistered);
+        } else {
+          setIsRegistered(false);
         }
-      } catch (err) {
-        console.error("Error fetching activity:", err);
+
+        await checkManagePermission(res);
       }
-    };
-    fetchData();
-  }, [id]);
+    } catch (err) {
+      console.error("Error fetching activity:", err);
+    }
+  };
+  fetchData();
+}, [id]);
 
-const checkManagePermission = async (activity: Activity) => {
-  try {
-    const userId = localStorage.getItem("userId"); // ยังใช้ userId อยู่เพื่อเรียก API
+  const checkManagePermission = async (activity: Activity) => {
+    try {
+      const userId = localStorage.getItem("userId"); // ยังใช้ userId อยู่เพื่อเรียก API
 
-    if (!userId) {
+      if (!userId) {
+        setCanManageActivity(false);
+        return;
+      }
+
+      const clubMember = await fetchClubMembersByUserID(userId);
+
+      // ✅ เช็คว่าเป็นประธานของชมรมที่ตรงกับ activity.ClubID
+      const isClubPresident =
+        clubMember.ClubID === activity.ClubID &&
+        clubMember.Role === "president";
+
+      setCanManageActivity(isClubPresident);
+    } catch (err) {
+      console.error("Error checking manage permission:", err);
       setCanManageActivity(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!userId || !activity) {
+      message.error("ไม่พบข้อมูลผู้ใช้หรือกิจกรรม");
       return;
     }
 
-    const clubMember = await fetchClubMembersByUserID(userId);
-
-    // ✅ เช็คว่าเป็นประธานของชมรมที่ตรงกับ activity.ClubID
-    const isClubPresident =
-      clubMember.ClubID === activity.ClubID &&
-      clubMember.Role === "president";
-
-    setCanManageActivity(isClubPresident);
-  } catch (err) {
-    console.error("Error checking manage permission:", err);
-    setCanManageActivity(false);
-  }
-};
-
-
-
-  const handleRegister = async () => {
-    if (!activity || isRegistered) return;
-
     setIsLoading(true);
     try {
-      // TODO: Implement registration API call
-      // await registerForActivity(activity.ID);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
+      await createActivityRegister(userId, activity.ID);
       setIsRegistered(true);
-      // Update activity data to reflect new registration
-      setActivity((prev) =>
-        prev
-          ? {
-              ...prev,
-              ActivityRegistrations: [
-                ...(prev.ActivityRegistrations || []),
-                // Add new registration object
-              ],
-            }
-          : null
-      );
-
-      alert("สมัครร่วมกิจกรรมสำเร็จ!");
-    } catch (err) {
-      console.error("Error registering for activity:", err);
-      alert("เกิดข้อผิดพลาดในการสมัครร่วมกิจกรรม");
+      message.success("สมัครกิจกรรมสำเร็จ!");
+    } catch (error) {
+      message.error((error as Error).message || "สมัครกิจกรรมไม่สำเร็จ");
     } finally {
       setIsLoading(false);
     }
@@ -107,10 +109,29 @@ const checkManagePermission = async (activity: Activity) => {
         <ActivityDetailHeader activity={activity} />
         <ActivityDetailContent
           activity={activity}
-          onRegister={handleRegister}
+          onRegisterClick={() => setIsConfirmOpen(true)} // <-- เปิด modal
+          onRegister={handleRegister} // <-- ฟังก์ชันสมัครจริง
           isRegistered={isRegistered}
           isLoading={isLoading}
           canManageActivity={canManageActivity}
+          isFull={
+            activity.Capacity - (activity.ActivityRegistrations?.length || 0) <=
+            0
+          }
+        />
+        <ConfirmModal
+          isOpen={isConfirmOpen}
+          onClose={() => setIsConfirmOpen(false)}
+          onConfirm={async () => {
+            setIsConfirmOpen(false);
+            await handleRegister();
+          }}
+          title="ยืนยันการสมัครกิจกรรม"
+          message="คุณต้องการสมัครเข้าร่วมกิจกรรมนี้หรือไม่?"
+          confirmText="สมัคร"
+          cancelText="ยกเลิก"
+          type="info"
+          isLoading={isLoading}
         />
       </div>
       <Footer />

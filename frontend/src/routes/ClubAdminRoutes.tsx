@@ -9,6 +9,7 @@ import Activities from "../pages/Activities/ActivitiesPage";
 import EditActivities from "../pages/Activities/EditActivities";
 import CreateActivities from "../pages/Activities/CreateActivities";
 import ActivitiesDetail from "../pages/Activities/ActivitiesDetail";
+import ActivitiesReg from "../pages/Activities/ActivitiesRegisterPage";
 import ActivitiesPhotos from "../pages/Activities/ActivitiesPhotosPage";
 import AddActivitiesPhotos from "../pages/Activities/AddActivitiesPhoto";
 import CreateClub from "../pages/Clubs/CreateClub";
@@ -70,6 +71,10 @@ const ClubAdminRoutes = (): RouteObject => {
       {
         path: "/create-club",
         element: <CreateClub />,
+      },
+      {
+        path: "/activities/register/:id",
+        element: <ActivitiesReg />,
       },
     ],
   };
