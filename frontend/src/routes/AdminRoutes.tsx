@@ -1,9 +1,12 @@
 import type { RouteObject } from "react-router-dom";
-import Profile from "../pages/Profile/Profile";
-import CEMSDashboard from "../pages/Admin/Dashboad";
+import UniversityInfoPage from "../pages/Admin/University/UniversityInfo";
+import CreateUniversityInfoPage from "../pages/Admin/University/CreateUniversityInfo";
+import EditUniversityInfoPage from "../pages/Admin/University/EditUniversityInfo";
+import CEMSDashboard from "../pages/Admin/Dashboard";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 import ReportsManagemet from "../components/Reports/ReportsDashboard";
 import ClubPage from "../pages/Admin/Club";
+import AdminProfile from "../pages/Profile/AdminProfile";
 
 const AdminRoutes = (): RouteObject => {
 	return {
@@ -15,12 +18,28 @@ const AdminRoutes = (): RouteObject => {
 				element: <CEMSDashboard />
 			},
 			{
+				path: "/dashboard",
+				element: <CEMSDashboard />
+			},
+			{
 				path: "/manage-reports",
 				element: <ReportsManagemet />
 			},
 			{
-                path: "/profile",
-                element: <Profile />,
+				path: "/profile",
+				element: <AdminProfile />
+			},
+			{
+                path: "/university-info",
+                element: <UniversityInfoPage />,
+            },
+			{
+                path: "/university-info/create",
+                element: <CreateUniversityInfoPage />,
+            },
+			{
+                path: "/university-info/edit/:id",
+                element: <EditUniversityInfoPage />,
             },
 			{
                 path: "/manage/clubs",

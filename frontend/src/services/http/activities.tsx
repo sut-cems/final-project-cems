@@ -1,6 +1,8 @@
 import type { Activity } from "../../interfaces/IActivitys";
 import type { EventCategory } from "../../interfaces/IEventCategories";
 import type { ActivityStatus } from "../../interfaces/IActivityStatuses";
+import type { ActivityRegistration } from "../../interfaces/IActivityRegistrations";
+import type { ActivityRegistrationStatus } from "../../interfaces/IActivityRegistrationStatuses";
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -145,6 +147,30 @@ export async function fetchPhotosByActivityID(id: number) {
   }
 }
 
+export async function fetchAllActivitiesWithoutPhotos() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/activities/without-photo`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to fetch activity statistics:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export async function addPhotoToActivity(id: number, photoData: { url: string; uploadedBy: string }) {
   try {
     const response = await fetch(`${API_BASE_URL}/activities/photo/${id}`, {
@@ -194,3 +220,80 @@ export async function createActivity(formData: FormData): Promise<void> {
   }
 }
 
+// GET /ActivityReg
+export async function fetchActivityRegister(): Promise<ActivityRegistration[]> {
+  const response = await fetch(`${API_BASE_URL}/activities/register`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.activityReg;
+}
+
+// GET /ActivityRegByID
+export async function fetchActivityRegisterByID(id: string): Promise<ActivityRegistration[]> {
+  const response = await fetch(`${API_BASE_URL}/activities/register/${id}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.activityReg;
+}
+
+// GET /ActivityRegStatus
+export async function fetchActivityRegisterStatus(): Promise<ActivityRegistrationStatus[]> {
+  const response = await fetch(`${API_BASE_URL}/activities/register/status`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result.status;
+}
+
+// Update /ActivityRegStatus
+export async function updateActivityRegisterStatus(id: string, statusId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/activities/register/status/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status_id: statusId }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update ActivityRegStatus: ${errorText}`);
+  }
+}
+
+export async function createActivityRegister(userId: number, activityId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/activities/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, activity_id: activityId }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Failed to create ActivityReg: ${errText}`);
+  }
+}

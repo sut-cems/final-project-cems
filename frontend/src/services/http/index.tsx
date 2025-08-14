@@ -3,7 +3,7 @@ import type { LoginInput, LoginResponse, SignupInput } from "../../interfaces/IS
 import type { Users } from "../../interfaces/IUsers";
 import type { ClubMember } from "../../interfaces/IClubMembers";
 import type { Activity } from "../../interfaces/IActivitys";
-import type { ActivityHoursChart, DashboardStats, ParticipationChart  } from "../../pages/Admin/Dashboad";
+import type { ActivityHoursChart, DashboardStats, ParticipationChart  } from "../../pages/Admin/Dashboard";
 import type { ReportRequest } from "../../components/Reports/ReportCreate";
 import type { ReportListResponse } from "../../components/Reports/ReportsDashboard";
 
@@ -65,7 +65,7 @@ export async function fetchUserById(id: number): Promise<Users> {
     throw new Error(error.error || "User not found");
   }
   const result = await response.json();
-  console.log("fetchUserById response:", result);
+
   return result.data;
 }
 
@@ -95,6 +95,19 @@ export async function updateUser(id: string, data: Partial<Users>): Promise<User
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to update user");
+  }
+  const result = await response.json();
+  return result.data;
+}
+
+export async function updateUserProfile(id: string, data: FormData): Promise<Users> {
+  const response = await fetch(`${API_BASE_URL}/users/${id}/profile`, {
+    method: "PATCH",
+    body: data,
   });
   if (!response.ok) {
     const error = await response.json();

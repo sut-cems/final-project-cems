@@ -6,7 +6,11 @@ import ("time"
 type ActivityRegistration struct {
 	gorm.Model
 	ActivityID   uint
+	Activity	Activity
 	UserID       uint
+	User		User
 	StatusID     uint
+	Status		ActivityRegistrationStatus
+	
 	RegisteredAt time.Time
 }

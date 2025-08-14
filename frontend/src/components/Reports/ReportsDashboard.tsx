@@ -749,11 +749,14 @@ const ReportsManagemet: React.FC = () => {
             <div className="bg-white min-h-screen">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="flex justify-between items-center mb-8">
-                        <div>
-                            <h1 className="text-2xl font-semibold text-gray-900 mb-1">การจัดการรายงาน</h1>
-                            <p className="text-sm text-gray-500">จัดการรายงานของคุณ</p>
+                        <div >
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-1">
+                                การจัดการรายงาน
+                            </h1>
+                            <p className="text-gray-600 text-sm sm:text-base">
+                                จัดการรายงานของคุณ
+                            </p>
                         </div>
-
                         {/* Modern Minimal Refresh Button */}
                         <button
                             onClick={() => loadReports()}
