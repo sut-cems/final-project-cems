@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Calendar, MapPin, Clock } from 'lucide-react';
-import { GetClubByID } from "../../services/http/clubs";
+import { AlertCircle, Calendar, MapPin, Clock, Plus, Edit, Delete, X, Trash } from "lucide-react";
+import { deleteClubAnnouncement, GetClubByID } from "../../services/http/clubs";
 import type { Activity } from "../../interfaces/IActivitys";
 import type { ClubMember } from "../../interfaces/IClubMembers";
 import { fetchUserById } from "../../services/http";
 import { GetClubAnnouncements } from "../../services/http/clubs";
+import ConfirmModal from "../../components/Clubs/ConfirmModal";
 
 interface ClubInfoProps {
   clubId: string;
@@ -43,9 +44,13 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMember, setIsMember] = useState<boolean>(false);
-  const [, setIsPresident] = useState(false);
+  const [isPresident, setIsPresident] = useState(false);
   const [announcements, setAnnouncements] = useState<ClubAnnouncement[]>([]);
   const [isPending, setIsPending] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ClubAnnouncement | null>(
+    null
+  );
 
   const checkMembershipStatusFromUser = async () => {
     const userId = localStorage.getItem("userId");
@@ -65,7 +70,9 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
       );
 
       const role = matched?.Role;
-      setIsMember(role === "member" || role === "vice_president" || role === "president");
+      setIsMember(
+        role === "member" || role === "vice_president" || role === "president"
+      );
       setIsPresident(role === "president");
       setIsPending(role === "pending");
     } catch {
@@ -75,33 +82,34 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
     }
   };
 
+  const fetchClubData = async () => {
+    if (!clubId) {
+      setError("ไม่พบ ID ชมรม");
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const clubResponse = await GetClubByID(clubId);
+      if (!clubResponse) throw new Error("ไม่พบข้อมูลชมรม");
+      setClub(clubResponse);
+      await checkMembershipStatusFromUser();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "เกิดข้อผิดพลาดในการโหลดข้อมูลชมรม";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchClubData();
+  }, [clubId]);
 
-    const fetchClubData = async () => {
-        if (!clubId) {
-          setError("ไม่พบ ID ชมรม");
-          setLoading(false);
-          return;
-        }
-        try {
-          setLoading(true);
-          setError(null);
-          const clubResponse = await GetClubByID(clubId);
-          if (!clubResponse) throw new Error("ไม่พบข้อมูลชมรม");
-          setClub(clubResponse);
-          await checkMembershipStatusFromUser();
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูลชมรม";
-          setError(errorMessage);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-        useEffect(() => {
-          fetchClubData();
-        }, [clubId]);
-    
   useEffect(() => {
     const memberStatus = localStorage.getItem("isMember");
     setIsMember(memberStatus === "true");
@@ -113,7 +121,11 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
         const clubResponse = await GetClubByID(clubId);
         setClub(clubResponse);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการโหลดข้อมูลชมรม");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "เกิดข้อผิดพลาดในการโหลดข้อมูลชมรม"
+        );
       } finally {
         setLoading(false);
       }
@@ -122,16 +134,29 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
   }, [clubId]);
 
   useEffect(() => {
-  const fetchAnnouncements = async () => {
+    const fetchAnnouncements = async () => {
+      try {
+        const data = await GetClubAnnouncements(clubId);
+        setAnnouncements(data);
+      } catch (err) {
+        console.error("Error loading announcements:", err);
+      }
+    };
+    fetchAnnouncements();
+  }, [clubId]);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      const data = await GetClubAnnouncements(clubId);
-      setAnnouncements(data);
-    } catch (err) {
-      console.error("Error loading announcements:", err);
+      await deleteClubAnnouncement(clubId, deleteTarget.ID);
+      setAnnouncements((prev) => prev.filter((x) => x.ID !== deleteTarget.ID));
+    } catch (e: any) {
+      alert(e?.message || "ลบประกาศไม่สำเร็จ");
+    } finally {
+      setDeleteOpen(false);
+      setDeleteTarget(null);
     }
   };
-  fetchAnnouncements();
-}, [clubId]);
 
   if (loading) {
     return (
@@ -140,7 +165,9 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
           <div className="flex items-center justify-center">
             <div className="text-center">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#D91656]/30 border-t-[#D91656] mx-auto mb-4"></div>
-              <p className="text-gray-600 text-lg font-medium">กำลังโหลดข้อมูลชมรม...</p>
+              <p className="text-gray-600 text-lg font-medium">
+                กำลังโหลดข้อมูลชมรม...
+              </p>
             </div>
           </div>
         </div>
@@ -155,7 +182,9 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
           <div className="bg-white rounded-2xl shadow-xl border border-red-100 p-12">
             <div className="text-center">
               <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">เกิดข้อผิดพลาด</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                เกิดข้อผิดพลาด
+              </h3>
               <p className="text-gray-600 mb-6">{error}</p>
               <button
                 onClick={() => window.location.reload()}
@@ -177,8 +206,12 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
           <div className="bg-white rounded-2xl shadow-xl p-12">
             <div className="text-center">
               <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">ไม่พบข้อมูลชมรม</h3>
-              <p className="text-gray-600">ชมรมที่คุณค้นหาอาจไม่มีอยู่หรือถูกลบไปแล้ว</p>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                ไม่พบข้อมูลชมรม
+              </h3>
+              <p className="text-gray-600">
+                ชมรมที่คุณค้นหาอาจไม่มีอยู่หรือถูกลบไปแล้ว
+              </p>
             </div>
           </div>
         </div>
@@ -193,12 +226,13 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
       <div className="max-w-7xl mx-auto px-6">
         {!isMember && !isPending ? (
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-
             {/* Recent Activities Section */}
             {recentActivities.length > 0 && (
               <div className="bg-white rounded-2xl shadow-xl p-8 mb-12">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-3xl font-bold text-gray-800">กิจกรรมล่าสุด</h2>
+                  <h2 className="text-3xl font-bold text-gray-800">
+                    กิจกรรมล่าสุด
+                  </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {recentActivities.map((activity, index) => (
@@ -213,7 +247,9 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                         <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#D91656] transition-colors">
                           {activity.Title}
                         </h3>
-                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{activity.Description}</p>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                          {activity.Description}
+                        </p>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <MapPin className="w-4 h-4" />
@@ -221,7 +257,11 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Clock className="w-4 h-4" />
-                            <span>{new Date(activity.DateStart).toLocaleDateString('th-TH')}</span>
+                            <span>
+                              {new Date(activity.DateStart).toLocaleDateString(
+                                "th-TH"
+                              )}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -230,10 +270,12 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                 </div>
               </div>
             )}
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">คุณยังไม่ได้เข้าร่วมชมรมนี้</h2>
-              <p className="text-gray-600 mb-6">
-                กรุณาเข้าร่วมชมรมเพื่อดูรายละเอียดกิจกรรมและข้อมูลเพิ่มเติม
-              </p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-6">
+              คุณยังไม่ได้เข้าร่วมชมรมนี้
+            </h2>
+            <p className="text-gray-600 mb-6">
+              กรุณาเข้าร่วมชมรมเพื่อดูรายละเอียดกิจกรรมและข้อมูลเพิ่มเติม
+            </p>
             <button
               onClick={() => navigate(-1)}
               className="bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
@@ -242,12 +284,13 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
             </button>
           </div>
         ) : isPending ? (
-
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             {recentActivities.length > 0 && (
               <div className="bg-white rounded-2xl shadow-xl p-8 mb-12">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-3xl font-bold text-gray-800">กิจกรรมล่าสุด</h2>
+                  <h2 className="text-3xl font-bold text-gray-800">
+                    กิจกรรมล่าสุด
+                  </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {recentActivities.map((activity, index) => (
@@ -262,7 +305,9 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                         <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-[#D91656] transition-colors">
                           {activity.Title}
                         </h3>
-                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{activity.Description}</p>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                          {activity.Description}
+                        </p>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <MapPin className="w-4 h-4" />
@@ -270,7 +315,11 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Clock className="w-4 h-4" />
-                            <span>{new Date(activity.DateStart).toLocaleDateString('th-TH')}</span>
+                            <span>
+                              {new Date(activity.DateStart).toLocaleDateString(
+                                "th-TH"
+                              )}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -279,28 +328,29 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                 </div>
               </div>
             )}
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">คุณได้ส่งคำขอเข้าร่วมชมรมแล้ว</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-6">
+              คุณได้ส่งคำขอเข้าร่วมชมรมแล้ว
+            </h2>
             <p className="text-gray-600 mb-6">โปรดรอการอนุมัติจากหัวหน้าชมรม</p>
             <button
               onClick={() => navigate(-1)}
-              className="bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              className="cursor-pointer bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               ← กลับไปหน้าชมรม
             </button>
           </div>
         ) : (
           <>
-            
-        {/* ส่วนกิจกรรมทั้งหมด */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
-            
+            {/* ส่วนกิจกรรมทั้งหมด */}
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-8">
                   <h1 className="text-3xl font-bold text-gray-800 mb-4">
                     กิจกรรมทั้งหมดของ {club.name}
                   </h1>
                   <p className="text-xl text-gray-600">
-                    พบกิจกรรมที่น่าสนใจทั้งหมด {club.activities?.length || 0} กิจกรรม
+                    พบกิจกรรมที่น่าสนใจทั้งหมด {club.activities?.length || 0}{" "}
+                    กิจกรรม
                   </p>
                 </div>
 
@@ -308,8 +358,12 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                   {club.activities?.length === 0 ? (
                     <div className="text-center py-20">
                       <div className="text-8xl mb-6">📅</div>
-                      <h2 className="text-2xl font-semibold text-gray-700 mb-4">ยังไม่มีกิจกรรม</h2>
-                      <p className="text-gray-500 text-lg">รอติดตามกิจกรรมสนุกๆ ได้เร็วๆ นี้</p>
+                      <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+                        ยังไม่มีกิจกรรม
+                      </h2>
+                      <p className="text-gray-500 text-lg">
+                        รอติดตามกิจกรรมสนุกๆ ได้เร็วๆ นี้
+                      </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -349,12 +403,21 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                             <div className="space-y-3">
                               <div className="flex items-center gap-3 text-sm text-gray-600">
                                 <span>📍</span>
-                                <span className="font-medium">{activity.Location}</span>
+                                <span className="font-medium">
+                                  {activity.Location}
+                                </span>
                               </div>
                               <div className="flex items-center gap-3 text-sm text-gray-600">
                                 <span>📅</span>
                                 <span className="font-medium">
-                                  ตั้งแต่วันที่ {new Date(activity.DateStart).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                  ตั้งแต่วันที่{" "}
+                                  {new Date(
+                                    activity.DateStart
+                                  ).toLocaleDateString("th-TH", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
                                 </span>
                               </div>
                             </div>
@@ -362,7 +425,10 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                             <div className="mt-6 pt-4 border-t border-gray-100">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs text-red-500">
-                                  ถึงวันที่ {new Date(activity.DateEnd).toLocaleDateString('th-TH')}
+                                  ถึงวันที่{" "}
+                                  {new Date(
+                                    activity.DateEnd
+                                  ).toLocaleDateString("th-TH")}
                                 </span>
                                 <div className="flex items-center gap-2 text-[#D91656] font-semibold text-sm">
                                   <span>ดูรายละเอียด</span>
@@ -378,53 +444,128 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
                 </div>
               </div>
             </div>
-            
+
             {/* Club Details Section */}
             <div className="bg-white rounded-2xl shadow-xl p-8 mt-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-6">เกี่ยวกับชมรม</h2>
+              <h2 className="text-3xl font-bold text-gray-800 mb-6">
+                เกี่ยวกับชมรม
+              </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">รายละเอียด</h3>
-                  <p className="text-gray-600 leading-relaxed mb-6">{club.description}</p>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                    รายละเอียด
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed mb-6">
+                    {club.description}
+                  </p>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-[#D91656] rounded-full"></div>
-                      <span className="text-gray-700">หมวดหมู่: <strong>{club.category?.Name}</strong></span>
+                      <span className="text-gray-700">
+                        หมวดหมู่: <strong>{club.category?.Name}</strong>
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-[#D91656] rounded-full"></div>
-                      <span className="text-gray-700">สถานะ: <strong>{club.status?.Description}</strong></span>
+                      <span className="text-gray-700">
+                        สถานะ: <strong>{club.status?.Description}</strong>
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-[#D91656] rounded-full"></div>
-                      <span className="text-gray-700">จำนวนสมาชิก: <strong>{club.member_count || 0} คน</strong></span>
+                      <span className="text-gray-700">
+                        จำนวนสมาชิก:{" "}
+                        <strong>{club.member_count || 0} คน</strong>
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">ข่าวสาร</h3>
-                    {announcements.length > 0 ? (
-                      <ul className="space-y-4">
-                        {announcements.map((a) => (
-                          <li key={a.ID} className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-                            <div className="font-semibold text-gray-800">{a.Title}</div>
-                            <div className="text-sm text-gray-600">{a.Content}</div>
-                            <div className="text-xs text-gray-400 mt-1">
-                              วันที่ประกาศ: {new Date(a.CreatedAt).toLocaleDateString('th-TH')}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="text-sm text-gray-500">ยังไม่มีข่าวสารจากชมรมนี้</div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-gray-800">
+                      ข่าวสาร
+                    </h3>
+                    {isPresident && (
+                      <button
+                        onClick={() =>
+                          navigate(`/clubs/${clubId}/post-announcement`)
+                        }
+                        className="cursor-pointer group flex items-center gap-2 bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white px-4 py-2 rounded-full text-sm font-semibold hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                      >
+                        <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+                        สร้างชมรมใหม่
+                      </button>
                     )}
+                  </div>
+                  {announcements.length > 0 ? (
+                    <ul className="space-y-4">
+                      {announcements.map((a) => (
+                        <li
+                          key={a.ID}
+                          className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg"
+                        >
+                          <div className="font-semibold text-gray-800">
+                            {a.Title}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {a.Content}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            วันที่ประกาศ:{" "}
+                            {new Date(a.CreatedAt).toLocaleDateString("th-TH")}
+                          </div>
+
+                          {isPresident && (
+                            <div className="mt-3 flex gap-2 flex justify-end">
+                              <button
+                                onClick={() =>
+                                  navigate(
+                                    `/clubs/${clubId}/announcements/${a.ID}/edit`
+                                  )
+                                }
+                                className="cursor-pointer group flex items-center gap-1 px-3 py-1.5 text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                <Edit size={14} /> แก้ไข
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setDeleteTarget(a);
+                                  setDeleteOpen(true); 
+                                }}
+                                className="cursor-pointer group flex items-center gap-1 px-3 py-1.5 text-sm rounded-full bg-red-600 text-white hover:bg-red-700"
+                              >
+                                <Trash size={14} /> ลบ
+                              </button>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-4xl mb-2">📢</div>
+                      <div className="text-sm text-gray-500 mb-2">
+                        ยังไม่มีข่าวสารจากชมรมนี้
+                      </div>
+                      {isPresident && (
+                        <button
+                          onClick={() =>
+                            navigate(`/clubs/${clubId}/post-announcement`)
+                          }
+                          className="mt-2 text-[#D91656] hover:text-[#640D5F] transition-colors text-sm font-medium"
+                        >
+                          เป็นคนแรกที่ประกาศข่าวสาร →
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-              
+
               <div className="text-center mt-12">
                 <button
-                  onClick={() => navigate(-1)}
-                  className="bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  onClick={() => navigate("/clubs")}
+                  className="cursor-pointer bg-gradient-to-r from-[#640D5F] to-[#D91656] text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   ← กลับไปหน้าชมรม
                 </button>
@@ -432,6 +573,17 @@ const ClubInfo: React.FC<ClubInfoProps> = ({ clubId }) => {
             </div>
           </>
         )}
+        <ConfirmModal
+          isOpen={deleteOpen}
+          title="ลบประกาศนี้?"
+          message={`หัวข้อ: ${deleteTarget?.Title ?? "-"}`}
+          type="remove"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => {
+            setDeleteOpen(false);
+            setDeleteTarget(null);
+          }}
+        />
       </div>
     </div>
   );
