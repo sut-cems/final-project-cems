@@ -1,9 +1,12 @@
 package controllers
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -63,6 +66,13 @@ type CreateClubInput struct {
 	CreatedBy   uint   `json:"CreatedBy"`
 }
 
+type AnnouncementPayload struct {
+	Title     string     `json:"title" binding:"required,min=1,max=200"`
+	Content   string     `json:"content" binding:"required,min=1"`
+	IsPinned  *bool      `json:"is_pinned"`
+	ExpiresAt *time.Time `json:"expires_at"`
+}
+
 func slugify(s string) string {
 	// แทนที่อักขระที่ไม่ใช่ตัวอักษรหรือตัวเลขด้วย "-"
 	re := regexp.MustCompile(`[^a-zA-Z0-9ก-๙]+`)
@@ -70,6 +80,20 @@ func slugify(s string) string {
 	// ลบ - ซ้ำ ๆ
 	slug = strings.Trim(slug, "-")
 	return slug
+}
+
+func isDirEmpty(name string) (bool, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err
 }
 
 func GetCategoriesWithClubs(c *gin.Context) {
@@ -138,72 +162,41 @@ func RemoveClubMember(c *gin.Context) {
 	clubID := c.Param("id")
 	userIDParam := c.Param("userId")
 
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "ไม่มี Authorization header"})
-		return
-	}
-
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	claims, err := jwtService.ValidateToken(tokenString)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token ไม่ถูกต้อง"})
-		return
-	}
-
-	var user entity.User
-	if err := db.Where("email = ?", claims.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "ไม่พบผู้ใช้ในระบบ"})
-		return
-	}
+	u, err := getUserFromJWT(c)
+	if err != nil { c.JSON(401, gin.H{"error": err.Error()}); return }
 
 	clubIDInt, err := strconv.Atoi(clubID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "club ID ไม่ถูกต้อง"})
-		return
-	}
+	if err != nil { c.JSON(400, gin.H{"error": "club ID ไม่ถูกต้อง"}); return }
 
+	// target: ถ้าไม่ส่ง userId = ออกเอง
 	var targetUserID uint
-
-	// ถ้าไม่มี userId param แสดงว่าเป็นการออกเอง
 	if userIDParam == "" {
-		targetUserID = user.ID
+		targetUserID = u.ID
 	} else {
 		uid, err := strconv.Atoi(userIDParam)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user ID ไม่ถูกต้อง"})
-			return
-		}
+		if err != nil { c.JSON(400, gin.H{"error": "user ID ไม่ถูกต้อง"}); return }
 		targetUserID = uint(uid)
 	}
 
-	// ตรวจสอบว่าสมาชิกนี้อยู่ในชมรม
 	var member entity.ClubMember
 	if err := db.Where("club_id = ? AND user_id = ?", clubIDInt, targetUserID).First(&member).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบสมาชิกในชมรม"})
+		c.JSON(404, gin.H{"error": "ไม่พบสมาชิกในชมรม"})
 		return
 	}
 
-	if user.ID != targetUserID {
-		var adminMember entity.ClubMember
-		if err := db.Where("club_id = ? AND user_id = ?", clubIDInt, user.ID).First(&adminMember).Error; err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": "ไม่มีสิทธิ์ลบสมาชิกคนอื่น"})
-			return
-		}
-		if adminMember.Role != "president" && adminMember.Role != "vice_president" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "เฉพาะหัวหน้าหรือรองหัวหน้าชมรมเท่านั้นที่ลบสมาชิกได้"})
-			return
-		}
+	//ออกเองได้เสมอ
+	//ถ้าลบคนอื่น: officer เท่านั้น
+	if u.ID != targetUserID {
+		if _, err := requireOfficer(c, uint(clubIDInt)); err != nil { return }
 	}
 
-	// ลบ
 	if err := db.Delete(&member).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถลบสมาชิกได้"})
+		c.JSON(500, gin.H{"error": "ไม่สามารถลบสมาชิกได้"})
 		return
 	}
 
 	action := "remove"
-	if user.ID == targetUserID {
+	if u.ID == targetUserID {
 		if member.Role == "pending" {
 			action = "cancel"
 		} else {
@@ -217,7 +210,7 @@ func RemoveClubMember(c *gin.Context) {
 		return
 	}
 
-	if member.Role == "pending" && user.ID != targetUserID {
+	if member.Role == "pending" && u.ID != targetUserID {
 		var student entity.User
 		if err := db.First(&student, member.UserID).Error; err == nil {
 			subject := "❌ คำขอเข้าร่วมชมรมของคุณถูกปฏิเสธ"
@@ -317,14 +310,17 @@ func ApproveClubMember(c *gin.Context) {
 	clubIDInt, err1 := strconv.Atoi(clubID)
 	userIDInt, err2 := strconv.Atoi(userID)
 	if err1 != nil || err2 != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid club or user id"})
+		c.JSON(400, gin.H{"error": "invalid club or user id"})
 		return
 	}
+
+	//Officer only
+	if _, err := requireOfficer(c, uint(clubIDInt)); err != nil { return }
 
 	if err := db.Model(&entity.ClubMember{}).
 		Where("club_id = ? AND user_id = ?", clubIDInt, userIDInt).
 		Update("role", "member").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถอนุมัติสมาชิกได้"})
+		c.JSON(500, gin.H{"error": "ไม่สามารถอนุมัติสมาชิกได้"})
 		return
 	}
 
@@ -349,129 +345,114 @@ func ApproveClubMember(c *gin.Context) {
 func GetMembersByClubID(c *gin.Context) {
 	db := config.DB()
 	clubID := c.Param("id")
+	clubIDInt, _ := strconv.Atoi(clubID)
 
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "No Authorization header"})
-		return
-	}
-
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenString == authHeader {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Bearer token format"})
-		return
-	}
-
-	claims, err := jwtService.ValidateToken(tokenString)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: " + err.Error()})
-		return
-	}
-
-	var user entity.User
-	if err := db.Where("email = ?", claims.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
-		return
-	}
-
-	var clubMember entity.ClubMember
-
-	err = db.Preload("Role").First(&user, user.ID).Error
-	if err == nil && user.Role.RoleName == "club_admin" {
-
-	} else {
-		err = db.Where("club_id = ? AND user_id = ? AND role IN (?)",
-			clubID, user.ID, []string{"president", "vice_president"}).
-			First(&clubMember).Error
-
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				c.JSON(http.StatusForbidden, gin.H{"error": "คุณไม่มีสิทธิ์ดูรายชื่อสมาชิกของชมรมนี้"})
-				return
-			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์"})
-			return
-		}
-	}
+	// officer only
+	if _, err := requireOfficer(c, uint(clubIDInt)); err != nil { return }
 
 	var members []ClubMemberInfo
-
-	err = db.
-		Table("users").
+	err := db.Table("users").
 		Select("users.id, users.first_name, users.last_name, users.email, club_members.role as club_role, club_members.joined_at").
 		Joins("JOIN club_members ON club_members.user_id = users.id").
-		Where("club_members.club_id = ?", clubID).
-		Where("club_members.deleted_at IS NULL").
+		Where("club_members.club_id = ? AND club_members.deleted_at IS NULL", clubID).
 		Scan(&members).Error
-
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลสมาชิกได้"})
+		c.JSON(500, gin.H{"error": "ไม่สามารถดึงข้อมูลสมาชิกได้"})
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": members})
-
+	c.JSON(200, gin.H{"success": true, "data": members})
 }
+
 
 func ChangeClubPresident(c *gin.Context) {
 	db := config.DB()
 	clubID := c.Param("id")
 
+	clubIDUint64, _ := strconv.ParseUint(clubID, 10, 64)
+	if _, err := requirePresident(c, uint(clubIDUint64)); err != nil {
+		return // requirePresident จัดการตอบ JSON ให้แล้ว
+	}
+
 	var req struct {
 		NewPresidentID uint `json:"new_president_id"`
 	}
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil || req.NewPresidentID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูลไม่ถูกต้อง"})
 		return
 	}
 
-	if err := db.Model(&entity.ClubMember{}).
-		Where("club_id = ? AND role = ?", clubID, "president").
-		Update("role", "member").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "เปลี่ยนหัวหน้าเก่าไม่สำเร็จ"})
+	var newMem entity.ClubMember
+	if err := db.Where("club_id = ? AND user_id = ?", clubID, req.NewPresidentID).
+		First(&newMem).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ผู้ใช้ไม่ได้เป็นสมาชิกชมรมนี้"})
 		return
 	}
 
-	if err := db.Model(&entity.ClubMember{}).
-		Where("club_id = ? AND user_id = ?", clubID, req.NewPresidentID).
-		Update("role", "president").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "เปลี่ยนหัวหน้าใหม่ไม่สำเร็จ"})
-		return
-	}
+	var token string
 
-	if err := db.Model(&entity.User{}).
-		Where("id = ?", req.NewPresidentID).
-		Update("role_id", 2).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตสิทธิ์ผู้ใช้ไม่สำเร็จ"})
-		return
-	}
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		var oldPres entity.ClubMember
+		if err := tx.Where("club_id = ? AND role = ?", clubID, "president").
+			First(&oldPres).Error; err != nil {
+			return fmt.Errorf("ไม่พบหัวหน้าชมรมคนเดิม")
+		}
 
-	var newPresident entity.User
-	if err := db.First(&newPresident, req.NewPresidentID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่พบผู้ใช้หัวหน้าใหม่"})
-		return
-	}
+		if oldPres.UserID != req.NewPresidentID {
+			if err := tx.Model(&entity.ClubMember{}).
+				Where("club_id = ? AND user_id = ?", clubID, oldPres.UserID).
+				Update("role", "member").Error; err != nil {
+				return fmt.Errorf("เปลี่ยนหัวหน้าเก่าไม่สำเร็จ")
+			}
+			if err := tx.Model(&entity.User{}).
+				Where("id = ?", oldPres.UserID).
+				Update("role_id", 1).Error; err != nil {
+				return fmt.Errorf("อัปเดตสิทธิ์หัวหน้าเดิมไม่สำเร็จ")
+			}
+		}
 
-	token, err := jwtService.GenerateToken(newPresident.Email)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้าง token ใหม่ได้"})
-		return
-	}
+		if err := tx.Model(&entity.ClubMember{}).
+			Where("club_id = ? AND user_id = ?", clubID, req.NewPresidentID).
+			Update("role", "president").Error; err != nil {
+			return fmt.Errorf("เปลี่ยนหัวหน้าใหม่ไม่สำเร็จ")
+		}
+		if err := tx.Model(&entity.User{}).
+			Where("id = ?", req.NewPresidentID).
+			Update("role_id", 2).Error; err != nil {
+			return fmt.Errorf("อัปเดตสิทธิ์หัวหน้าใหม่ไม่สำเร็จ")
+		}
 
-	if err := db.Model(&entity.Club{}).
-		Where("id = ?", clubID).
-		Update("created_by", req.NewPresidentID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปเดตผู้สร้างชมรมไม่สำเร็จ"})
+		if err := tx.Model(&entity.Club{}).
+			Where("id = ?", clubID).
+			Update("created_by", req.NewPresidentID).Error; err != nil {
+			return fmt.Errorf("อัปเดตผู้สร้างชมรมไม่สำเร็จ")
+		}
+
+		var newPresident entity.User
+		if err := tx.First(&newPresident, req.NewPresidentID).Error; err != nil {
+			return fmt.Errorf("ไม่พบผู้ใช้หัวหน้าใหม่")
+		}
+		tk, err := jwtService.GenerateToken(newPresident.Email)
+		if err != nil {
+			return fmt.Errorf("ไม่สามารถสร้าง token ใหม่ได้")
+		}
+		token = tk
+
+		return nil
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var club entity.Club
 	if err := db.First(&club, clubID).Error; err == nil {
-		subject := "📢 คุณได้รับสิทธิ์เป็นหัวหน้าชมรม"
-		htmlBody, _ := services.RenderTemplate("new_president.html", map[string]string{
-			"ClubName": club.Name,
-		})
-		go services.SendEmailHTML(newPresident.Email, subject, htmlBody)
+		var newPresident entity.User
+		if err := db.First(&newPresident, req.NewPresidentID).Error; err == nil {
+			if htmlBody, _ := services.RenderTemplate("new_president.html", map[string]string{
+				"ClubName": club.Name,
+			}); htmlBody != "" {
+				go services.SendEmailHTML(newPresident.Email, "📢 คุณได้รับสิทธิ์เป็นหัวหน้าชมรม", htmlBody)
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -479,19 +460,6 @@ func ChangeClubPresident(c *gin.Context) {
 		"message": "เปลี่ยนหัวหน้าชมรมเรียบร้อยแล้ว",
 		"token":   token,
 	})
-}
-
-func GetClubAnnouncements(c *gin.Context) {
-	db := config.DB()
-	clubID := c.Param("id")
-
-	var announcements []entity.ClubAnnouncement
-	if err := db.Where("club_id = ?", clubID).Order("created_at DESC").Find(&announcements).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถดึงข้อมูลประกาศได้"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": announcements})
 }
 
 func CreateClub(c *gin.Context) {
@@ -661,3 +629,111 @@ func RejectClub(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "ปฏิเสธชมรมเรียบร้อยแล้ว", "club_id": club.ID})
 }
+
+func UpdateClub(c *gin.Context) {
+	id := c.Param("id")
+
+	var club entity.Club
+	if err := config.DB().Where("id = ?", id).First(&club).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ไม่พบบันทึกชมรม"})
+		return
+	}
+
+	// รับ json_data
+	jsonData := c.PostForm("json_data")
+	var input struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		CategoryID  uint   `json:"category_id"`
+		StatusID    uint   `json:"status_id"`
+	}
+	if err := json.Unmarshal([]byte(jsonData), &input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ข้อมูล json_data ไม่ถูกต้อง"})
+		return
+	}
+
+	// หา category name (จำเป็นสำหรับ path)
+	var category entity.ClubCategory
+	if err := config.DB().Where("id = ?", input.CategoryID).First(&category).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ไม่พบหมวดหมู่ที่เลือก"})
+		return
+	}
+
+	// อัปโหลดโลโก้ถ้ามี
+	file, err := c.FormFile("logo")
+	if err == nil {
+		dir := fmt.Sprintf("images/clubs/%s", strings.ToLower(club.Name))
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ไม่สามารถสร้างโฟลเดอร์โลโก้ได้"})
+			return
+		}
+
+		filename := "logo.jpg"
+		path := filepath.Join(dir, filename)
+
+		if err := c.SaveUploadedFile(file, path); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "อัปโหลดโลโก้ล้มเหลว"})
+			return
+		}
+
+		club.LogoImage = strings.TrimPrefix(filepath.ToSlash(path), "/")
+
+	}
+
+	// เช็กชื่อเดิม vs ชื่อใหม่
+	oldName := club.Name
+	newName := input.Name
+
+	if oldName != newName {
+		oldDir := fmt.Sprintf("images/clubs/%s", strings.ToLower(oldName))
+		newDir := fmt.Sprintf("images/clubs/%s", strings.ToLower(newName))
+
+		// ย้ายโลโก้เก่าไปโฟลเดอร์ใหม่ (ถ้ามี)
+		oldLogoPath := filepath.Join(oldDir, "logo.jpg")
+		newLogoPath := filepath.Join(newDir, "logo.jpg")
+
+		if _, err := os.Stat(oldLogoPath); err == nil {
+			if err := os.MkdirAll(newDir, os.ModePerm); err == nil {
+				if err := os.Rename(oldLogoPath, newLogoPath); err == nil {
+					club.LogoImage = strings.TrimPrefix(filepath.ToSlash(newLogoPath), "/")
+				}
+			}
+		}
+
+		// ลบโฟลเดอร์เดิมหากไม่มีไฟล์
+		if isEmpty, _ := isDirEmpty(oldDir); isEmpty {
+			os.Remove(oldDir)
+		}
+	}
+
+	/// อัปเดตฟิลด์แบบระบุคอลัมน์ (กัน association มาทับ)
+	updates := map[string]interface{}{
+		"name":        input.Name,
+		"description": input.Description,
+		"category_id": input.CategoryID,
+		"status_id":   input.StatusID,
+	}
+
+	// ถ้ามีการอัปโหลดโลโก้ จะแก้ค่า club.LogoImage ไว้แล้วด้านบน ก็อัปเดตคอลัมน์นี้ด้วย
+	if club.LogoImage != "" {
+		updates["logo_image"] = club.LogoImage
+	}
+
+	if err := config.DB().Model(&club).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "บันทึกข้อมูลล้มเหลว"})
+		return
+	}
+
+	// โหลดข้อมูล club ใหม่ พร้อม preload Category และ Status
+	if err := config.DB().
+		Preload("Category").
+		Preload("Status").
+		First(&club, club.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "โหลดข้อมูลหลังบันทึกล้มเหลว"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "อัปเดตชมรมสำเร็จ", "club": club})
+}
+
+

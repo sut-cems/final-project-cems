@@ -1,11 +1,13 @@
 import type { Club } from "../../interfaces/IClubs";
+import { authFetch } from "./authFetch";
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// =============== Public (ไม่ต้องมี token ก็เรียกได้ แต่เรายังผ่าน authFetch ได้) ===============
 export async function GetCategoriesWithClubs() {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories/clubs`);
+    const response = await authFetch(`${API_BASE_URL}/categories/clubs`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -16,11 +18,11 @@ export async function GetCategoriesWithClubs() {
   }
 }
 
-export async function GetClubByID(id: string){
-  const response = await fetch(`${API_BASE_URL}/clubs/${id}`);
+export async function GetClubByID(id: string) {
+  const response = await authFetch(`${API_BASE_URL}/clubs/${id}`);
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Club not found");
+    const error = await safeJson(response);
+    throw new Error(error?.error || "Club not found");
   }
   const result = await response.json();
   if (!result.success) {
@@ -29,135 +31,90 @@ export async function GetClubByID(id: string){
   return result.data;
 }
 
-export const requestJoinClub = async (clubId: string) => {
-  try {
-    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-    if (!token) throw new Error("ไม่ได้เข้าสู่ระบบ");
-
-    const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || "ไม่สามารถส่งคำขอเข้าร่วมได้");
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error("requestJoinClub error:", error);
-    throw error;
-  }
-};
-
-
-export async function GetMembersByClubID(clubId: string) {
-  try {
-    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-    if (!token) throw new Error("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
-
-    const response = await fetch(`${API_BASE_URL}/clubs/${clubId}/members`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    if (!result.success) {
-      throw new Error("Failed to fetch club members");
-    }
-
-    return result.data;
-  } catch (err) {
-    console.error("Failed to fetch club members:", err);
-    throw err;
-  }
-}
-
-export async function changePresident(clubId: string, newPresidentId: number) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/clubs/${clubId}/change-president`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ new_president_id: newPresidentId }),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to change president");
-    }
-    return await response.json();
-  } catch (err) {
-    console.error("Failed to change president:", err);
-    throw err;
-  }
-}
-
 export async function GetClubAnnouncements(clubId: string) {
-  const response = await fetch(`${API_BASE_URL}/clubs/${clubId}/announcements`);
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
+  const res = await authFetch(`${API_BASE_URL}/clubs/${clubId}/announcements`);
+  const data = await safeJson(res);
+  if (!res.ok) throw new Error(data?.error || "เกิดข้อผิดพลาด");
   return data.data;
 }
 
-export async function approveMember(clubId: string, userId: number) {
-  const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/approve-member/${userId}`, {
+// =============== Auth-required ===============
+export const requestJoinClub = async (clubId: string) => {
+  const res = await authFetch(`${API_BASE_URL}/clubs/${clubId}/request`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
   });
-
   if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "ไม่สามารถอนุมัติสมาชิกได้");
+    const error = await safeJson(res);
+    throw new Error(error?.message || "ไม่สามารถส่งคำขอเข้าร่วมได้");
   }
+  return await safeJson(res);
+};
 
-  return await res.json();
+export async function GetMembersByClubID(clubId: string) {
+  const response = await authFetch(`${API_BASE_URL}/clubs/${clubId}/members`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!response.ok) {
+    const errorData = await safeJson(response);
+    throw new Error(
+      errorData?.error || `HTTP error! status: ${response.status}`
+    );
+  }
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error("Failed to fetch club members");
+  }
+  return result.data;
+}
+
+export async function changePresident(clubId: string, newPresidentId: number) {
+  const res = await authFetch(
+    `${API_BASE_URL}/clubs/${clubId}/change-president`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ new_president_id: newPresidentId }),
+    }
+  );
+  if (!res.ok) {
+    const error = await safeJson(res);
+    throw new Error(error?.error || "Failed to change president");
+  }
+  return await safeJson(res);
+}
+
+export async function approveMember(clubId: string, userId: number) {
+  const res = await authFetch(
+    `${API_BASE_URL}/clubs/${clubId}/approve-member/${userId}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+  if (!res.ok) {
+    const err = await safeJson(res);
+    throw new Error(err?.error || "ไม่สามารถอนุมัติสมาชิกได้");
+  }
+  return await safeJson(res);
 }
 
 export const removeClubMember = async (clubId: string, userId?: number) => {
-  try {
-    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-    console.log("Using token:", token);
+  const endpoint = userId
+    ? `${API_BASE_URL}/clubs/${clubId}/remove-member/${userId}` // ลบคนอื่น
+    : `${API_BASE_URL}/clubs/${clubId}/remove-member`; // ออกจากชมรมเอง
 
-    if (!token) throw new Error("ไม่พบ token กรุณาเข้าสู่ระบบใหม่");
+  const res = await authFetch(endpoint, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
 
-    const endpoint = userId
-      ? `${API_BASE_URL}/clubs/${clubId}/remove-member/${userId}` // ลบคนอื่น
-      : `${API_BASE_URL}/clubs/${clubId}/remove-member`;         // ลบตัวเอง
-
-    const response = await fetch(endpoint, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "ลบสมาชิกไม่สำเร็จ");
-    }
-
-    return result;
-  } catch (error) {
-    console.error("removeClubMember error:", error);
-    throw error;
+  const result = await safeJson(res);
+  if (!res.ok) {
+    throw new Error(result?.error || "ลบสมาชิกไม่สำเร็จ");
   }
+  return result;
 };
 
 export async function createClub(data: {
@@ -174,14 +131,14 @@ export async function createClub(data: {
   formData.append("CreatedBy", data.CreatedBy.toString());
   formData.append("Image", data.imageFile);
 
-  const response = await fetch(`${API_BASE_URL}/clubs/create`, {
+  const response = await authFetch(`${API_BASE_URL}/clubs/create`, {
     method: "POST",
-    body: formData,
+    body: formData, // อย่า set Content-Type เอง
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to create club");
+    const error = await safeJson(response);
+    throw new Error(error?.error || "Failed to create club");
   }
 
   const result = await response.json();
@@ -189,38 +146,148 @@ export async function createClub(data: {
 }
 
 export async function ApproveClub(id: string) {
-  const response = await fetch(`${API_BASE_URL}/clubs/${id}/approve`, {
+  const response = await authFetch(`${API_BASE_URL}/clubs/${id}/approve`, {
     method: "PATCH",
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "ไม่สามารถอนุมัติชมรมได้");
+    const error = await safeJson(response);
+    throw new Error(error?.error || "ไม่สามารถอนุมัติชมรมได้");
   }
 
-  const result = await response.json();
-  if (!result.message) {
-    throw new Error("Approve club failed");
-  }
-
+  const result = await safeJson(response);
+  if (!result?.message) throw new Error("Approve club failed");
   return result;
 }
 
 export async function RejectClub(id: string) {
-  const response = await fetch(`${API_BASE_URL}/clubs/${id}/reject`, {
+  const response = await authFetch(`${API_BASE_URL}/clubs/${id}/reject`, {
     method: "PATCH",
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "ไม่สามารถปฏิเสธชมรมได้");
+    const error = await safeJson(response);
+    throw new Error(error?.error || "ไม่สามารถปฏิเสธชมรมได้");
   }
 
-  const result = await response.json();
-  if (!result.message) {
-    throw new Error("Reject club failed");
-  }
-
+  const result = await safeJson(response);
+  if (!result?.message) throw new Error("Reject club failed");
   return result;
 }
 
+export async function UpdateClub(clubId: string, formData: FormData) {
+  const res = await authFetch(`${API_BASE_URL}/clubs/${clubId}`, {
+    method: "PUT",
+    body: formData, // FormData ไม่ต้องตั้ง Content-Type
+  });
+
+  if (!res.ok) {
+    const error = await safeJson(res);
+    throw new Error(error?.error || "ไม่สามารถอัปเดตข้อมูลชมรมได้");
+  }
+
+  const result = await safeJson(res);
+  if (!result?.message) throw new Error("Update club failed");
+  return result;
+}
+
+export async function createClubAnnouncement(
+  clubId: string,
+  title: string,
+  content: string
+) {
+  const token =
+    localStorage.getItem("authToken") || localStorage.getItem("token");
+  if (!token) throw new Error("ไม่ได้เข้าสู่ระบบ");
+
+  const res = await fetch(`${API_BASE_URL}/clubs/${clubId}/announcements`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ title, content }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "ไม่สามารถโพสต์ประกาศได้");
+  }
+
+  return await res.json();
+}
+
+export async function updateClubAnnouncement(
+  clubId: string | number,
+  annId: number | string,
+  title: string,
+  content: string
+) {
+  const token =
+    localStorage.getItem("authToken") || localStorage.getItem("token");
+  if (!token) throw new Error("ไม่ได้เข้าสู่ระบบ");
+
+  const res = await fetch(
+    `${API_BASE_URL}/clubs/${clubId}/announcements/${annId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ title, content }),
+    }
+  );
+
+  const raw = await res.text();
+  let data: any = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {}
+  if (!res.ok) throw new Error(data?.error || raw || "อัปเดตประกาศไม่สำเร็จ");
+  return data;
+}
+
+export async function deleteClubAnnouncement(clubId: string, annId: number) {
+  const token =
+    localStorage.getItem("authToken") || localStorage.getItem("token");
+  if (!token) throw new Error("ไม่ได้เข้าสู่ระบบ");
+
+  const res = await fetch(
+    `${API_BASE_URL}/clubs/${clubId}/announcements/${annId}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `ลบประกาศไม่สำเร็จ (HTTP ${res.status})`);
+  }
+  const json = await res.json().catch(() => ({}));
+  return json;
+}
+
+export async function getClubAnnouncementbyID(
+  clubId: string | number,
+  annId: number | string
+) {
+  const res = await fetch(
+    `${API_BASE_URL}/clubs/${clubId}/announcements/${annId}`
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || "โหลดประกาศไม่สำเร็จ");
+  return data.data; // {ID, Title, Content, ...}
+}
+
+// =============== helpers ภายในไฟล์ ===============
+async function safeJson(res: Response) {
+  try {
+    return await res.json();
+  } catch {
+    // ถ้าไม่ใช่ JSON ให้ลองอ่านข้อความเพื่อลง log / คืนข้อความได้
+    const t = await res.text().catch(() => "");
+    return t ? { message: t } : null;
+  }
+}

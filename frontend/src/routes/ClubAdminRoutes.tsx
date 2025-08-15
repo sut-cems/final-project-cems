@@ -14,6 +14,10 @@ import ActivitiesPhotos from "../pages/Activities/ActivitiesPhotosPage";
 import AddActivitiesPhotos from "../pages/Activities/AddActivitiesPhoto";
 import CreateClub from "../pages/Clubs/CreateClub";
 import AddNewActivitiesPhotos from "../pages/Activities/AddNewActivitiesPhoto";
+import EditClubForm from "../components/Clubs/EditClub";
+import ClubAnnouncements from "../components/Clubs/ClubAnnouncement";
+import EditAnnouncements from "../components/Clubs/EditAnnouncement";
+
 
 const ClubAdminRoutes = (): RouteObject => {
   return {
@@ -75,6 +79,18 @@ const ClubAdminRoutes = (): RouteObject => {
       {
         path: "/activities/register/:id",
         element: <ActivitiesReg />,
+      },
+      {
+        path: "/clubs/:id/edit",
+        element: <EditClubForm />,
+      },
+      {
+        path: "/clubs/:id/post-announcement",
+        element: <ClubAnnouncements />,
+      },
+      {
+        path: "/clubs/:clubId/announcements/:annId/edit",
+        element: <EditAnnouncements />,
       },
     ],
   };

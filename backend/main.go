@@ -107,7 +107,14 @@ func main() {
 		router.POST("/clubs/create", controllers.CreateClub)
 		router.PATCH("/clubs/:id/approve", controllers.ApproveClub)
 		router.PATCH("/clubs/:id/reject", controllers.RejectClub)
+		router.PUT("/clubs/:id", controllers.UpdateClub)
+		router.POST("/clubs/:id/announcements",controllers.CreateClubAnnouncement)
+		router.PUT("/clubs/:id/announcements/:annId",controllers.UpdateClubAnnouncement)
+		router.DELETE("/clubs/:id/announcements/:annId",controllers.DeleteClubAnnouncement)
+		router.GET("/clubs/:id/announcements/:annId",  controllers.GetClubAnnouncementByID)
 
+
+		
 		// Fetured Activities
 		router.GET("/activities/featured", activityHandler.GetFeaturedActivities)
 		router.GET("/activities", activityHandler.GetActivities)
